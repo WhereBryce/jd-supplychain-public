@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JD 仓网入门 · 新人必读 · JD Supply Chain</title>
+<meta name="description" content="面向新人的京东仓网知识汇总：11 大 RDC、三层级 8→62 仓、RDC vs 配送中心、库存流转四机制、62 仓 vs 11 仓布货决策、轻货仓/城市仓枢纽。" />
+<style>
+  :root{
+    --bg:#0b1020; --card:#151d3b; --line:#26305a; --ink:#eaf0ff; --muted:#9fb0d8;
+    --brand:#4f7cff; --brand2:#6ee7b7; --accent:#ffd166; --danger:#ff6b6b; --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,"Microsoft YaHei",sans-serif;
+    color:var(--ink);background:linear-gradient(180deg,#0b1020,#0d1330 40%,#0b1020);line-height:1.75;}
+  a{color:var(--brand);text-decoration:none}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 20px}
+  nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);
+    background:rgba(11,16,32,.72);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;gap:16px;height:56px}
+  nav .logo{font-weight:800;letter-spacing:.3px;font-size:15px}
+  nav .logo span{color:var(--brand)}
+  nav .links{margin-left:auto;display:flex;gap:15px;flex-wrap:wrap}
+  nav .links a{color:var(--muted);font-size:13.5px}
+  nav .links a:hover{color:var(--ink)}
+  header.hero{padding:60px 0 34px}
+  .badge{display:inline-block;font-size:12.5px;color:var(--brand2);border:1px solid var(--line);
+    background:var(--card);padding:5px 12px;border-radius:999px;margin-bottom:18px}
+  h1{font-size:clamp(28px,4.8vw,44px);line-height:1.2;margin:0 0 18px;font-weight:800}
+  h1 em{font-style:normal;background:linear-gradient(90deg,var(--brand),var(--brand2));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .abstract{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--brand2);
+    border-radius:0 14px 14px 0;padding:18px 22px;color:#e6ecff;font-size:16px}
+  section{padding:38px 0;border-top:1px solid var(--line)}
+  h2{font-size:23px;margin:0 0 8px;font-weight:800}
+  h2 .n{color:var(--brand);margin-right:10px;font-variant-numeric:tabular-nums}
+  h3{font-size:17px;margin:22px 0 8px}
+  .lead{color:var(--muted);margin:0 0 20px;max-width:820px}
+  p{margin:12px 0}
+  ul,ol{padding-left:22px}
+  li{margin:6px 0}
+  strong{color:#fff}
+  code,.mono{font-family:"Cascadia Code",Consolas,monospace;font-size:13px;
+    background:#0a0f22;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:#cfe0ff}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14.5px}
+  th,td{border:1px solid var(--line);padding:10px 13px;text-align:left;vertical-align:top}
+  th{background:#0e1430;color:var(--muted);font-weight:600}
+  tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(2,1fr)}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .card h3{margin:0 0 8px;font-size:16px}
+  .card p{margin:0;color:var(--muted);font-size:14px}
+  .callout{border-left:3px solid var(--brand);background:#161d38;border-radius:0 12px 12px 0;
+    padding:14px 18px;color:#e6ecff;margin:16px 0}
+  .callout.tip{border-left-color:var(--accent)}
+  .callout.warn{border-left-color:var(--danger)}
+  .callout .t{display:block;font-weight:700;margin-bottom:6px;color:#fff}
+  .diagram{background:#0e1430;border:1px solid var(--line);border-radius:14px;padding:18px;margin:18px 0;overflow:auto}
+  .mermaid{display:flex;justify-content:center}
+  .pill{display:inline-block;background:#0a0f22;border:1px solid var(--line);border-radius:8px;
+    padding:3px 10px;margin:4px 6px 0 0;font-size:13px;color:#cfe0ff}
+  footer{padding:34px 0 60px;color:var(--muted);text-align:center;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="logo">JD <span>Supply Chain</span> · 仓网入门</div>
+    <div class="links">
+      <a href="#why">为什么学</a>
+      <a href="#skeleton">仓网骨架</a>
+      <a href="#rdc">RDC vs 配送中心</a>
+      <a href="#flow">库存流转</a>
+      <a href="#place">货放哪</a>
+      <a href="#hubs">枢纽仓</a>
+      <a href="#pit">易踩的坑</a>
+      <a href="../">🏠 首页</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="badge">新人必读 · 京东仓网知识汇总</div>
+    <h1>JD 仓网<em>入门</em></h1>
+    <div class="abstract">
+      仓网 = <strong>货放在哪张网上</strong>。理解<strong>仓网结构、库存怎么在仓间流动、货该放哪</strong>，以及「放错地方就多花异常费」，
+      是做好补货、时效与成本的地基。一句话记住：<strong>库存分布 ≠ 需求分布 → 拆单/代发 → 多花钱</strong>。
+    </div>
+  </div>
+</header>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="n">01</span>为什么先学仓网</h2>
+    <p class="lead">「库存放哪」这一个决定，同时牵动三件事：</p>
+    <div class="grid">
+      <div class="card"><h3>⏱️ 时效</h3><p>货越近消费者，211/次日达越容易达成，转化越高（618 调研 76% 首选当日/次日达）。</p></div>
+      <div class="card"><h3>💰 成本</h3><p>就近履约 + 合适仓型，直接决定仓配费高低。</p></div>
+      <div class="card"><h3>⚠️ 异常费</h3><p>本地没货 → 拆单/代发/平行履约 → 额外 up charge。异常费是「货没放对地方多付的钱」。</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="skeleton">
+  <div class="wrap">
+    <h2><span class="n">02</span>仓网骨架：11 大 RDC + 三层级</h2>
+    <p class="lead">京东自营仓网骨架 = 约 11 个 RDC + 分层 FDC，2025 已扩到 <strong>62 仓</strong>。</p>
+
+    <h3>11 大 RDC（区域配送中心）</h3>
+    <div>
+      <span class="pill">北京</span><span class="pill">上海</span><span class="pill">广州</span><span class="pill">成都</span>
+      <span class="pill">武汉</span><span class="pill">西安</span><span class="pill">沈阳</span><span class="pill">德州</span>
+      <span class="pill">郑州</span><span class="pill">杭州</span><span class="pill">南京</span>
+    </div>
+
+    <h3>三层级（2025，共 ~62 仓）</h3>
+    <table>
+      <tr><th>层</th><th>仓</th><th>说明</th></tr>
+      <tr><td>一层</td><td><strong>8 大 RDC</strong></td><td>传统主仓，一仓覆盖多区域</td></tr>
+      <tr><td>二层</td><td><strong>22 升级仓</strong></td><td>8 主 + 16 本地（2023）</td></tr>
+      <tr><td>三层</td><td><strong>30 直送仓</strong></td><td>覆盖剩 ~20% 消费者（三四线）</td></tr>
+    </table>
+
+    <h3>仓网怎么长起来的（2018 → 2025）</h3>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart LR
+    A["2018<br/>8 仓发全国"] --> B["2023<br/>22 升级仓"]
+    B --> C["2024<br/>30 直送仓"]
+    C --> D["2025<br/>62 仓 · 三四线翻倍"]
+    D --> S1["轻货仓 ×6<br/>小件/赠品 ~50%费"]
+    D --> S2["城市仓 ×3<br/>爆品直达站点"]
+    style D fill:#FFC000,color:#111,stroke:#c99a00
+      </pre>
+    </div>
+    <p>核心叙事：靠 <strong>库存下沉</strong>（仓网 8→62 仓）换生意增长，靠 <strong>仓网合并 / 集约订单 / 集中预约</strong> 换物流效率。</p>
+  </div>
+</section>
+
+<section id="rdc">
+  <div class="wrap">
+    <h2><span class="n">03</span>RDC vs 配送中心（别搞混）</h2>
+    <table>
+      <tr><th>概念</th><th>理解</th></tr>
+      <tr><td><strong>RDC</strong></td><td>京东希望商家送货/沉库存的城市或节点，带<strong>目标与指引</strong>意义</td></tr>
+      <tr><td><strong>配送中心</strong></td><td>京东已有基础设施、可承接履约的城市/仓节点</td></tr>
+      <tr><td>关系</td><td>可能重叠也可能不重叠，<strong>不再是严格一对多</strong></td></tr>
+    </table>
+    <div class="callout tip">
+      <span class="t">⭐ 反直觉但要记牢</span>
+      <strong>RDC 也是 C 仓、也能 to C 履约</strong>——不是只有配送中心才面向消费者发货。而且现在是 <strong>动态·SKU 级</strong>：同品牌不同 SKU 的 RDC 范围可不同，同一 SKU 不同阶段可从 11→20→30→62 仓扩展。
+    </div>
+
+    <h3>京东仓类型速览</h3>
+    <table>
+      <tr><th>类型</th><th>说明</th></tr>
+      <tr><td><strong>C 仓</strong></td><td>城市维度主仓，全品类；含 8 大主仓 + 省会主力 + 三四线下沉，共 <strong>62</strong> 个</td></tr>
+      <tr><td><strong>B 仓</strong></td><td>集货/向 C 仓调拨的枢纽仓，主要在 8 大 RDC 城市（BBCC 方案，宝洁未采用）</td></tr>
+      <tr><td><strong>城市仓/本地仓</strong></td><td>本地爆品聚合，链路<strong>剔除分拣、直发站点</strong>，具 211 时效</td></tr>
+      <tr><td><strong>站仓</strong></td><td>配送站点 + 仓储结合，高频热销前置到末端</td></tr>
+    </table>
+    <p style="color:var(--muted);font-size:14px">品类差异：SKIN 11 仓、SKII 8 仓（含杭州）。</p>
+  </div>
+</section>
+
+<section id="flow">
+  <div class="wrap">
+    <h2><span class="n">04</span>库存怎么在仓间流动</h2>
+    <p class="lead">四种跨仓机制，规则各异——记住谁能借谁、谁入库才算数。</p>
+    <table>
+      <tr><th>机制</th><th>何时发生</th><th>规则要点</th></tr>
+      <tr><td><strong>平行</strong></td><td>to 消费者履约时</td><td>本仓无货，从<strong>他区域仓</strong>直发消费者（有平行库存返利费）</td></tr>
+      <tr><td><strong>支援</strong></td><td>to 消费者履约时</td><td><strong>同区域</strong> RDC↔FDC 互借；RDC 可支援 FDC，FDC 不能支援 RDC</td></tr>
+      <tr><td><strong>内配</strong></td><td>京东内部京仓间</td><td>实物调库，<strong>入目标库后才能履约</strong>；跨区域 RDC 与 FDC 不能内配</td></tr>
+      <tr><td><strong>预定</strong></td><td>页面可下单量</td><td>采购/内配在途可开预定；平行不影响预定，支援可影响预定</td></tr>
+    </table>
+
+    <h3>拉黑 / 同区代发 / 平行履约（关键：谁买单）</h3>
+    <table>
+      <tr><th>概念</th><th>含义</th><th>费用归属</th></tr>
+      <tr><td><strong>拉黑</strong></td><td>对某城市/仓屏蔽某 SKU 的本地履约，订单改由上游仓发</td><td>—</td></tr>
+      <tr><td><strong>同区代发</strong></td><td>下游无货，同区域上游仓承接</td><td>京东多自行承担，<strong>宝洁不一定产生 up charge</strong></td></tr>
+      <tr><td><strong>平行履约</strong></td><td>跨大区/跨 11 仓打开履约，一个仓有货即可放全国</td><td>运输更贵，<strong>up charge 通常压到宝洁</strong></td></tr>
+    </table>
+    <div class="callout">
+      💡 <b>只要不是本地发货，都可视为某种「异地代发」。</b>　平行更像一个「跨区代发工具」；同区上游支援与跨区平行都可能拆单，但<strong>费用归属与计算方式不同</strong>——优化时要看「谁买单」，不是只看「是否拆单」。
+    </div>
+  </div>
+</section>
+
+<section id="place">
+  <div class="wrap">
+    <h2><span class="n">05</span>货放哪：62 仓 vs 11 仓 + 布货决策</h2>
+    <p class="lead">理想是所有 SKU 沉到所有 C 仓，但现实不可行（含赠品可达两三千 SKU、长尾流速低、新品无历史流速）。</p>
+    <div class="grid">
+      <div class="card"><h3>🏢 11 大仓 = 核心枢纽</h3><p>覆盖全国的枢纽；适合长尾、明星周边、一次性活动品、供应受限赠品、流速不稳的新品早期。</p></div>
+      <div class="card"><h3>🏘️ 62 仓 = 深度下沉</h3><p>提本地发货率/时效、改善体验、减部分异常费；代价是库存分散、补货复杂、滞销风险高。</p></div>
+    </div>
+
+    <h3>新 SKU 布几仓？按类型决策</h3>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart TD
+    Q["新 SKU 要布几仓?"] --> T1{"SKU 类型?"}
+    T1 -->|大体量新品| D1["参考历史对标品<br/>可 day-one 深铺"]
+    T1 -->|普通/中等新品| D2["先布 11 仓<br/>看流速再扩 20/30/62"]
+    T1 -->|明星周边/活动品| D3["只布 11 仓<br/>活动后一次性消化"]
+    T1 -->|常规品| D4["按品类表现与销量判断"]
+    style D2 fill:#6ee7b7,color:#111,stroke:#2f9e79
+      </pre>
+    </div>
+    <div class="callout tip">
+      <span class="t">🎯 决策心法</span>
+      核心变量 = <strong>流速（是否可预测）× 供应能力 × 生命周期</strong>。先用 11 仓兜底覆盖，再用流速数据驱动深下沉——把「下沉」当作<strong>可观测后再加码</strong>的动作，而非默认全铺。
+    </div>
+  </div>
+</section>
+
+<section id="hubs">
+  <div class="wrap">
+    <h2><span class="n">06</span>两个省钱枢纽仓：轻货仓 vs 城市仓</h2>
+    <p class="lead">两者都能把仓配费压到<strong>主仓的 ~50%</strong>，但目的与时效不同。</p>
+    <table>
+      <tr><th></th><th>轻货仓（= 经济仓）</th><th>城市仓</th></tr>
+      <tr><td>数量/位置</td><td>6 个：北、广、上、武汉、西安、成都</td><td>3 个：北、上、广</td></tr>
+      <tr><td>为谁设计</td><td>小件<strong>赠品</strong>专仓</td><td>一线城市<strong>爆品</strong>专仓</td></tr>
+      <tr><td>为何便宜</td><td>降级时效换低价</td><td>出库<strong>不过分拣</strong>、直达派送站点</td></tr>
+      <tr><td>时效</td><td>更慢</td><td>更快（211）</td></tr>
+      <tr><td>边界</td><td>时效降级</td><td>仅北上广核心城区</td></tr>
+    </table>
+    <div class="callout">
+      🔎 <b>轻货仓几个坑：</b>自动平行但<strong>不与主仓平行</strong>；与主仓/经济仓间<strong>无内配</strong>（发不完不能转主仓）；单线路 <strong>MOQ 200cs</strong>，赠品需搭配主仓主品 &gt;200cs 且 FGOI 配额提前 ready。
+    </div>
+  </div>
+</section>
+
+<section id="pit">
+  <div class="wrap">
+    <h2><span class="n">07</span>新人最容易踩的坑</h2>
+    <div class="callout warn">
+      <span class="t">① region 字段 ≠ 物理城市</span>
+      主数据用<strong>付运点（ship-to，实际的运输线路/送达点）</strong>描述直送网络；<span class="mono">region</span> 对应库存大表的「配送中心」，但<strong>不等于实际物理城市</strong>——「上海 region」下的付运点可能在昆山，「北京 region」下可能在天津。做覆盖/距离分析前先确认真实地址。
+    </div>
+    <div class="callout warn">
+      <span class="t">② 优化拆单要看「谁买单」</span>
+      不是所有拆单都要消灭。<strong>同区代发京东多自行承担；跨区平行的 up charge 才压到宝洁</strong>。优先堵住会触发<strong>平行</strong>的缺货，比一刀切压「拆单率」更省钱。
+    </div>
+    <div class="callout warn">
+      <span class="t">③ 绑赠品要一起下沉</span>
+      JD 路由是<strong>整单优先</strong>。只下沉主品、赠品不在本地，会触发跨区/拆单——<strong>绑送赠品也要一起下沉</strong>。
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="n">08</span>想深入？读这些原子笔记</h2>
+    <p class="lead">本页是新人汇总；细节见知识库 vault「16 仓网」域：</p>
+    <div>
+      <span class="pill">仓网地理 11 RDC</span>
+      <span class="pill">RDC 与配送中心 概念演进</span>
+      <span class="pill">62 仓直送与 11 仓取舍</span>
+      <span class="pill">库存流转 平行支援内配预定</span>
+      <span class="pill">拉黑 同区代发 与平行履约</span>
+      <span class="pill">SKU 仓网布货决策</span>
+      <span class="pill">轻货仓与经济仓</span>
+      <span class="pill">付运点与 region 字段</span>
+      <span class="pill">物流价值创造与仓网演进</span>
+      <span class="pill">BBCC B仓B网</span>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p><b>JD Supply Chain 团队知识库</b> · 仓网入门（新人向汇总）</p>
+    <p style="font-size:13px">源自 vault：<span class="mono">16 仓网/*</span> · <a href="../">返回首页</a> · <a href="./guide.html">使用指南</a></p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad:true, theme:'dark',
+    themeVariables:{
+      fontFamily:'Segoe UI, Microsoft YaHei, sans-serif',
+      primaryColor:'#151d3b', primaryTextColor:'#eaf0ff', primaryBorderColor:'#4f7cff',
+      lineColor:'#6b7bb5', secondaryColor:'#111834', tertiaryColor:'#0e1430',
+      clusterBkg:'#0e1430', background:'#0e1430'
+    }
+  });
+</script>
+</body>
+</html>
