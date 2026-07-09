@@ -86,8 +86,9 @@
     <div class="logo">JD <span>Supply Chain</span> · 知识库</div>
     <div class="links">
       <a href="#why">为什么</a>
-      <a href="#inbox">3 步贡献</a>
-      <a href="#how">它怎么运转</a>
+      <a href="#inbox">怎么贡献</a>
+      <a href="#run">运转方式</a>
+      <a href="#how">三个循环</a>
       <a href="#types">笔记类型</a>
       <a href="#ai">和 AI 协作</a>
       <a href="#faq">常见问题</a>
@@ -98,9 +99,9 @@
 <header class="hero">
   <div class="wrap">
     <div class="badge">团队共享 · Obsidian on SharePoint · 人人可贡献</div>
-    <h1>把碎片丢进 Inbox，<br/>让团队知识<em>自己长大</em></h1>
-    <p class="sub">一句话、一张截图、一个半成品想法——都值得留下。你只管「丢」，AI 和管家会把它整理成体系化知识与洞察。</p>
-    <a class="cta" href="#inbox">▶ 我要贡献一条</a>
+    <h1>把材料扔进 Inbox，<br/>让团队知识<em>自己长大</em></h1>
+    <p class="sub">一句话、一张截图、一份 Word/PPT/PDF、一个半成品想法——任何格式都值得留下。你只管「扔」，AI 和管家会把它整理成体系化知识与洞察。</p>
+    <a class="cta" href="#inbox">▶ 我要扔一份材料</a>
     <a class="cta ghost" href="#why">先了解一下</a>
   </div>
 </header>
@@ -119,31 +120,40 @@
 
 <section id="inbox">
   <div class="wrap">
-    <h2><span class="n">02</span>三步把碎片贡献到 Inbox</h2>
-    <p class="lead">Inbox 是<strong>无门槛落地区</strong>。这里的东西还不算知识，只是原料——不用判断价值，也不用归类。</p>
+    <h2><span class="n">02</span>怎么贡献：直接把材料扔进 Inbox</h2>
+    <p class="lead">Inbox 是<strong>无门槛落地区</strong>。任何格式、任何半成品，直接扔进去就行——不用判断价值、不用归类、<strong>也不用担心冲突</strong>。</p>
     <div class="grid g3">
       <div class="card step">
         <div class="num">1</div>
         <h3>打开 Inbox 文件夹</h3>
-        <p>在 vault 里进入 <span class="mono">_Inbox/</span>。这是所有碎片的入口。</p>
+        <p>点下面的 SharePoint 链接，或用已同步到本地的 <span class="mono">_Inbox/</span> 文件夹。</p>
       </div>
       <div class="card step">
         <div class="num">2</div>
-        <h3>一条碎片 = 一个新文件</h3>
-        <p>新建 <span class="mono">YYYYMMDD-姓名-简述.md</span>，把内容写进去；大段内容 / 文件 / 图片直接拖进来。</p>
+        <h3>把材料拖进去</h3>
+        <p>Word / PPT / PDF / Excel / 图片 / 截图 / 链接 / 一句话记事……<strong>任何格式都行</strong>，直接拖拽或上传。</p>
       </div>
       <div class="card step">
         <div class="num">3</div>
-        <h3>署上你的名字</h3>
-        <p>在文件开头填 <span class="mono">contributor: 你的名字</span>，方便回溯与认领。就这样，完成！</p>
+        <h3>（可选）留个线索</h3>
+        <p>文件名带上你的名字或一句话主题最好，方便回溯；不写也没关系。就这样，完成！</p>
       </div>
     </div>
 
-    <div class="callout danger" style="margin-top:22px">
-      ⚠️ <b>为什么不直接编辑同一个 <span class="mono">00 Inbox.md</span>？</b>　多人同时改一个文件，SharePoint 会产生「冲突副本」。所以请<strong>一条碎片建一个新文件</strong>。
+    <div class="callout ok" style="margin-top:22px">
+      🙌 <b>随便扔，不会冲突。</b>　你每次是往文件夹里<strong>新增一个文件</strong>，不是去改别人正在编辑的同一个文件，所以多人同时扔也不会产生「冲突副本」。放心投。
     </div>
 
-    <p style="margin-top:24px;color:var(--muted)">复制这个模板到你的新文件里 👇</p>
+    <div class="card" style="margin-top:22px;border-color:var(--brand)">
+      <h3>📍 Inbox 在哪（SharePoint 路径）</h3>
+      <p style="margin-bottom:12px">团队共享位置，点开即用（建议加入浏览器收藏）：</p>
+      <a class="cta" href="https://pgone.sharepoint.com/:f:/r/sites/JDCSCSlay/Shared%20Documents/10.%20Repository/JD%20Supply%20Chain/_Inbox?csf=1&amp;web=1&amp;e=Q2rmw3" target="_blank" rel="noopener">📂 打开 Inbox（SharePoint）</a>
+      <div class="code" style="margin-top:14px">网页：JD CSC Slay 团队 → 文件 → 10. Repository / JD Supply Chain / _Inbox
+本地（已同步 SharePoint 的电脑）：
+  …\JD CSC Slay - Documents\10. Repository\JD Supply Chain\_Inbox\</div>
+    </div>
+
+    <p style="margin-top:24px;color:var(--muted)">想直接打一段文字记事？可用这个模板（非必需）👇</p>
     <div class="code">---
 type: source
 contributor: 你的名字
@@ -158,14 +168,37 @@ created: 2026-07-09
 </div>
 
     <div class="callout ok">
-      ✅ 投完想让它立刻被整理？在 Copilot 里说一句「<b>整理收集箱</b>」，AI 会把它原子化、归类、建立关联、挂到地图上，然后移出 Inbox。
+      ✅ 扔完想让它立即被整理？在 Copilot 里说一句「<b>整理收集箱</b>」，AI 会把它原子化、归类、建立关联、挂到地图上，然后移出 Inbox；图片/文档也会配上可检索的文字注释。
+    </div>
+  </div>
+</section>
+
+<section id="run">
+  <div class="wrap">
+    <h2><span class="n">03</span>知识库怎么运转（云 ⇅ 本地）</h2>
+    <p class="lead">你扔进 SharePoint 的材料，会通过下面这条链路变成团队随手可查的知识：</p>
+    <div class="flow" style="margin-bottom:22px">
+      <b>你扔材料</b> <span class="arrow">▶</span>
+      <b>SharePoint（云·共享）</b> <span class="arrow">⇅ 自动同步</span>
+      <b>本地文件夹</b> <span class="arrow">▶</span>
+      <b>Obsidian + AI 整理</b> <span class="arrow">▶</span>
+      <b>体系化知识 / 洞察</b>
+    </div>
+    <div class="grid g2">
+      <div class="card"><h3>☁️ SharePoint = 团队共享盘</h3><p>整个知识库存在这里，人人可读写。你扔的材料先落在这，大家都能看到。</p></div>
+      <div class="card"><h3>💻 本地 = 同步的镜像</h3><p>装了 SharePoint/OneDrive 同步的电脑，会把库同步成一个本地文件夹，离线也能看，改动自动回传云端。</p></div>
+      <div class="card"><h3>🔗 Obsidian = 阅读/编辑器</h3><p>用 Obsidian 打开本地文件夹，就能看双链、关系图、领域地图（MOC）。纯 Markdown，无需插件。</p></div>
+      <div class="card"><h3>🤖 AI = 整理与产洞察</h3><p>Copilot 在本地对库做原子化、建关联、跑合成产洞察；结论再反哺领域与应用。</p></div>
+    </div>
+    <div class="callout" style="margin-top:18px">
+      💡 <b>只想贡献？</b>　你完全不需要装 Obsidian——<strong>在 SharePoint 网页里把材料扔进 _Inbox 就够了</strong>。整理和沉淀由管家 + AI 完成。
     </div>
   </div>
 </section>
 
 <section id="how">
   <div class="wrap">
-    <h2><span class="n">03</span>它怎么运转（三个循环）</h2>
+    <h2><span class="n">04</span>碎片如何变成知识（三个循环）</h2>
     <p class="lead">你贡献的碎片，会经过三个循环变成团队资产：</p>
     <div class="flow" style="margin-bottom:24px">
       <b>碎片/资料</b> <span class="arrow">──①结构化──▶</span>
@@ -183,7 +216,7 @@ created: 2026-07-09
 
 <section id="types">
   <div class="wrap">
-    <h2><span class="n">04</span>知识长什么样</h2>
+    <h2><span class="n">05</span>知识长什么样</h2>
     <p class="lead">库里的每篇笔记有个「类型」。你只要会投 Inbox 就够了，其余交给整理；了解结构有助于你读得更快。</p>
     <table>
       <tr><th>类型</th><th>含义</th><th>放哪</th></tr>
@@ -202,7 +235,7 @@ created: 2026-07-09
 
 <section id="ai">
   <div class="wrap">
-    <h2><span class="n">05</span>和 AI 协作：一句话触发</h2>
+    <h2><span class="n">06</span>和 AI 协作：一句话触发</h2>
     <p class="lead">在 Copilot 里对着知识库说这些词，AI 就会动手：</p>
     <div>
       <span class="pill"><span class="tag">整理收集箱</span> — 把 Inbox 碎片原子化、归类、清空</span>
@@ -221,13 +254,13 @@ created: 2026-07-09
 
 <section id="faq">
   <div class="wrap">
-    <h2><span class="n">06</span>常见问题</h2>
+    <h2><span class="n">07</span>常见问题</h2>
     <details><summary>我不确定这条信息对不对 / 有没有用，要投吗？</summary>
       <p style="color:var(--muted)">要。Inbox 就是收「不确定」的地方——它只是原料。价值判断交给整理环节，AI 会标为噪音待你确认，不会擅自删你的在制品。</p></details>
-    <details><summary>投图片/Excel/PDF 怎么办？</summary>
-      <p style="color:var(--muted)">直接拖进 <span class="mono">_Inbox/</span>。图片会自动存到 <span class="mono">_Attachments/</span>；说「处理图片 X」，AI 会给它配一段文字注释，让图片也能被搜索到。</p></details>
-    <details><summary>我会不会覆盖/弄乱别人的东西？</summary>
-      <p style="color:var(--muted)">不会。只要遵循「一条碎片=一个新文件」，就不会和别人编辑冲突。整理时也不会擅自删除任何人的在制品。</p></details>
+    <details><summary>能投什么格式？有限制吗？</summary>
+      <p style="color:var(--muted)">没有限制。Word / PPT / PDF / Excel / 图片 / 截图 / 链接 / Markdown……任何格式直接扔进 <span class="mono">_Inbox/</span>。图片和文档在整理时会被配上可检索的文字注释，说「处理图片 X」即可。</p></details>
+    <details><summary>大家一起扔，会不会冲突/覆盖别人的东西？</summary>
+      <p style="color:var(--muted)">不会。你每次是往文件夹里<strong>新增一个文件</strong>，不是编辑别人正在改的同一个文件，所以多人同时扔也不会产生「冲突副本」。整理时也不会擅自删除任何人的在制品。</p></details>
     <details><summary>写笔记有格式要求吗？</summary>
       <p style="color:var(--muted)">投 Inbox 阶段：随意，一行也行。正式沉淀成知识时由整理者按《知识库约定 Conventions》规范化，你不用操心。</p></details>
   </div>
