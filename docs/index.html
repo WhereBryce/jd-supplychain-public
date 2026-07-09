@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JD Supply Chain 团队知识库 · 使用指南</title>
+<meta name="description" content="JD 供应链团队知识库入门：如何把碎片贡献到 Inbox，让知识沉淀为体系与洞察。" />
+<style>
+  :root{
+    --bg:#0b1020; --bg2:#111834; --card:#151d3b; --line:#26305a;
+    --ink:#eaf0ff; --muted:#9fb0d8; --brand:#4f7cff; --brand2:#6ee7b7;
+    --accent:#ffd166; --danger:#ff6b6b; --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; font-family:"Segoe UI",system-ui,-apple-system,"Microsoft YaHei",sans-serif;
+    color:var(--ink); background:linear-gradient(180deg,#0b1020,#0d1330 40%,#0b1020);
+    line-height:1.7;
+  }
+  a{color:var(--brand);text-decoration:none}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+  /* nav */
+  nav{
+    position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);
+    background:rgba(11,16,32,.72);border-bottom:1px solid var(--line);
+  }
+  nav .wrap{display:flex;align-items:center;gap:18px;height:58px}
+  nav .logo{font-weight:800;letter-spacing:.5px}
+  nav .logo span{color:var(--brand)}
+  nav .links{margin-left:auto;display:flex;gap:18px;flex-wrap:wrap}
+  nav .links a{color:var(--muted);font-size:14px}
+  nav .links a:hover{color:var(--ink)}
+  /* hero */
+  header.hero{padding:72px 0 48px;text-align:center}
+  .badge{display:inline-block;font-size:12.5px;color:var(--brand2);
+    border:1px solid var(--line);background:var(--card);padding:5px 12px;border-radius:999px;margin-bottom:20px}
+  h1{font-size:clamp(30px,5vw,48px);line-height:1.2;margin:0 0 14px;font-weight:800}
+  h1 em{font-style:normal;background:linear-gradient(90deg,var(--brand),var(--brand2));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{font-size:18px;color:var(--muted);max-width:680px;margin:0 auto 30px}
+  .cta{display:inline-flex;gap:10px;align-items:center;background:var(--brand);color:#fff;
+    padding:14px 26px;border-radius:12px;font-weight:700;font-size:16px;box-shadow:0 8px 30px rgba(79,124,255,.35)}
+  .cta:hover{transform:translateY(-1px)}
+  .cta.ghost{background:transparent;border:1px solid var(--line);color:var(--ink);box-shadow:none;margin-left:10px}
+  /* sections */
+  section{padding:46px 0;border-top:1px solid var(--line)}
+  h2{font-size:26px;margin:0 0 8px;font-weight:800}
+  h2 .n{color:var(--brand);margin-right:10px;font-variant-numeric:tabular-nums}
+  .lead{color:var(--muted);margin:0 0 26px;max-width:760px}
+  .grid{display:grid;gap:18px}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:820px){.g3,.g2{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+  .card h3{margin:0 0 8px;font-size:18px}
+  .card p{margin:0;color:var(--muted);font-size:15px}
+  .step{position:relative;padding-left:12px}
+  .step .num{display:inline-flex;width:34px;height:34px;border-radius:10px;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,var(--brand),#3457d5);font-weight:800;margin-bottom:12px}
+  code,.mono{font-family:"Cascadia Code",Consolas,monospace;font-size:13.5px}
+  .code{background:#0a0f22;border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+    overflow:auto;color:#cfe0ff;margin:14px 0;white-space:pre}
+  .pill{display:inline-block;background:#0a0f22;border:1px solid var(--line);border-radius:8px;
+    padding:3px 10px;margin:4px 6px 0 0;font-size:13px;color:#cfe0ff}
+  .tag{color:var(--accent)}
+  table{width:100%;border-collapse:collapse;margin-top:8px;font-size:14.5px}
+  th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top}
+  th{background:#0e1430;color:var(--muted);font-weight:600}
+  .callout{border-left:3px solid var(--accent);background:#171d38;border-radius:0 12px 12px 0;padding:14px 18px;color:#e6ecff}
+  .callout.danger{border-left-color:var(--danger)}
+  .callout.ok{border-left-color:var(--brand2)}
+  details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 18px;margin:10px 0}
+  summary{cursor:pointer;font-weight:600;padding:10px 0}
+  footer{padding:40px 0 60px;color:var(--muted);text-align:center;border-top:1px solid var(--line)}
+  .kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 7px;background:#0e1430;font-size:13px}
+  .flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:15px}
+  .flow b{color:var(--ink)}
+  .arrow{color:var(--brand)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="logo">JD <span>Supply Chain</span> · 知识库</div>
+    <div class="links">
+      <a href="#why">为什么</a>
+      <a href="#inbox">3 步贡献</a>
+      <a href="#how">它怎么运转</a>
+      <a href="#types">笔记类型</a>
+      <a href="#ai">和 AI 协作</a>
+      <a href="#faq">常见问题</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="badge">团队共享 · Obsidian on SharePoint · 人人可贡献</div>
+    <h1>把碎片丢进 Inbox，<br/>让团队知识<em>自己长大</em></h1>
+    <p class="sub">一句话、一张截图、一个半成品想法——都值得留下。你只管「丢」，AI 和管家会把它整理成体系化知识与洞察。</p>
+    <a class="cta" href="#inbox">▶ 我要贡献一条</a>
+    <a class="cta ghost" href="#why">先了解一下</a>
+  </div>
+</header>
+
+<section id="why">
+  <div class="wrap">
+    <h2><span class="n">01</span>为什么要有这个知识库</h2>
+    <p class="lead">团队的经验大多散落在聊天、邮件、脑子里，人一走就没了。这个知识库把它们变成<strong>可检索、可复用、可复利</strong>的团队资产。</p>
+    <div class="grid g3">
+      <div class="card"><h3>🧠 单一事实来源</h3><p>供应链的口径、流程、概念集中一处；不再「同名不同义」、各写各的。</p></div>
+      <div class="card"><h3>🔁 越用越聪明</h3><p>碎片 → 原子知识 → 洞察 → 反哺应用。知识之间建立连接，产生新观点。</p></div>
+      <div class="card"><h3>🤝 人人可贡献</h3><p>存在 SharePoint，团队协作编辑。零门槛投递，不用担心「写得对不对」。</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="inbox">
+  <div class="wrap">
+    <h2><span class="n">02</span>三步把碎片贡献到 Inbox</h2>
+    <p class="lead">Inbox 是<strong>无门槛落地区</strong>。这里的东西还不算知识，只是原料——不用判断价值，也不用归类。</p>
+    <div class="grid g3">
+      <div class="card step">
+        <div class="num">1</div>
+        <h3>打开 Inbox 文件夹</h3>
+        <p>在 vault 里进入 <span class="mono">_Inbox/</span>。这是所有碎片的入口。</p>
+      </div>
+      <div class="card step">
+        <div class="num">2</div>
+        <h3>一条碎片 = 一个新文件</h3>
+        <p>新建 <span class="mono">YYYYMMDD-姓名-简述.md</span>，把内容写进去；大段内容 / 文件 / 图片直接拖进来。</p>
+      </div>
+      <div class="card step">
+        <div class="num">3</div>
+        <h3>署上你的名字</h3>
+        <p>在文件开头填 <span class="mono">contributor: 你的名字</span>，方便回溯与认领。就这样，完成！</p>
+      </div>
+    </div>
+
+    <div class="callout danger" style="margin-top:22px">
+      ⚠️ <b>为什么不直接编辑同一个 <span class="mono">00 Inbox.md</span>？</b>　多人同时改一个文件，SharePoint 会产生「冲突副本」。所以请<strong>一条碎片建一个新文件</strong>。
+    </div>
+
+    <p style="margin-top:24px;color:var(--muted)">复制这个模板到你的新文件里 👇</p>
+    <div class="code">---
+type: source
+contributor: 你的名字
+source: 出处/场景（可选）
+created: 2026-07-09
+---
+
+# 一句话标题
+
+把想记的东西写这里：一句话、链接、半成品想法、
+不确定对不对的信息都行。不用判断价值，不用归类。
+</div>
+
+    <div class="callout ok">
+      ✅ 投完想让它立刻被整理？在 Copilot 里说一句「<b>整理收集箱</b>」，AI 会把它原子化、归类、建立关联、挂到地图上，然后移出 Inbox。
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <h2><span class="n">03</span>它怎么运转（三个循环）</h2>
+    <p class="lead">你贡献的碎片，会经过三个循环变成团队资产：</p>
+    <div class="flow" style="margin-bottom:24px">
+      <b>碎片/资料</b> <span class="arrow">──①结构化──▶</span>
+      <b>原子知识</b> <span class="arrow">──②沉淀──▶</span>
+      <b>洞察</b> <span class="arrow">──③合成──▶</span>
+      <b>反哺应用</b>
+    </div>
+    <div class="grid g3">
+      <div class="card"><h3>① 结构化</h3><p>碎片拆成「一念一笔」的原子知识，打标签、建双链、挂到领域地图 MOC。</p></div>
+      <div class="card"><h3>② 沉淀</h3><p>对话/思考里冒出的新观点，写成「洞察」：主张 + 推理 + 依据 + 置信度。</p></div>
+      <div class="card"><h3>③ 合成</h3><p>跨知识跑批，找矛盾 / 空白 / 类比，升级成新洞察，再反哺回领域。</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="types">
+  <div class="wrap">
+    <h2><span class="n">04</span>知识长什么样</h2>
+    <p class="lead">库里的每篇笔记有个「类型」。你只要会投 Inbox 就够了，其余交给整理；了解结构有助于你读得更快。</p>
+    <table>
+      <tr><th>类型</th><th>含义</th><th>放哪</th></tr>
+      <tr><td><span class="mono">atom</span> 原子</td><td>一个概念/事实，自足可复用</td><td>领域文件夹</td></tr>
+      <tr><td><span class="mono">source</span> 来源</td><td>某份文档/书/视频的提炼</td><td>领域文件夹</td></tr>
+      <tr><td><span class="mono">moc</span> 地图</td><td>某领域的入口与导航</td><td>领域根 / 顶层</td></tr>
+      <tr><td><span class="mono">insight</span> 洞察</td><td>想出来的新观点</td><td>Insights/</td></tr>
+      <tr><td><span class="mono">class</span> 本体实体</td><td>领域对象的显式定义（订单/库存/仓…）</td><td>_Meta/Ontology/</td></tr>
+    </table>
+    <div class="grid g2" style="margin-top:20px">
+      <div class="card"><h3>🧩 本体 Ontology</h3><p>供应链的语义层：订单、商品 SKU、客户、仓 RDC、库存、配额、KPI…及它们之间的关系。是上层应用的口径根基。</p></div>
+      <div class="card"><h3>⚙️ 应用 Applications</h3><p>围绕知识库构建的自动化：低库存告警、智能补货、现货率报告等。代码在独立 Git 仓库，消费本体口径。</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="ai">
+  <div class="wrap">
+    <h2><span class="n">05</span>和 AI 协作：一句话触发</h2>
+    <p class="lead">在 Copilot 里对着知识库说这些词，AI 就会动手：</p>
+    <div>
+      <span class="pill"><span class="tag">整理收集箱</span> — 把 Inbox 碎片原子化、归类、清空</span>
+      <span class="pill"><span class="tag">原子化 X</span> — 把 X 拆成原子笔记</span>
+      <span class="pill"><span class="tag">找关联</span> — 为当前笔记补双链与标签</span>
+      <span class="pill"><span class="tag">合成 &lt;域&gt;</span> — 对某领域跑批产洞察</span>
+      <span class="pill"><span class="tag">沉淀 / 记一下</span> — 把刚才的观点写成洞察</span>
+      <span class="pill"><span class="tag">处理图片 X</span> — 给截图配文字注释让它可检索</span>
+      <span class="pill"><span class="tag">巡检洞察</span> — 回顾洞察层，列「想向你要的信息」</span>
+    </div>
+    <div class="callout" style="margin-top:22px">
+      🗓️ <b>管家轮值（Steward）：</b>每周由一位同学执行「整理收集箱」，把大家投的碎片清零、沉淀入库。轮到你时，说一句「整理收集箱」即可。
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <h2><span class="n">06</span>常见问题</h2>
+    <details><summary>我不确定这条信息对不对 / 有没有用，要投吗？</summary>
+      <p style="color:var(--muted)">要。Inbox 就是收「不确定」的地方——它只是原料。价值判断交给整理环节，AI 会标为噪音待你确认，不会擅自删你的在制品。</p></details>
+    <details><summary>投图片/Excel/PDF 怎么办？</summary>
+      <p style="color:var(--muted)">直接拖进 <span class="mono">_Inbox/</span>。图片会自动存到 <span class="mono">_Attachments/</span>；说「处理图片 X」，AI 会给它配一段文字注释，让图片也能被搜索到。</p></details>
+    <details><summary>我会不会覆盖/弄乱别人的东西？</summary>
+      <p style="color:var(--muted)">不会。只要遵循「一条碎片=一个新文件」，就不会和别人编辑冲突。整理时也不会擅自删除任何人的在制品。</p></details>
+    <details><summary>写笔记有格式要求吗？</summary>
+      <p style="color:var(--muted)">投 Inbox 阶段：随意，一行也行。正式沉淀成知识时由整理者按《知识库约定 Conventions》规范化，你不用操心。</p></details>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p><b>JD Supply Chain 团队知识库</b> · 存于 SharePoint · 纯 Markdown · 原生 Obsidian</p>
+    <p style="font-size:13px">入口：<span class="mono">00 JD Supply Chain MOC</span> · 约定：<span class="mono">_Meta/知识库约定 Conventions</span> · 碎片入口：<span class="mono">_Inbox/</span></p>
+    <p style="font-size:13px;margin-top:14px">有问题找知识库管家 · 一起把团队的经验沉淀下来 🌱</p>
+  </div>
+</footer>
+
+</body>
+</html>
