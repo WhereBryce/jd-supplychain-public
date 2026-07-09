@@ -96,11 +96,10 @@
 <section id="why">
   <div class="wrap">
     <h2><span class="n">01</span>为什么先学仓网</h2>
-    <p class="lead">「库存放哪」这一个决定，同时牵动三件事：</p>
+    <p class="lead">京东零售的仓网极「重」，且强制绑定京东物流服务，因此仓网变动常常与前台零售决策彼此牵制。「库存放哪」这一个决定，同时牵动两件事：</p>
     <div class="grid">
-      <div class="card"><h3>⏱️ 时效</h3><p>货越近消费者，211/次日达越容易达成，转化越高（618 调研 76% 首选当日/次日达）。</p></div>
-      <div class="card"><h3>💰 成本</h3><p>就近履约 + 合适仓型，直接决定仓配费高低。</p></div>
-      <div class="card"><h3>⚠️ 异常费</h3><p>本地没货 → 拆单/代发/平行履约 → 额外 up charge。异常费是「货没放对地方多付的钱」。</p></div>
+      <div class="card"><h3>⏱️ 时效</h3><p>货越近消费者，211/次日达越容易达成，转化越高（大促调研 76% 首选当日/次日达）。</p></div>
+      <div class="card"><h3>💰 成本 · 异常费</h3><p>是否就近整单履约 + 是否是合适的仓型，直接决定仓配费高低。异常仓配费主要来源：本地没货 → 拆单/代发/平行履约 → 额外 upcharge。异常费是「货没放对地方多付的钱」。</p></div>
     </div>
   </div>
 </section>
@@ -108,7 +107,7 @@
 <section id="skeleton">
   <div class="wrap">
     <h2><span class="n">02</span>仓网骨架：11 大 RDC + 三层级</h2>
-    <p class="lead">京东自营仓网骨架 = 约 11 个 RDC + 分层 FDC，2025 已扩到 <strong>62 仓</strong>。</p>
+    <p class="lead">京东自营仓网骨架 = 约 11 个大仓 + 60 个左右的下沉仓，2025 年 10 月后宝洁直送范围已扩到 <strong>62 仓</strong>。</p>
 
     <h3>11 大 RDC（区域配送中心）</h3>
     <div>
@@ -120,24 +119,24 @@
     <h3>三层级（2025，共 ~62 仓）</h3>
     <table>
       <tr><th>层</th><th>仓</th><th>说明</th></tr>
-      <tr><td>一层</td><td><strong>8 大 RDC</strong></td><td>传统主仓，一仓覆盖多区域</td></tr>
-      <tr><td>二层</td><td><strong>22 升级仓</strong></td><td>8 主 + 16 本地（2023）</td></tr>
-      <tr><td>三层</td><td><strong>30 直送仓</strong></td><td>覆盖剩 ~20% 消费者（三四线）</td></tr>
+      <tr><td>一层</td><td><strong>11 大 RDC</strong></td><td>传统主仓 + 新增 3 大主仓，一仓覆盖多区域</td></tr>
+      <tr><td>二层</td><td><strong>19 个 2025 以前升级仓</strong></td><td>—</td></tr>
+      <tr><td>三层</td><td><strong>32 个 2025 以后新增 BBCC 直送仓</strong></td><td>覆盖剩 ~20% 消费者（三四线）</td></tr>
     </table>
 
     <h3>仓网怎么长起来的（2018 → 2025）</h3>
     <div class="diagram">
       <pre class="mermaid">
 flowchart LR
-    A["2018<br/>8 仓发全国"] --> B["2023<br/>22 升级仓"]
-    B --> C["2024<br/>30 直送仓"]
+    A["2018<br/>8 仓发全国"] --> B["2019~2024<br/>8 + 22 升级仓"]
+    B --> C["2025<br/>8 + 22 + 32 BBCC直送仓"]
     C --> D["2025<br/>62 仓 · 三四线翻倍"]
-    D --> S1["轻货仓 ×6<br/>小件/赠品 ~50%费"]
-    D --> S2["城市仓 ×3<br/>爆品直达站点"]
+    D --> S1["轻货仓 ×6<br/>小件/赠品 ~50%仓配费"]
+    D --> S2["城市仓 ×3<br/>爆品直达站点 ~50%仓配费"]
     style D fill:#FFC000,color:#111,stroke:#c99a00
       </pre>
     </div>
-    <p>核心叙事：靠 <strong>库存下沉</strong>（仓网 8→62 仓）换生意增长，靠 <strong>仓网合并 / 集约订单 / 集中预约</strong> 换物流效率。</p>
+    <p>核心叙事：靠 <strong>库存下沉</strong>（仓网 8→62 仓）换生意增长，靠 <strong>仓网合并 / 集约订单 / 集中预约</strong> 规避部分复杂化、换物流效率。</p>
   </div>
 </section>
 
@@ -147,44 +146,42 @@ flowchart LR
     <table>
       <tr><th>概念</th><th>理解</th></tr>
       <tr><td><strong>RDC</strong></td><td>京东希望商家送货/沉库存的城市或节点，带<strong>目标与指引</strong>意义</td></tr>
-      <tr><td><strong>配送中心</strong></td><td>京东已有基础设施、可承接履约的城市/仓节点</td></tr>
+      <tr><td><strong>配送中心</strong></td><td>京东已有基础设施、可承接 to C 履约的城市节点</td></tr>
       <tr><td>关系</td><td>可能重叠也可能不重叠，<strong>不再是严格一对多</strong></td></tr>
     </table>
     <div class="callout tip">
       <span class="t">⭐ 反直觉但要记牢</span>
-      <strong>RDC 也是 C 仓、也能 to C 履约</strong>——不是只有配送中心才面向消费者发货。而且现在是 <strong>动态·SKU 级</strong>：同品牌不同 SKU 的 RDC 范围可不同，同一 SKU 不同阶段可从 11→20→30→62 仓扩展。
+      <strong>RDC 也是 C 仓、也能 to C 履约</strong>——不是只有配送中心才面向消费者发货。而且现在是 <strong>动态·SKU 级</strong>：同品牌不同 SKU 的 RDC 范围可不同，同一 SKU 不同阶段可从 11→20→…→62 仓扩展。
     </div>
 
     <h3>京东仓类型速览</h3>
     <table>
       <tr><th>类型</th><th>说明</th></tr>
-      <tr><td><strong>C 仓</strong></td><td>城市维度主仓，全品类；含 8 大主仓 + 省会主力 + 三四线下沉，共 <strong>62</strong> 个</td></tr>
-      <tr><td><strong>B 仓</strong></td><td>集货/向 C 仓调拨的枢纽仓，主要在 8 大 RDC 城市（BBCC 方案，宝洁未采用）</td></tr>
-      <tr><td><strong>城市仓/本地仓</strong></td><td>本地爆品聚合，链路<strong>剔除分拣、直发站点</strong>，具 211 时效</td></tr>
-      <tr><td><strong>站仓</strong></td><td>配送站点 + 仓储结合，高频热销前置到末端</td></tr>
+      <tr><td><strong>C 仓</strong></td><td>城市维度主仓，全品类；含 11 大主仓 + 省会主力 + 三四线下沉，共 <strong>62</strong> 个</td></tr>
+      <tr><td><strong>B 仓</strong></td><td>集货/向 C 仓调拨的枢纽仓，当前有 24 个（BBCC 方案，宝洁未采用）</td></tr>
+      <tr><td><strong>城市仓</strong></td><td>本地爆品聚合，链路<strong>剔除分拣、直发站点</strong>，具 211 时效甚至更优时效</td></tr>
+      <tr><td><strong>轻货仓</strong></td><td>小件廉价特殊仓型，时效降级，但仓配费更为便宜</td></tr>
     </table>
-    <p style="color:var(--muted);font-size:14px">品类差异：SKIN 11 仓、SKII 8 仓（含杭州）。</p>
+    <p style="color:var(--muted);font-size:14px">品类差异：SKIN 和 SKII 只做 11 仓覆盖（含传统 8 仓 + 杭州/郑州/南京）。</p>
   </div>
 </section>
 
 <section id="flow">
   <div class="wrap">
-    <h2><span class="n">04</span>库存怎么在仓间流动</h2>
-    <p class="lead">四种跨仓机制，规则各异——记住谁能借谁、谁入库才算数。</p>
+    <h2><span class="n">04</span>库存怎么在城市/区域间流动</h2>
+    <p class="lead">三种跨仓机制 + 一个注意，规则各异——记住谁能借谁、谁入库才算数。</p>
     <table>
       <tr><th>机制</th><th>何时发生</th><th>规则要点</th></tr>
       <tr><td><strong>平行</strong></td><td>to 消费者履约时</td><td>本仓无货，从<strong>他区域仓</strong>直发消费者（有平行库存返利费）</td></tr>
       <tr><td><strong>支援</strong></td><td>to 消费者履约时</td><td><strong>同区域</strong> RDC↔FDC 互借；RDC 可支援 FDC，FDC 不能支援 RDC</td></tr>
-      <tr><td><strong>内配</strong></td><td>京东内部京仓间</td><td>实物调库，<strong>入目标库后才能履约</strong>；跨区域 RDC 与 FDC 不能内配</td></tr>
-      <tr><td><strong>预定</strong></td><td>页面可下单量</td><td>采购/内配在途可开预定；平行不影响预定，支援可影响预定</td></tr>
+      <tr><td><strong>内配</strong></td><td>京东内部京仓间</td><td>实物调库，<strong>入目标库后才能履约</strong>；仅限同区 RDC 与 FDC 调配，跨区域 RDC 与 FDC 不能内配</td></tr>
+      <tr><td><strong>注意：预定</strong></td><td>页面可下单量</td><td>采购/内配在途可开预定；平行不影响预定，支援可影响预定</td></tr>
     </table>
 
-    <h3>拉黑 / 同区代发 / 平行履约（关键：谁买单）</h3>
+    <h3>一个黑话</h3>
     <table>
-      <tr><th>概念</th><th>含义</th><th>费用归属</th></tr>
-      <tr><td><strong>拉黑</strong></td><td>对某城市/仓屏蔽某 SKU 的本地履约，订单改由上游仓发</td><td>—</td></tr>
-      <tr><td><strong>同区代发</strong></td><td>下游无货，同区域上游仓承接</td><td>京东多自行承担，<strong>宝洁不一定产生 up charge</strong></td></tr>
-      <tr><td><strong>平行履约</strong></td><td>跨大区/跨 11 仓打开履约，一个仓有货即可放全国</td><td>运输更贵，<strong>up charge 通常压到宝洁</strong></td></tr>
+      <tr><th>概念</th><th>含义</th></tr>
+      <tr><td><strong>拉黑</strong></td><td>对某城市/仓屏蔽某 SKU 的本地履约，订单改由上游仓发，<strong>主动制造大仓对下仓的代发关系</strong>。</td></tr>
     </table>
     <div class="callout">
       💡 <b>只要不是本地发货，都可视为某种「异地代发」。</b>　平行更像一个「跨区代发工具」；同区上游支援与跨区平行都可能拆单，但<strong>费用归属与计算方式不同</strong>——优化时要看「谁买单」，不是只看「是否拆单」。
@@ -229,7 +226,7 @@ flowchart TD
       <tr><td>数量/位置</td><td>6 个：北、广、上、武汉、西安、成都</td><td>3 个：北、上、广</td></tr>
       <tr><td>为谁设计</td><td>小件<strong>赠品</strong>专仓</td><td>一线城市<strong>爆品</strong>专仓</td></tr>
       <tr><td>为何便宜</td><td>降级时效换低价</td><td>出库<strong>不过分拣</strong>、直达派送站点</td></tr>
-      <tr><td>时效</td><td>更慢</td><td>更快（211）</td></tr>
+      <tr><td>时效</td><td>更慢</td><td>更快（211 及以上）</td></tr>
       <tr><td>边界</td><td>时效降级</td><td>仅北上广核心城区</td></tr>
     </table>
     <div class="callout">
@@ -246,8 +243,8 @@ flowchart TD
       主数据用<strong>付运点（ship-to，实际的运输线路/送达点）</strong>描述直送网络；<span class="mono">region</span> 对应库存大表的「配送中心」，但<strong>不等于实际物理城市</strong>——「上海 region」下的付运点可能在昆山，「北京 region」下可能在天津。做覆盖/距离分析前先确认真实地址。
     </div>
     <div class="callout warn">
-      <span class="t">② 优化拆单要看「谁买单」</span>
-      不是所有拆单都要消灭。<strong>同区代发京东多自行承担；跨区平行的 up charge 才压到宝洁</strong>。优先堵住会触发<strong>平行</strong>的缺货，比一刀切压「拆单率」更省钱。
+      <span class="t">② 拆单「谁买单」</span>
+      不是所有拆单都由京东自己买单。<strong>同区代发京东自行承担；跨区平行的 upcharge 会推账单给宝洁</strong>。
     </div>
     <div class="callout warn">
       <span class="t">③ 绑赠品要一起下沉</span>
