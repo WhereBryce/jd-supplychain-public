@@ -12,6 +12,7 @@ JD 供应链团队知识库的**对外发布站**（GitHub Pages 托管）。所
 | 团队知识库使用指南 | 指南 | 怎么往 Inbox 贡献材料、云⇄本地运转方式、AI 协作触 发词（含二维码） | <https://wherebryce.github.io/jd-supplychain-public/pages/guide.html> |
 | 仓配费节降通用框架 | 洞察·仓配成本 | 仓配费 = 非异常+异常，按 费项→方式→抓手  三层拆解的跨品类节降骨架（含流程图） | <https://wherebryce.github.io/jd-supplychain-public/pages/warehouse-cost-reduction.html> |
 | JD 仓网入门 | 新人·仓网 | 11 大 RDC、三层级 8→62 仓、RDC vs 配送中心、库存流转、布货决策、枢纽仓与常见坑（含流程图） | <https://wherebryce.github.io/jd-supplychain-public/pages/warehouse-network-primer.html> |
+| JD 库存报告字段词典 | 参考·库存字段 | 商智库存报告全字段逐条识别（现货/可用/可订购公式、滞销库龄、出库销量口径、PV现货率），带即时筛选 | <https://wherebryce.github.io/jd-supplychain-public/pages/jd-inventory-report-fields.html> |
 
 ## 📁 目录结构
 
@@ -22,6 +23,7 @@ jd-supplychain-public/          # Pages 从 /(root) 发布
     guide.html                  # 团队知识库使用指南
     warehouse-cost-reduction.html   # 仓配费节降通用框架
     warehouse-network-primer.html   # JD 仓网入门（新人向）
+    jd-inventory-report-fields.html # JD 库存报告字段词典
   .nojekyll                     # 关闭 Jekyll 处理
   README.md
 ```

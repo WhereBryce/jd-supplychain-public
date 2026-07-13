@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>JD 库存报告字段词典 · JD Supply Chain</title>
+<meta name="description" content="京东商智库存报告明细字段逐条识别词典：商品属性、销量band、库存件数（现货/可用/可订购公式）、周转滞销库龄、采购到货、出库销量口径、有货天数/可售/PV现货率。" />
+<style>
+  :root{
+    --bg:#0b1020; --card:#151d3b; --line:#26305a; --ink:#eaf0ff; --muted:#9fb0d8;
+    --brand:#4f7cff; --brand2:#6ee7b7; --accent:#ffd166; --danger:#ff6b6b; --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,"Microsoft YaHei",sans-serif;
+    color:var(--ink);background:linear-gradient(180deg,#0b1020,#0d1330 40%,#0b1020);line-height:1.7;}
+  a{color:var(--brand);text-decoration:none}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 20px}
+  nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);
+    background:rgba(11,16,32,.72);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;gap:14px;height:56px}
+  nav .logo{font-weight:800;letter-spacing:.3px;font-size:15px}
+  nav .logo span{color:var(--brand)}
+  nav .links{margin-left:auto;display:flex;gap:14px;flex-wrap:wrap}
+  nav .links a{color:var(--muted);font-size:13.5px}
+  nav .links a:hover{color:var(--ink)}
+  header.hero{padding:56px 0 20px}
+  .badge{display:inline-block;font-size:12.5px;color:var(--brand2);border:1px solid var(--line);
+    background:var(--card);padding:5px 12px;border-radius:999px;margin-bottom:16px}
+  h1{font-size:clamp(26px,4.4vw,40px);line-height:1.2;margin:0 0 16px;font-weight:800}
+  h1 em{font-style:normal;background:linear-gradient(90deg,var(--brand),var(--brand2));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .abstract{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--brand2);
+    border-radius:0 14px 14px 0;padding:16px 20px;color:#e6ecff;font-size:15.5px}
+  .searchbar{position:sticky;top:56px;z-index:40;background:rgba(11,16,32,.9);backdrop-filter:blur(8px);
+    padding:14px 0;border-bottom:1px solid var(--line);margin-top:22px}
+  .searchbar input{width:100%;padding:12px 16px;font-size:15px;color:var(--ink);
+    background:#0a0f22;border:1px solid var(--line);border-radius:12px;outline:none}
+  .searchbar input:focus{border-color:var(--brand)}
+  .searchbar .hint{color:var(--muted);font-size:12.5px;margin-top:6px}
+  section{padding:30px 0;border-top:1px solid var(--line)}
+  h2{font-size:21px;margin:0 0 10px;font-weight:800}
+  h2 .n{color:var(--brand);margin-right:10px;font-variant-numeric:tabular-nums}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14.5px}
+  th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+  th{background:#0e1430;color:var(--muted);font-weight:600;position:sticky}
+  tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
+  td:first-child{white-space:nowrap;font-weight:600;color:#fff}
+  .noresult{display:none;color:var(--muted);padding:20px;text-align:center}
+  code,.mono{font-family:"Cascadia Code",Consolas,monospace;font-size:13px;
+    background:#0a0f22;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:#cfe0ff}
+  footer{padding:34px 0 60px;color:var(--muted);text-align:center;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="logo">JD <span>Supply Chain</span> · 库存字段</div>
+    <div class="links">
+      <a href="#s1">商品属性</a>
+      <a href="#s3">库存件数</a>
+      <a href="#s4">周转滞销</a>
+      <a href="#s5">采购到货</a>
+      <a href="#s6">出库销量</a>
+      <a href="#s8">字段区分</a>
+      <a href="../">🏠 首页</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="badge">参考词典 · 商智库存报告 · 字段逐条识别</div>
+    <h1>JD 库存报告<em>字段词典</em></h1>
+    <div class="abstract">
+      京东<strong>商智库存报告</strong>（黄金眼 / 商智「库存明细下载」）明细字段的<strong>逐条识别词典</strong>：商品属性、销量 band、库存件数（现货 / 可用 / 可订购 及公式）、周转 / 滞销 / 不动销 / 库龄、采购与到货、出库与销量口径、有货天数 / 可售 / PV 现货率。文末附<strong>库存相关字段区分</strong>对比表。字段定义均取自官方《商智库存报告字段识别》。
+    </div>
+  </div>
+</header>
+
+<div class="searchbar">
+  <div class="wrap">
+    <input id="q" type="search" placeholder="🔍 输入字段名或关键词过滤，如：可订购、滞销、VMI、现货率…" autocomplete="off" />
+    <div class="hint">实时过滤下方所有字段行；清空恢复全部。</div>
+  </div>
+</div>
+
+<section id="s1">
+  <div class="wrap">
+    <h2><span class="n">一</span>商品与主数据属性</h2>
+    <table>
+      <tr><th>字段</th><th>说明</th></tr>
+      <tr><td>是否售完即止</td><td>设置售止的商品，无法下采购单，不进行统计 PV 现货率</td></tr>
+      <tr><td>是否厂直</td><td>是否厂商直送</td></tr>
+      <tr><td>全国厂直可用库存</td><td></td></tr>
+      <tr><td>是否影分身</td><td>是虚拟库存或是虚拟 sku 等</td></tr>
+      <tr><td>是否虚拟组套</td><td>指将几个 sku 组合在一起卖</td></tr>
+      <tr><td>上下柜状态</td><td>商品当前的上下柜状态，指主站场的上下柜状态</td></tr>
+      <tr><td>中台上下柜状态</td><td>中台上下柜状态，指商品的上下柜状态，包含下柜、可上柜、上柜三种状态</td></tr>
+      <tr><td>上架时间</td><td>即 SKU 的创建时间</td></tr>
+      <tr><td>下柜时间</td><td>下柜时间，最近一次下柜时间</td></tr>
+      <tr><td>首次入库时间</td><td>首次入库时间</td></tr>
+      <tr><td>末次入库时间</td><td>最近一次入库时间</td></tr>
+      <tr><td>首次上柜时间</td><td>首次上柜时间</td></tr>
+      <tr><td>上柜时间</td><td>指商品最近一次上柜时间</td></tr>
+      <tr><td>是否平行库存</td><td>开通平行库存即可一地备货，全国发货</td></tr>
+      <tr><td>是否赠品</td><td>商家 VC 后台维护的是否赠品，区分非赠品、赠品（不可单独销售）、赠品（可单独销售）三种类型</td></tr>
+      <tr><td>SPU 编码</td><td>进入商品详情页默认的第一个 sku 编码，指的是 SPU，不是影分身商品的主品</td></tr>
+      <tr><td>条形码</td><td>商品条形码，又称 UPC 编码。</td></tr>
+      <tr><td>商品价格</td><td>商家 VC 后台维护的商品价格</td></tr>
+      <tr><td>全国采购价</td><td>商家 VC 后台维护的商品采购价，优先取促销采购价，没有则取基本采购价</td></tr>
+      <tr><td>仓网类型</td><td>该商品所属的仓库类型，包含中小件、大件、生鲜、医药、图书等</td></tr>
+      <tr><td>保质期</td><td>商品维护的保质期天数。</td></tr>
+      <tr><td>长度 / 宽度 / 高度</td><td>商品长度 / 宽度 / 高度（mm）</td></tr>
+      <tr><td>重量</td><td>商品重量（g）</td></tr>
+      <tr><td>冷链标记</td><td>分为控温（10 -18℃）、冷藏（0-4℃）、冷冻（零下 18℃ 以下）、深冷（零下 30℃）、鲜活、产地直送、鲜品（冷藏存常温配）、冷藏(2-8度)、冷冻(-15- -25℃)</td></tr>
+      <tr><td>是否新品</td><td>按照首次入仓 30 天判断的</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="s2">
+  <div class="wrap">
+    <h2><span class="n">二</span>销量分级 Band</h2>
+    <table>
+      <tr><th>字段</th><th>说明</th></tr>
+      <tr><td>全国 7 日三级销量 band</td><td>根据近 7 天的销量对这个类目中的所有 sku 进行排序分级，排在前 20% 的为 A，20%-40% 为 B，以此类推，分为 ABCDEF 六个 band</td></tr>
+      <tr><td>全国 28 日三级销量 band</td><td>根据近 28 天的销量对这个类目中的所有 sku 进行排序分级，排在前 20% 的为 A，20%-40% 为 B，以此类推，分为 ABCDEF 六个 band</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="s3">
+  <div class="wrap">
+    <h2><span class="n">三</span>库存件数与可用 / 可订购</h2>
+    <table>
+      <tr><th>字段</th><th>说明</th></tr>
+      <tr><td>现货库存</td><td>在京东仓库的现货库存件数</td></tr>
+      <tr><td>内配在途库存</td><td>内配途中数量，记在目的仓下</td></tr>
+      <tr><td>库存件数</td><td>现货库存件数 + 内配在途件数</td></tr>
+      <tr><td>内配入</td><td>内配计划入，源仓还未完成出库的数量</td></tr>
+      <tr><td>内配出</td><td>内配计划出，还未完成出库的数量</td></tr>
+      <tr><td>已锁定</td><td>已锁定库存，包括订单取消锁定、供货商退货锁定、POP 团购等业务上需要锁定库存的数量，不允许用户下单</td></tr>
+      <tr><td>可用库存</td><td>前台可以销售的库存数量，现货 + 内配在途 + VMI 库存 - 锁定 - 内配出 - 不可售 - 订单预定（订单预占未出库的商品数量）。VMI 库存：VMI 是一种供应链模式，指的是将 POP 入仓的库存共享给自营，VMI 库存指的是共享给自营的库存件数</td></tr>
+      <tr><td>可订购库存</td><td>代表可以订购的库存，= 现货 + 内配在途 + VMI 库存 - 锁定 + 内配入 - 内配出 - 不可售 - 订单预定 + 采购未到货。与可用库存关系：可订购库存 = 可用库存 + 采购未到货 + 内配入</td></tr>
+      <tr><td>订单预定</td><td>用户下订单后未出库的订单对应的件数，包含下单未付款 + 付款未发货两部分</td></tr>
+      <tr><td>VMI 库存</td><td>VMI 是一种供应链模式，指的是将 POP 入仓的库存共享给自营，VMI 库存指的是共享给自营的库存件数</td></tr>
+      <tr><td>不可售</td><td>残品、样品、报废品等</td></tr>
+      <tr><td>现货库存成本</td><td>现货库存数量 * 仓报价</td></tr>
+      <tr><td>可用库存金额</td><td>可用库存 * 仓报价</td></tr>
+      <tr><td>退供应商在途</td><td>未完成的退货单对应的退货数量</td></tr>
+      <tr><td>预定状态</td><td>指没有现货时，但为保持商品有持续的展示和销量，通过采销或者系统设置商品状态（前台显示预定）</td></tr>
+      <tr><td>预定数量</td><td>指没有现货时，但为保持商品有持续的展示和销量，通过采销或者系统设置商品状态（前台显示预定）</td></tr>
+      <tr><td>无货下单</td><td>包含两种订单类型：1）企业大客户的无货下单；2）家电专卖店的免限订单</td></tr>
+      <tr><td>大件待预占数量</td><td>客户下单已付款且符合破界释放中订单明细（目前可订购库存中未扣减大件 X-X 天待预占数量的数据）</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="s4">
+  <div class="wrap">
+    <h2><span class="n">四</span>周转 / 滞销 / 不动销 / 库龄</h2>
+    <table>
+      <tr><th>字段</th><th>说明</th></tr>
+      <tr><td>数量周转</td><td>库存件数 / 日均出库销量</td></tr>
+      <tr><td>滞销件数</td><td>总库存数量 - 滞销天数阈值（指周转超多少天为滞销）* 日均出库销量；若日均销量为 0，则滞销库存数量 = 总库存数量 - 无销售基本备货数量。滞销库存中剔除新品，新品首次入仓天定义需查看规则配置（默认 30 天）。滞销天数阈值、参考的日均出库销量、无销售基本备货数量、新品判断规则为采销配置的口径。中小件、生鲜按照 RDC 维度统计，大件按照中心仓 + 卫星仓维度，其他按照配送中心维度统计</td></tr>
+      <tr><td>滞销库存金额</td><td>滞销件数 * 仓报价</td></tr>
+      <tr><td>不动销库存件数</td><td>连续 XX 天以上有货且 XX 天销量为 0 的 SKU 的库存件数 - 无销售基本备货。连续 XX 天以上有货、XX 天销量为 0 和无销售基本备货数量为采销配置的口径。中小件、生鲜按照 RDC 维度统计，大件按照中心仓 + 卫星仓维度，其他按照配送中心维度统计</td></tr>
+      <tr><td>不动销库存金额</td><td>不动销库存件数 * 仓报价</td></tr>
+      <tr><td>长库龄库存件数</td><td>按照统计规则部门设置的库龄阈值计算超出阈值的库存数量，指在库时间超多少天为长库龄</td></tr>
+      <tr><td>长库龄库存金额</td><td>长库龄库存件数 * 仓报价</td></tr>
+      <tr><td>X-X 天库存数量</td><td>库龄在 X 天（时间范围内）的库存数量。每批次库存的库龄 = 当前日期 - 该批次首次采购入库日期。内配不会影响库龄的计算。库龄库存 = 逻辑批次口径的现货库存 + 内配在途库存</td></tr>
+      <tr><td>X-X 天库存金额</td><td>X-X 天库存数量 * 仓报价</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="s5">
+  <div class="wrap">
+    <h2><span class="n">五</span>采购与到货</h2>
+    <table>
+      <tr><th>字段</th><th>说明</th></tr>
+      <tr><td>采购未到货</td><td>包含订单提交后到完成之前的有效采购单的库存件数，已回告取回告数量，没有回告取原始下单数量</td></tr>
+      <tr><td>采购未到货 - 已回告</td><td>已回告的采购未到货件数</td></tr>
+      <tr><td>采购未到货 - 已预约</td><td>已预约送货的采购未到货件数</td></tr>
+      <tr><td>采购未到货金额</td><td>= 昨日采购未到货数量 * 下单价</td></tr>
+      <tr><td>采购未到货金额（已回告）</td><td>= 昨日采购未到货数量（已回告）* 下单价</td></tr>
+      <tr><td>采购未到货金额（已预约）</td><td>= 昨日采购未到货数量（已预约）* 下单价</td></tr>
+      <tr><td>采购入库件数</td><td>该时间段内京东自营仓库验收入库的商品数量</td></tr>
+      <tr><td>采购入库金额</td><td>该时间段内京东自营仓库验收入库的商品采购金额</td></tr>
+      <tr><td>采购下单件数</td><td>该时间段内有效状态下的采购单初始的下单件数</td></tr>
+      <tr><td>退供应商件数</td><td>该时间段内提货的有效退货单的库存件数</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="s6">
+  <div class="wrap">
+    <h2><span class="n">六</span>出库与销量口径</h2>
+    <table>
+      <tr><th>字段</th><th>说明</th></tr>
+      <tr><td>出库商品件数</td><td>按出库地统计近 X 日出库销量，取库房出库打包的数量，不减退货、拒收。只包含自营仓库出库的订单，不包含厂直、VMI 等订单。出库 + 厂直 + VMI 出库则为自营总体的出库件数。</td></tr>
+      <tr><td>厂直出库商品件数</td><td>厂直订单对应的出库件数</td></tr>
+      <tr><td>VMI 出库商品件数</td><td>VMI 订单对应的出库件数。VMI 是一种供应链模式，指的是将 POP 入仓的库存共享给自营。</td></tr>
+      <tr><td>收货地商品件数</td><td>按照订单收货地址对应到配送中心，统计的收货地销量，会减去退货、拒收、取消的订单</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="s7">
+  <div class="wrap">
+    <h2><span class="n">七</span>有货天数 / 可售 / 现货率</h2>
+    <table>
+      <tr><th>字段</th><th>说明</th></tr>
+      <tr><td>xx 日有货天数</td><td>近 X 日可用库存 &gt; 0 的天数，根据下载数据的统计维度计算，比如 RDC 维度是按照 RDC 汇总的可用库存判断的有货天数，配送中心维度是按照配送中心自己的可用库存判断的有货天数</td></tr>
+      <tr><td>预计可售天数</td><td>对于库存可以卖多少天的预估。预计可售天数 = 可用库存 /（近 28 日收货地商品件数 / 28 日有货天数），若 28 日有效销量或 28 日有货天数 = 0（或空值），则可售天数 = 可用库存 / 0.1</td></tr>
+      <tr><td>PV 现货率</td><td>该时间段内有货的 SKU 的浏览量 / 总的 SKU 的浏览量，即有货 PV / 总 PV，剔除虚拟品类、虚拟组套、影分身商品、售完即止的 SKU</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="s8">
+  <div class="wrap">
+    <h2><span class="n">八</span>库存相关字段的区分（汇总对比）</h2>
+    <table>
+      <tr><th>字段</th><th>字段说明</th><th>应用场景</th></tr>
+      <tr><td>现货库存</td><td>在京东仓库的现货库存件数</td><td>代表实际在京东仓库的库存</td></tr>
+      <tr><td>内配在途库存</td><td>内配途中数量，记在目的仓下</td><td></td></tr>
+      <tr><td>库存件数</td><td>现货库存件数 + 内配在途件数</td><td>较现货库存增加了内配在途库存</td></tr>
+      <tr><td>可用库存</td><td>前台可以销售的库存数量，现货 + 内配在途 + VMI 库存 - 锁定 - 内配出 - 不可售 - 订单预定（订单预占未出库的商品数量）。VMI 库存：VMI 是一种供应链模式，指的是将 POP 入仓的库存共享给自营，VMI 库存指的是共享给自营的库存件数</td><td>更贴近京东前台可以销售的库存数量，前台是否有货以可用库存为基础依据</td></tr>
+      <tr><td>可订购库存</td><td>代表可以订购的库存，= 现货 + 内配在途 + VMI 库存 - 锁定 + 内配入 - 内配出 - 不可售 - 订单预定 + 采购未到货</td><td>可订购库存与可用库存的关系：可订购库存 = 可用库存 + 采购未到货 + 内配入</td></tr>
+      <tr><td>内配入</td><td>内配计划入，源仓还未完成出库的数量</td><td></td></tr>
+      <tr><td>内配出</td><td>内配计划出，还未完成出库的数量</td><td></td></tr>
+      <tr><td>已锁定</td><td>已锁定库存，包括订单取消锁定、供货商退货锁定、POP 团购等业务上需要锁定库存的数量，不允许用户下单</td><td></td></tr>
+      <tr><td>采购未到货</td><td>包含订单提交后到完成之前的有效采购单的库存件数，已回告取回告数量，没有回告取原始下单数量</td><td></td></tr>
+      <tr><td>VMI 库存</td><td>VMI 是一种供应链模式，指的是将 POP 入仓的库存共享给自营，VMI 库存指的是共享给自营的库存件数</td><td></td></tr>
+      <tr><td>订单预定</td><td>用户下订单后未出库的订单对应的件数，包含下单未付款 + 付款未发货两部分</td><td></td></tr>
+      <tr><td>出库商品件数</td><td>按出库地统计近 X 日出库销量，取库房出库打包的数量，不减退货、拒收。</td><td>只包含自营仓库出库的订单，不包含厂直、VMI 等订单；出库 + 厂直 + VMI 出库则为总体的出库件数</td></tr>
+      <tr><td>厂直出库商品件数</td><td>厂直订单对应的出库件数</td><td></td></tr>
+      <tr><td>VMI 出库商品件数</td><td>VMI 订单对应的出库件数。VMI 是一种供应链模式，指的是将 POP 入仓的库存共享给自营。</td><td></td></tr>
+      <tr><td>收货地商品件数</td><td>按照订单收货地址对应到配送中心，统计的收货地销量，会减去退货、拒收、取消的订单</td><td>开通平行库存商品，应使用收货地商品件数，体现各区域用户真实需求，有利于精准铺货，减少跨区</td></tr>
+    </table>
+    <div class="noresult" id="noresult">没有匹配的字段，试试别的关键词。</div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p><b>JD Supply Chain 团队知识库</b> · 库存字段词典（新人 / 数据同学参考）</p>
+    <p style="font-size:13px">源自官方《商智库存报告字段识别》 · <a href="../">返回首页</a> · <a href="./guide.html">使用指南</a></p>
+  </div>
+</footer>
+
+<script>
+  var q = document.getElementById('q');
+  var rows = Array.prototype.slice.call(document.querySelectorAll('section table tr'))
+    .filter(function(tr){ return !tr.querySelector('th'); });
+  q.addEventListener('input', function(){
+    var k = q.value.trim().toLowerCase();
+    var any = false;
+    rows.forEach(function(tr){
+      var show = k === '' || tr.textContent.toLowerCase().indexOf(k) !== -1;
+      tr.style.display = show ? '' : 'none';
+      if(show) any = true;
+    });
+    document.getElementById('noresult').style.display = (k !== '' && !any) ? 'block' : 'none';
+  });
+</script>
+</body>
+</html>
