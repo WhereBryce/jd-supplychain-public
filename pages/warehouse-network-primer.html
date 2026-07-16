@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>JD 仓网入门 · 新人必读 · JD Supply Chain</title>
-<meta name="description" content="面向新人的京东仓网知识汇总：11 大 RDC、三层级 8→62 仓、RDC vs 配送中心、库存流转四机制、62 仓 vs 11 仓布货决策、轻货仓/城市仓枢纽。" />
+<meta name="description" content="面向新人的京东仓网知识汇总：11 大 RDC、按事业部宝洁直送城市互动地图、RDC vs 配送中心、库存流转四机制、62 城 vs 11 城布货决策、轻货仓/城市仓枢纽。" />
 <style>
   :root{
     --bg:#0b1020; --card:#151d3b; --line:#26305a; --ink:#eaf0ff; --muted:#9fb0d8;
@@ -61,6 +61,41 @@
   .mermaid{display:flex;justify-content:center}
   .pill{display:inline-block;background:#0a0f22;border:1px solid var(--line);border-radius:8px;
     padding:3px 10px;margin:4px 6px 0 0;font-size:13px;color:#cfe0ff}
+  .network-map{margin:18px 0 24px;background:#0e1430;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .map-toolbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:16px 18px;border-bottom:1px solid var(--line)}
+  .map-toolbar strong{display:block;font-size:16px}
+  .map-summary{display:block;margin-top:2px;color:var(--muted);font-size:13px}
+  .map-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+  .segmented{display:inline-flex;padding:3px;background:#090e20;border:1px solid var(--line);border-radius:8px}
+  .segmented button,.map-icon-btn,.rdc-filter button{font:inherit;color:var(--muted);border:0;cursor:pointer}
+  .segmented button{padding:6px 10px;background:transparent;border-radius:6px;font-size:13px}
+  .segmented button:hover,.segmented button[aria-pressed="true"]{color:#fff;background:#26305a}
+  .map-icon-btn{display:inline-grid;place-items:center;width:32px;height:32px;background:#151d3b;border:1px solid var(--line);border-radius:7px;font-size:18px;line-height:1}
+  .map-icon-btn:hover{color:#fff;border-color:#50639b}
+  .coverage-toggle{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:13px;cursor:pointer;white-space:nowrap}
+  .coverage-toggle input{width:16px;height:16px;accent-color:var(--brand)}
+  .rdc-filter{display:flex;gap:7px;align-items:center;overflow-x:auto;padding:12px 18px;border-bottom:1px solid var(--line);scrollbar-width:none}
+  .rdc-filter::-webkit-scrollbar{display:none}
+  .rdc-filter button{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;padding:6px 9px;background:#111834;border:1px solid var(--line);border-radius:7px;font-size:12.5px}
+  .rdc-filter button:hover,.rdc-filter button[aria-pressed="true"]{color:#fff;border-color:var(--rdc-color,#6b7bb5);box-shadow:inset 0 0 0 1px var(--rdc-color,#6b7bb5)}
+  .rdc-filter .swatch{width:8px;height:8px;border-radius:50%;background:var(--rdc-color,#6b7bb5)}
+  .map-stage{position:relative;width:100%;aspect-ratio:850/760;background:#f7f9fb;transition:aspect-ratio .2s ease}
+  .map-stage[data-mode="compare"]{aspect-ratio:1750/760}
+  .map-stage object{display:block;width:100%;height:100%;border:0}
+  .map-loading{position:absolute;inset:0;display:grid;place-items:center;color:#52606d;background:#f7f9fb;font-size:14px;pointer-events:none}
+  .map-stage.is-ready .map-loading{display:none}
+  .map-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 18px;border-top:1px solid var(--line);font-size:13px}
+  .map-key{display:flex;gap:14px;align-items:center;color:var(--muted);flex-wrap:wrap}
+  .map-key span{display:inline-flex;align-items:center;gap:6px}
+  .key-dot{width:9px;height:9px;border-radius:50%;background:var(--brand)}
+  .key-dot.faint{opacity:.3}
+  .key-star{color:var(--accent);font-size:16px;line-height:1}
+  .map-detail{color:#fff;text-align:right;min-height:23px}
+  .map-note{margin:0;padding:0 18px 15px;color:var(--muted);font-size:12.5px}
+  @media(max-width:760px){
+    .map-toolbar{display:block}.map-actions{justify-content:flex-start;margin-top:12px}
+    .map-stage[data-mode="compare"]{aspect-ratio:1.35}.map-footer{display:block}.map-detail{text-align:left;margin-top:8px}
+  }
   footer{padding:34px 0 60px;color:var(--muted);text-align:center;border-top:1px solid var(--line)}
 </style>
 </head>
@@ -107,7 +142,7 @@
 <section id="skeleton">
   <div class="wrap">
     <h2><span class="n">02</span>仓网骨架：11 大 RDC + 三层级</h2>
-    <p class="lead">京东自营仓网骨架 = 约 11 个大仓 + 60 个左右的下沉仓，2025 年 10 月后宝洁直送范围已扩到 <strong>62 仓</strong>。</p>
+    <p class="lead">京东自营仓网骨架 = 约 11 个大仓 + 60 个左右的下沉仓。宝洁直送范围按事业部不同：<strong>大商超事业部 62 城，美妆事业部 11 城</strong>。</p>
 
     <h3>11 大 RDC（区域配送中心）</h3>
     <div>
@@ -123,6 +158,60 @@
       <tr><td>二层</td><td><strong>19 个 2025 以前升级仓</strong></td><td>—</td></tr>
       <tr><td>三层</td><td><strong>32 个 2025 以后新增 BBCC 直送仓</strong></td><td>覆盖剩 ~20% 消费者（三四线）</td></tr>
     </table>
+
+    <h3>按事业部看宝洁直送城市</h3>
+    <table>
+      <tr><th>事业部</th><th>包含业务</th><th>宝洁直送范围</th></tr>
+      <tr><td><strong>大商超事业部</strong></td><td>洁护母婴家清（个护、母婴、家清）</td><td><strong>62 个城市</strong></td></tr>
+      <tr><td><strong>美妆事业部</strong></td><td>SK-II、OLAY</td><td><strong>11 个城市</strong>，即 11 个 RDC 城市</td></tr>
+    </table>
+
+    <div class="network-map" id="direct-delivery-map">
+      <div class="map-toolbar">
+        <div>
+          <strong>宝洁直送城市分布</strong>
+          <span class="map-summary" id="map-summary">大商超事业部 · 62 个直送城市</span>
+        </div>
+        <div class="map-actions">
+          <div class="segmented" role="group" aria-label="选择事业部地图">
+            <button type="button" data-map-mode="mass" aria-pressed="true">大商超</button>
+            <button type="button" data-map-mode="beauty" aria-pressed="false">美妆</button>
+            <button type="button" data-map-mode="compare" aria-pressed="false">对比</button>
+          </div>
+          <label class="coverage-toggle"><input id="coverage-toggle" type="checkbox" checked />显示覆盖城市</label>
+          <button class="map-icon-btn" type="button" data-map-action="zoom-in" title="放大" aria-label="放大地图">+</button>
+          <button class="map-icon-btn" type="button" data-map-action="zoom-out" title="缩小" aria-label="缩小地图">−</button>
+          <button class="map-icon-btn" type="button" data-map-action="reset" title="重置视图" aria-label="重置地图视图">↺</button>
+        </div>
+      </div>
+      <div class="rdc-filter" role="group" aria-label="按 RDC 筛选">
+        <button type="button" data-rdc="" aria-pressed="true">全部 RDC</button>
+        <button type="button" data-rdc="北京" aria-pressed="false" style="--rdc-color:#C43C4E"><span class="swatch"></span>北京</button>
+        <button type="button" data-rdc="上海" aria-pressed="false" style="--rdc-color:#008A91"><span class="swatch"></span>上海</button>
+        <button type="button" data-rdc="广州" aria-pressed="false" style="--rdc-color:#F28E2B"><span class="swatch"></span>广州</button>
+        <button type="button" data-rdc="成都" aria-pressed="false" style="--rdc-color:#4E9A51"><span class="swatch"></span>成都</button>
+        <button type="button" data-rdc="武汉" aria-pressed="false" style="--rdc-color:#8B5FBF"><span class="swatch"></span>武汉</button>
+        <button type="button" data-rdc="西安" aria-pressed="false" style="--rdc-color:#3F72AF"><span class="swatch"></span>西安</button>
+        <button type="button" data-rdc="沈阳" aria-pressed="false" style="--rdc-color:#E05A47"><span class="swatch"></span>沈阳</button>
+        <button type="button" data-rdc="德州" aria-pressed="false" style="--rdc-color:#49A7A0"><span class="swatch"></span>德州</button>
+        <button type="button" data-rdc="郑州" aria-pressed="false" style="--rdc-color:#D4A514"><span class="swatch"></span>郑州</button>
+        <button type="button" data-rdc="杭州" aria-pressed="false" style="--rdc-color:#D95F9A"><span class="swatch"></span>杭州</button>
+        <button type="button" data-rdc="南京" aria-pressed="false" style="--rdc-color:#8C6D5A"><span class="swatch"></span>南京</button>
+      </div>
+      <div class="map-stage" id="map-stage" data-mode="mass">
+        <object id="network-map-object" type="image/svg+xml" data="../assets/warehouse-network-direct-delivery.svg" aria-label="宝洁直送城市与 11 RDC 覆盖互动地图"></object>
+        <div class="map-loading" id="map-loading">地图加载中…</div>
+      </div>
+      <div class="map-footer">
+        <div class="map-key" aria-label="地图符号说明">
+          <span><i class="key-dot"></i>事业部直送城市</span>
+          <span><i class="key-dot faint"></i>推测覆盖城市</span>
+          <span><i class="key-star">★</i>11 大 RDC</span>
+        </div>
+        <div class="map-detail" id="map-detail" aria-live="polite">悬停城市查看详情</div>
+      </div>
+      <p class="map-note">直送城市来自《宝洁直送region.xlsx》；RDC 覆盖结合 2026 年 3—6 月库存关系、11 仓扩仓材料及城市地理推测。城市级静态归属不代表官方行政边界或 SKU 级实时路由。</p>
+    </div>
 
     <h3>仓网怎么长起来的（2018 → 2025）</h3>
     <div class="diagram">
@@ -162,7 +251,7 @@ flowchart LR
       <tr><td><strong>城市仓</strong></td><td>本地爆品聚合，链路<strong>剔除分拣、直发站点</strong>，具 211 时效甚至更优时效</td></tr>
       <tr><td><strong>轻货仓</strong></td><td>小件廉价特殊仓型，时效降级，但仓配费更为便宜</td></tr>
     </table>
-    <p style="color:var(--muted);font-size:14px">品类差异：SKIN 和 SKII 只做 11 仓覆盖（含传统 8 仓 + 杭州/郑州/南京）。</p>
+    <p style="color:var(--muted);font-size:14px">事业部差异：大商超事业部，即洁护母婴家清（个护、母婴、家清），直送 62 城；美妆事业部（SK-II、OLAY）直送 11 城，即传统 8 RDC + 杭州、郑州、南京。</p>
   </div>
 </section>
 
@@ -279,17 +368,196 @@ flowchart TD
   </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 <script>
-  mermaid.initialize({
-    startOnLoad:true, theme:'dark',
-    themeVariables:{
-      fontFamily:'Segoe UI, Microsoft YaHei, sans-serif',
-      primaryColor:'#151d3b', primaryTextColor:'#eaf0ff', primaryBorderColor:'#4f7cff',
-      lineColor:'#6b7bb5', secondaryColor:'#111834', tertiaryColor:'#0e1430',
-      clusterBkg:'#0e1430', background:'#0e1430'
-    }
-  });
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!window.mermaid) return;
+    mermaid.initialize({
+      startOnLoad:false, theme:'dark',
+      themeVariables:{
+        fontFamily:'Segoe UI, Microsoft YaHei, sans-serif',
+        primaryColor:'#151d3b', primaryTextColor:'#eaf0ff', primaryBorderColor:'#4f7cff',
+        lineColor:'#6b7bb5', secondaryColor:'#111834', tertiaryColor:'#0e1430',
+        clusterBkg:'#0e1430', background:'#0e1430'
+      }
+    });
+    mermaid.run({ querySelector:'.mermaid' });
+  }, { once:true });
+
+  (() => {
+    const mapObject = document.getElementById('network-map-object');
+    const stage = document.getElementById('map-stage');
+    const summary = document.getElementById('map-summary');
+    const detail = document.getElementById('map-detail');
+    const coverageToggle = document.getElementById('coverage-toggle');
+    const modeButtons = [...document.querySelectorAll('[data-map-mode]')];
+    const rdcButtons = [...document.querySelectorAll('[data-rdc]')];
+    const actionButtons = [...document.querySelectorAll('[data-map-action]')];
+    const views = {
+      mass: { x: 25, y: 110, width: 850, height: 770, label: '大商超事业部 · 62 个直送城市' },
+      beauty: { x: 925, y: 110, width: 850, height: 770, label: '美妆事业部 · 11 个直送城市' },
+      compare: { x: 25, y: 110, width: 1750, height: 770, label: '大商超 62 城 vs 美妆 11 城' }
+    };
+    let svgRoot;
+    let mapItems = [];
+    let mode = 'mass';
+    let activeRdc = '';
+    let baseView = { ...views.mass };
+    let currentView = { ...views.mass };
+    let dragStart;
+    let mapInitialized = false;
+
+    const setViewBox = view => {
+      if (!svgRoot) return;
+      currentView = { ...view };
+      svgRoot.setAttribute('viewBox', `${view.x} ${view.y} ${view.width} ${view.height}`);
+    };
+
+    const resetView = () => setViewBox(baseView);
+
+    const zoom = factor => {
+      if (!svgRoot) return;
+      const minWidth = baseView.width * .42;
+      const nextWidth = Math.max(minWidth, Math.min(baseView.width, currentView.width * factor));
+      const nextHeight = nextWidth * baseView.height / baseView.width;
+      const centerX = currentView.x + currentView.width / 2;
+      const centerY = currentView.y + currentView.height / 2;
+      setViewBox({ x: centerX - nextWidth / 2, y: centerY - nextHeight / 2, width: nextWidth, height: nextHeight });
+    };
+
+    const itemDetail = item => {
+      if (item.kind === 'direct') return `${item.city} · ${item.business}直送 · ${item.rdc} RDC 区域`;
+      if (item.kind === 'coverage') return `${item.city} · 推测由 ${item.rdc} RDC 覆盖`;
+      return `${item.rdc} RDC`;
+    };
+
+    const updateSummary = () => {
+      const visibleDirect = new Set(mapItems
+        .filter(item => item.kind === 'direct')
+        .filter(item => mode === 'compare' || item.mode === mode)
+        .filter(item => !activeRdc || item.rdc === activeRdc)
+        .map(item => `${item.mode}:${item.city}`));
+      summary.textContent = activeRdc
+        ? `${views[mode].label} · ${activeRdc} RDC · ${visibleDirect.size} 个直送城市`
+        : views[mode].label;
+    };
+
+    const applyFilters = () => {
+      mapItems.forEach(item => {
+        const rdcMatch = !activeRdc || item.rdc === activeRdc;
+        const showCoverage = coverageToggle.checked || item.kind !== 'coverage';
+        item.element.style.display = showCoverage ? '' : 'none';
+        item.element.style.opacity = rdcMatch ? '1' : '.08';
+      });
+      updateSummary();
+    };
+
+    const selectMode = nextMode => {
+      mode = nextMode;
+      baseView = { ...views[mode] };
+      stage.dataset.mode = mode;
+      modeButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.mapMode === mode)));
+      resetView();
+      applyFilters();
+    };
+
+    const selectRdc = rdc => {
+      activeRdc = rdc;
+      rdcButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.rdc === rdc)));
+      detail.textContent = rdc ? `${rdc} RDC 已高亮` : '悬停城市查看详情';
+      applyFilters();
+    };
+
+    modeButtons.forEach(button => button.addEventListener('click', () => selectMode(button.dataset.mapMode)));
+    rdcButtons.forEach(button => button.addEventListener('click', () => selectRdc(button.dataset.rdc)));
+    coverageToggle.addEventListener('change', applyFilters);
+    actionButtons.forEach(button => button.addEventListener('click', () => {
+      if (button.dataset.mapAction === 'zoom-in') zoom(.78);
+      if (button.dataset.mapAction === 'zoom-out') zoom(1.28);
+      if (button.dataset.mapAction === 'reset') resetView();
+    }));
+
+    const initializeMap = () => {
+      if (mapInitialized) return;
+      const svgDocument = mapObject.contentDocument;
+      svgRoot = svgDocument && svgDocument.documentElement;
+      if (!svgRoot || !svgDocument.querySelector('circle > title')) {
+        return;
+      }
+      mapInitialized = true;
+
+      svgRoot.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      svgRoot.style.cursor = 'grab';
+      svgRoot.style.touchAction = 'none';
+      const parseElement = element => {
+        const title = element.querySelector(':scope > title');
+        if (!title) return;
+        const text = title.textContent.trim();
+        let match;
+        let item;
+        if ((match = text.match(/^(.+?)｜推测由(.+?)RDC覆盖$/))) {
+          item = { element, city: match[1], rdc: match[2], kind: 'coverage', mode: element.getAttribute('cx') < 900 ? 'mass' : 'beauty' };
+        } else if ((match = text.match(/^(.+?)｜(大商超|美妆)事业部直送｜(.+?)RDC区域$/))) {
+          item = { element, city: match[1], business: match[2], rdc: match[3], kind: 'direct', mode: match[2] === '大商超' ? 'mass' : 'beauty' };
+        } else if ((match = text.match(/^(.+?)RDC$/))) {
+          item = { element, rdc: match[1], kind: 'rdc', mode: 'both' };
+        }
+        if (!item) return;
+        element.style.transition = 'opacity .18s ease';
+        if (item.kind !== 'rdc') {
+          element.style.cursor = 'pointer';
+          element.setAttribute('tabindex', '0');
+          element.setAttribute('role', 'button');
+          element.setAttribute('aria-label', itemDetail(item));
+          const showDetail = () => { detail.textContent = itemDetail(item); };
+          element.addEventListener('pointerenter', showDetail);
+          element.addEventListener('focus', showDetail);
+          element.addEventListener('click', () => selectRdc(item.rdc));
+          element.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              selectRdc(item.rdc);
+            }
+          });
+        }
+        mapItems.push(item);
+      };
+
+      svgDocument.querySelectorAll('circle, polygon').forEach(parseElement);
+      svgDocument.querySelectorAll('text').forEach(element => {
+        const match = element.textContent.trim().match(/^(.+?)RDC$/);
+        if (match && views.mass && Object.prototype.hasOwnProperty.call({北京:1,上海:1,广州:1,成都:1,武汉:1,西安:1,沈阳:1,德州:1,郑州:1,杭州:1,南京:1}, match[1])) {
+          mapItems.push({ element, rdc: match[1], kind: 'rdc-label', mode: 'both' });
+        }
+      });
+
+      svgRoot.addEventListener('wheel', event => {
+        event.preventDefault();
+        zoom(event.deltaY > 0 ? 1.14 : .86);
+      }, { passive: false });
+      svgRoot.addEventListener('pointerdown', event => {
+        dragStart = { clientX: event.clientX, clientY: event.clientY, view: { ...currentView } };
+        svgRoot.style.cursor = 'grabbing';
+        svgRoot.setPointerCapture?.(event.pointerId);
+      });
+      svgRoot.addEventListener('pointermove', event => {
+        if (!dragStart) return;
+        const rect = svgRoot.getBoundingClientRect();
+        const dx = (event.clientX - dragStart.clientX) * dragStart.view.width / rect.width;
+        const dy = (event.clientY - dragStart.clientY) * dragStart.view.height / rect.height;
+        setViewBox({ ...dragStart.view, x: dragStart.view.x - dx, y: dragStart.view.y - dy });
+      });
+      const endDrag = () => { dragStart = undefined; svgRoot.style.cursor = 'grab'; };
+      svgRoot.addEventListener('pointerup', endDrag);
+      svgRoot.addEventListener('pointercancel', endDrag);
+
+      stage.classList.add('is-ready');
+      selectMode('mass');
+    };
+
+    mapObject.addEventListener('load', initializeMap);
+    initializeMap();
+  })();
 </script>
 </body>
 </html>
