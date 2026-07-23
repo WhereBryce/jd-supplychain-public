@@ -9,7 +9,10 @@ param(
 $ErrorActionPreference = 'Stop'
 
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$RelativeOutput = 'data/rdc-inventory.enc.json'
+$RelativeOutputs = @(
+    'data/rdc-inventory.enc.json'
+    'data/rdc-inventory-shards'
+)
 $Output = Join-Path $RepoRoot 'data\rdc-inventory.enc.json'
 $Builder = Join-Path $PSScriptRoot 'build-rdc-inventory.ps1'
 
@@ -22,6 +25,18 @@ function Invoke-Git {
     }
 }
 
+function Test-PublicationPath {
+    param([Parameter(Mandatory)][string]$Path)
+
+    $normalized = $Path.Replace('\', '/')
+    foreach ($allowed in $RelativeOutputs) {
+        if ($normalized -eq $allowed -or $normalized.StartsWith("$allowed/")) {
+            return $true
+        }
+    }
+    return $false
+}
+
 if (-not (Test-Path -LiteralPath $Source)) {
     throw "RDC 库存报告不存在：$Source"
 }
@@ -32,7 +47,7 @@ if (-not $NoPush) {
         throw '无法读取 Git 工作区状态'
     }
     $unexpectedChanges = @($trackedChanges | Where-Object {
-        $_.Length -lt 4 -or $_.Substring(3).Replace('\', '/') -ne $RelativeOutput
+        $_.Length -lt 4 -or -not (Test-PublicationPath $_.Substring(3))
     })
     if ($unexpectedChanges) {
         throw "仓库存在 RDC 密文之外的未提交修改，自动发布已停止：`n$($unexpectedChanges -join "`n")"
@@ -92,8 +107,9 @@ if ($NoPush) {
     exit 0
 }
 
-Invoke-Git @('add', '--', $RelativeOutput)
-& git -C $RepoRoot diff --cached --quiet -- $RelativeOutput
+$addArguments = @('add', '--') + $RelativeOutputs
+Invoke-Git $addArguments
+& git -C $RepoRoot diff --cached --quiet -- @RelativeOutputs
 if ($LASTEXITCODE -eq 0) {
     Write-Host '密文内容没有变化，无需提交'
     exit 0
@@ -102,6 +118,7 @@ if ($LASTEXITCODE -ne 1) {
     throw "无法检查待提交密文，退出码 $LASTEXITCODE"
 }
 
-Invoke-Git @('commit', '-m', 'data: 更新 RDC 加密库存', '--', $RelativeOutput)
+$commitArguments = @('commit', '-m', 'data: 更新 RDC 加密库存', '--') + $RelativeOutputs
+Invoke-Git $commitArguments
 Invoke-Git @('push', 'origin', 'main')
 Write-Host 'RDC 加密库存已推送，GitHub Pages 将自动部署'

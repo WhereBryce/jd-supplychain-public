@@ -6,9 +6,10 @@
 <meta name="color-scheme" content="dark" />
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'" />
 <title>RDC 库存查询 · JD Supply Chain</title>
-<meta name="description" content="带加密密码保护的 JD RDC 库存查询页，支持 SKU、商品、RDC、品牌和库存状态筛选。" />
-<link rel="stylesheet" href="../assets/rdc-inventory-query.css?v=20260723" />
-<script src="../assets/rdc-inventory-query.js?v=20260723b" defer></script>
+<meta name="description" content="带加密密码保护的 JD RDC 库存查询页，按完整 SKU 加载小分片并支持 RDC、品牌和库存状态筛选。" />
+<link rel="icon" href="data:," />
+<link rel="stylesheet" href="../assets/rdc-inventory-query.css?v=20260723c" />
+<script src="../assets/rdc-inventory-query.js?v=20260723c" defer></script>
 </head>
 <body>
 
@@ -17,11 +18,13 @@
     <div class="lock-mark" aria-hidden="true">RDC</div>
     <p class="eyebrow">ENCRYPTED INVENTORY</p>
     <h1 id="unlockTitle">RDC 库存查询</h1>
-    <p class="unlock-copy">库存明细已加密。输入访问密码后在当前浏览器本地解密。</p>
+    <p class="unlock-copy">输入完整 SKU 和访问密码，仅下载该 SKU 所在的加密分片。</p>
     <form id="unlockForm" method="post" action="#">
+      <label for="initialSku">SKU</label>
+      <input class="unlock-input" id="initialSku" name="sku" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="32" autocomplete="off" placeholder="输入完整数字 SKU" required autofocus />
       <label for="password">访问密码</label>
       <div class="password-row">
-        <input id="password" name="password" type="password" minlength="12" maxlength="256" autocomplete="current-password" required autofocus />
+        <input id="password" name="password" type="password" minlength="12" maxlength="256" autocomplete="current-password" required />
         <button id="togglePassword" class="reveal-button" type="button">显示</button>
       </div>
       <p class="unlock-status" id="unlockStatus" role="status" aria-live="polite"></p>
@@ -83,8 +86,8 @@
       </div>
       <form class="filter-grid" id="filterForm">
         <label class="filter-field search-field">
-          <span>SKU / 商品</span>
-          <input id="keywordFilter" type="search" maxlength="100" placeholder="输入 SKU、商品名称或品牌" autocomplete="off" />
+          <span>SKU</span>
+          <input id="keywordFilter" type="search" inputmode="numeric" maxlength="32" placeholder="输入完整数字 SKU" autocomplete="off" />
         </label>
         <label class="filter-field">
           <span>RDC</span>
@@ -141,7 +144,7 @@
         </table>
         <div class="empty-state" id="emptyState" hidden>
           <span aria-hidden="true"></span>
-          <strong>没有匹配的库存记录</strong>
+          <strong id="emptyStateText">没有匹配的库存记录</strong>
         </div>
         <div class="loading-state" id="loadingState" hidden>
           <span class="loading-line" aria-hidden="true"></span>

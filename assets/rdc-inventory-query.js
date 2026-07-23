@@ -1,11 +1,12 @@
 "use strict";
 
-const DATA_URL = "../data/rdc-inventory.enc.json";
+const SHARD_BASE_URL = "../data/rdc-inventory-shards";
+const SHARD_COUNT = 64;
 const elements = Object.fromEntries([
-  "unlockView", "appView", "unlockForm", "password", "togglePassword", "unlockButton",
+  "unlockView", "appView", "unlockForm", "initialSku", "password", "togglePassword", "unlockButton",
   "unlockStatus", "lockButton", "refreshButton", "reportMeta", "totalRecords",
   "availableInventory", "outOfStock", "incomingInventory", "filterForm", "keywordFilter",
-  "rdcFilter", "brandFilter", "statusFilter", "clearButton", "inventoryBody", "emptyState",
+  "rdcFilter", "brandFilter", "statusFilter", "clearButton", "inventoryBody", "emptyState", "emptyStateText",
   "loadingState", "resultRange", "pageSize", "previousPage", "nextPage", "pageIndicator",
   "notice", "noticeText", "noticeClose", "tableFrame",
 ].map((id) => [id, document.getElementById(id)]));
@@ -16,6 +17,8 @@ const state = {
   metadata: null,
   columns: null,
   lowerDictionaries: null,
+  password: "",
+  currentShard: null,
   filteredRows: [],
   page: 1,
   pageCount: 1,
@@ -53,8 +56,8 @@ async function deriveKey(password, salt, iterations) {
   );
 }
 
-async function fetchEncryptedPayload() {
-  const response = await fetch(DATA_URL, { cache: "no-cache" });
+async function fetchEncryptedPayload(url, reportProgress) {
+  const response = await fetch(url, { cache: "no-cache" });
   if (!response.ok) {
     throw new Error(response.status === 404 ? "加密库存尚未发布" : "加密库存下载失败");
   }
@@ -73,9 +76,9 @@ async function fetchEncryptedPayload() {
     const receivedMb = (receivedBytes / 1024 / 1024).toFixed(1);
     if (hasReliableTotal) {
       const progress = Math.min(99, Math.round((receivedBytes / totalBytes) * 100));
-      setUnlockStatus(`正在下载加密库存… ${progress}%`, true);
+      reportProgress(`正在下载 SKU 数据… ${progress}%`);
     } else {
-      setUnlockStatus(`正在下载加密库存… ${receivedMb} MB`, true);
+      reportProgress(`正在下载 SKU 数据… ${receivedMb} MB`);
     }
   }
 
@@ -114,6 +117,30 @@ async function decryptInventory(payload, password) {
   return JSON.parse(new TextDecoder().decode(decoded));
 }
 
+function isExactSku(value) {
+  return /^\d+$/.test(value.trim());
+}
+
+async function skuShardIndex(sku) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(sku));
+  return new Uint8Array(digest)[0] % SHARD_COUNT;
+}
+
+async function downloadSkuShard(sku, password, reportProgress) {
+  const shardIndex = await skuShardIndex(sku);
+  const shardName = String(shardIndex).padStart(2, "0");
+  const payload = await fetchEncryptedPayload(
+    `${SHARD_BASE_URL}/${shardName}.enc.json`,
+    reportProgress,
+  );
+  reportProgress("正在本地验证密码并解密…");
+  const decrypted = await decryptInventory(payload, password);
+  if (Number(decrypted.metadata?.shard_index) !== shardIndex) {
+    throw new Error("SKU 分片校验失败");
+  }
+  return { payload, decrypted, shardIndex };
+}
+
 function setUnlockStatus(message, info = false) {
   elements.unlockStatus.textContent = message;
   elements.unlockStatus.classList.toggle("info", info);
@@ -143,6 +170,8 @@ function clearDecryptedData() {
   state.metadata = null;
   state.columns = null;
   state.lowerDictionaries = null;
+  state.password = "";
+  state.currentShard = null;
   state.filteredRows = [];
   elements.inventoryBody.replaceChildren();
 }
@@ -182,10 +211,10 @@ function populateSelect(select, column, emptyLabel) {
   empty.value = "";
   empty.textContent = emptyLabel;
   fragment.appendChild(empty);
-  values.forEach((value, code) => {
+  values.forEach((value) => {
     if (!value) return;
     const option = document.createElement("option");
-    option.value = String(code);
+    option.value = value;
     option.textContent = value;
     fragment.appendChild(option);
   });
@@ -205,8 +234,16 @@ function initializeData(decrypted) {
       values.map((value) => String(value).toLocaleLowerCase("zh-CN")),
     ]),
   );
+  const selectedRdc = elements.rdcFilter.value;
+  const selectedBrand = elements.brandFilter.value;
   populateSelect(elements.rdcFilter, "RDC", "全部 RDC");
   populateSelect(elements.brandFilter, "品牌", "全部品牌");
+  if (Array.from(elements.rdcFilter.options).some((option) => option.value === selectedRdc)) {
+    elements.rdcFilter.value = selectedRdc;
+  }
+  if (Array.from(elements.brandFilter.options).some((option) => option.value === selectedBrand)) {
+    elements.brandFilter.value = selectedBrand;
+  }
   const reportDate = state.metadata.report_date || "日期未知";
   const generated = state.metadata.generated_at
     ? new Date(state.metadata.generated_at).toLocaleString("zh-CN", { hour12: false })
@@ -220,15 +257,26 @@ async function handleUnlock(event) {
     setUnlockStatus("当前环境不支持安全解密，请使用 HTTPS 打开本页");
     return;
   }
+  const initialSku = elements.initialSku.value.trim();
+  if (!isExactSku(initialSku)) {
+    setUnlockStatus("请输入完整的数字 SKU");
+    elements.initialSku.focus();
+    return;
+  }
   const password = elements.password.value;
   setUnlockLoading(true);
-  setUnlockStatus("正在下载加密库存…", true);
+  setUnlockStatus("正在定位 SKU 数据…", true);
   try {
-    const payload = await fetchEncryptedPayload();
-    setUnlockStatus("正在本地验证密码并解密…", true);
-    const decrypted = await decryptInventory(payload, password);
+    const { payload, decrypted, shardIndex } = await downloadSkuShard(
+      initialSku,
+      password,
+      (message) => setUnlockStatus(message, true),
+    );
     state.payload = payload;
+    state.password = password;
+    state.currentShard = shardIndex;
     initializeData(decrypted);
+    elements.keywordFilter.value = initialSku;
     elements.password.value = "";
     showApp();
     applyFilters();
@@ -238,6 +286,40 @@ async function handleUnlock(event) {
     elements.password.select();
   } finally {
     setUnlockLoading(false);
+  }
+}
+
+async function ensureSkuShard(sku) {
+  if (!isExactSku(sku)) {
+    showNotice("请输入完整的数字 SKU");
+    return false;
+  }
+  const shardIndex = await skuShardIndex(sku);
+  if (state.data && state.currentShard === shardIndex) return true;
+
+  setFiltering(true);
+  showNotice("正在定位 SKU 数据…");
+  try {
+    const result = await downloadSkuShard(
+      sku,
+      state.password,
+      (message) => showNotice(message),
+    );
+    state.payload = result.payload;
+    state.currentShard = result.shardIndex;
+    elements.initialSku.value = sku;
+    initializeData(result.decrypted);
+    hideNotice();
+    return true;
+  } catch (error) {
+    if (error && error.name === "OperationError") {
+      lockPage("库存已更新，请重新输入密码和 SKU");
+      return false;
+    }
+    showNotice(error.message || "SKU 数据加载失败");
+    return false;
+  } finally {
+    setFiltering(false);
   }
 }
 
@@ -253,8 +335,8 @@ function rowMatchesKeyword(row, keyword) {
 
 function filterRows() {
   const keyword = elements.keywordFilter.value.trim().toLocaleLowerCase("zh-CN");
-  const rdcCode = elements.rdcFilter.value;
-  const brandCode = elements.brandFilter.value;
+  const rdcValue = elements.rdcFilter.value;
+  const brandValue = elements.brandFilter.value;
   const status = elements.statusFilter.value;
   const rdcIndex = state.columns.RDC;
   const brandIndex = state.columns["品牌"];
@@ -262,8 +344,8 @@ function filterRows() {
   const matches = [];
   for (let index = 0; index < state.data.rows.length; index += 1) {
     const row = state.data.rows[index];
-    if (rdcCode && row[rdcIndex] !== Number(rdcCode)) continue;
-    if (brandCode && row[brandIndex] !== Number(brandCode)) continue;
+    if (rdcValue && dictionaryValue("RDC", row[rdcIndex]) !== rdcValue) continue;
+    if (brandValue && dictionaryValue("品牌", row[brandIndex]) !== brandValue) continue;
     if (status && stockStatus(row[availableIndex]).key !== status) continue;
     if (!rowMatchesKeyword(row, keyword)) continue;
     matches.push(index);
@@ -323,6 +405,7 @@ function renderRows() {
     fragment.appendChild(row);
   }
   elements.inventoryBody.replaceChildren(fragment);
+  elements.emptyStateText.textContent = "没有匹配的库存记录";
   elements.emptyState.hidden = state.filteredRows.length !== 0;
   const first = state.filteredRows.length === 0 ? 0 : start + 1;
   elements.resultRange.textContent = `${first}-${end} / ${numberFormatter.format(state.filteredRows.length)}`;
@@ -378,8 +461,23 @@ function clearFilters() {
   elements.rdcFilter.value = "";
   elements.brandFilter.value = "";
   elements.statusFilter.value = "";
+  state.data = null;
+  state.columns = null;
+  state.lowerDictionaries = null;
+  state.currentShard = null;
+  state.filteredRows = [];
   state.page = 1;
-  applyFilters();
+  elements.inventoryBody.replaceChildren();
+  elements.emptyStateText.textContent = "输入完整 SKU 后查询";
+  elements.emptyState.hidden = false;
+  elements.resultRange.textContent = "等待输入 SKU";
+  elements.pageIndicator.textContent = "第 1 / 1 页";
+  elements.previousPage.disabled = true;
+  elements.nextPage.disabled = true;
+  elements.totalRecords.textContent = "0";
+  elements.availableInventory.textContent = "0";
+  elements.outOfStock.textContent = "0";
+  elements.incomingInventory.textContent = "0";
 }
 
 function showNotice(message) {
@@ -401,10 +499,12 @@ elements.togglePassword.addEventListener("click", () => {
 });
 elements.lockButton.addEventListener("click", () => lockPage());
 elements.refreshButton.addEventListener("click", () => lockPage("加密库存可能已更新，请重新输入密码"));
-elements.filterForm.addEventListener("submit", (event) => {
+elements.filterForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   state.page = 1;
   hideNotice();
+  const ready = await ensureSkuShard(elements.keywordFilter.value.trim());
+  if (!ready) return;
   applyFilters();
 });
 for (const select of [elements.rdcFilter, elements.brandFilter, elements.statusFilter]) {
@@ -414,7 +514,11 @@ for (const select of [elements.rdcFilter, elements.brandFilter, elements.statusF
   });
 }
 elements.clearButton.addEventListener("click", clearFilters);
-elements.pageSize.addEventListener("change", () => { state.page = 1; renderRows(); });
+elements.pageSize.addEventListener("change", () => {
+  if (!state.data) return;
+  state.page = 1;
+  renderRows();
+});
 elements.previousPage.addEventListener("click", () => {
   if (state.page > 1) { state.page -= 1; renderRows(); elements.tableFrame.scrollLeft = 0; }
 });
