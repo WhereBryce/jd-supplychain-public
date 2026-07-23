@@ -4,7 +4,7 @@ const SHARD_BASE_URL = "../data/rdc-inventory-shards";
 const CATALOG_URL = "../data/rdc-product-catalog.enc.json";
 const SEARCH_BASE_URL = "../data/rdc-product-search";
 const SHARD_COUNT = 64;
-const SEARCH_SHARD_COUNT = 64;
+const SEARCH_SHARD_COUNT = 256;
 const MAX_PRODUCT_MATCHES = 100;
 const elements = Object.fromEntries([
   "unlockView", "appView", "unlockForm", "password", "togglePassword", "unlockButton",

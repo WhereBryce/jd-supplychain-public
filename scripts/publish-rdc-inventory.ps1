@@ -89,7 +89,7 @@ $needsBuild = `
     -not (Test-Path -LiteralPath $Output) -or `
     -not (Test-Path -LiteralPath $CatalogOutput) -or `
     $shardCount -ne 64 -or `
-    $searchShardCount -ne 64
+    $searchShardCount -ne 256
 if (-not $needsBuild -and (Test-Path -LiteralPath $StatePath)) {
     try {
         $previousState = Get-Content -LiteralPath $StatePath -Raw | ConvertFrom-Json
