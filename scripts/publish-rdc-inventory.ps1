@@ -2,6 +2,7 @@
 param(
     [string]$Source = 'C:\Users\yao.q.1\Procter and Gamble\JD CSC Slay - Documents\7. AI Order\Low Inventory Alert\RDC库存报告.xlsx',
     [string]$CredentialPath = (Join-Path $env:LOCALAPPDATA 'JD-SupplyChain\rdc-pages-password.xml'),
+    [string]$StatePath = (Join-Path $env:LOCALAPPDATA 'JD-SupplyChain\rdc-pages-state.json'),
     [switch]$Force,
     [switch]$NoPush
 )
@@ -14,6 +15,7 @@ $RelativeOutputs = @(
     'data/rdc-inventory-shards'
 )
 $Output = Join-Path $RepoRoot 'data\rdc-inventory.enc.json'
+$ShardDirectory = Join-Path $RepoRoot 'data\rdc-inventory-shards'
 $Builder = Join-Path $PSScriptRoot 'build-rdc-inventory.ps1'
 
 function Invoke-Git {
@@ -72,10 +74,30 @@ if (-not $NoPush) {
 }
 
 $sourceItem = Get-Item -LiteralPath $Source
-$needsBuild = $Force -or -not (Test-Path -LiteralPath $Output)
-if (-not $needsBuild) {
-    $outputItem = Get-Item -LiteralPath $Output
-    $needsBuild = $sourceItem.LastWriteTimeUtc -gt $outputItem.LastWriteTimeUtc
+$sourceFingerprint = [ordered]@{
+    source_last_write_ticks = $sourceItem.LastWriteTimeUtc.Ticks
+    source_length = $sourceItem.Length
+}
+$shardCount = @(Get-ChildItem -LiteralPath $ShardDirectory -Filter '*.enc.json' -File -ErrorAction SilentlyContinue).Count
+$needsBuild = $Force -or -not (Test-Path -LiteralPath $Output) -or $shardCount -ne 64
+if (-not $needsBuild -and (Test-Path -LiteralPath $StatePath)) {
+    try {
+        $previousState = Get-Content -LiteralPath $StatePath -Raw | ConvertFrom-Json
+        $previousTicks = if ($previousState.source_last_write_ticks) {
+            [long]$previousState.source_last_write_ticks
+        } elseif ($previousState.source_last_write_utc) {
+            ([datetime]$previousState.source_last_write_utc).ToUniversalTime().Ticks
+        } else {
+            0
+        }
+        $needsBuild = `
+            $previousTicks -ne $sourceFingerprint.source_last_write_ticks -or `
+            [long]$previousState.source_length -ne $sourceFingerprint.source_length
+    } catch {
+        $needsBuild = $true
+    }
+} elseif (-not $needsBuild) {
+    $needsBuild = $true
 }
 
 if ($needsBuild) {
@@ -94,12 +116,15 @@ if ($needsBuild) {
         if ($LASTEXITCODE -ne 0) {
             throw "RDC 密文构建失败，退出码 $LASTEXITCODE"
         }
+        $stateDirectory = Split-Path -Parent $StatePath
+        New-Item -ItemType Directory -Path $stateDirectory -Force | Out-Null
+        $sourceFingerprint | ConvertTo-Json | Set-Content -LiteralPath $StatePath -Encoding utf8
     } finally {
         Remove-Item Env:RDC_PAGES_PASSWORD -ErrorAction SilentlyContinue
         [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($passwordPointer)
     }
 } else {
-    Write-Host "无需更新：密文已覆盖源报告 $($sourceItem.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss'))"
+    Write-Host "无需更新：已发布源报告 $($sourceItem.LastWriteTime.ToString('yyyy-MM-dd HH:mm:ss'))"
 }
 
 if ($NoPush) {
