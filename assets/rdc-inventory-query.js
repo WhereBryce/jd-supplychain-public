@@ -1,24 +1,33 @@
 "use strict";
 
 const SHARD_BASE_URL = "../data/rdc-inventory-shards";
+const CATALOG_URL = "../data/rdc-product-catalog.enc.json";
+const SEARCH_BASE_URL = "../data/rdc-product-search";
 const SHARD_COUNT = 64;
+const SEARCH_SHARD_COUNT = 64;
+const MAX_PRODUCT_MATCHES = 100;
 const elements = Object.fromEntries([
-  "unlockView", "appView", "unlockForm", "initialSku", "password", "togglePassword", "unlockButton",
+  "unlockView", "appView", "unlockForm", "password", "togglePassword", "unlockButton",
   "unlockStatus", "lockButton", "refreshButton", "reportMeta", "totalRecords",
-  "availableInventory", "outOfStock", "incomingInventory", "filterForm", "keywordFilter",
-  "rdcFilter", "brandFilter", "statusFilter", "clearButton", "inventoryBody", "emptyState", "emptyStateText",
+  "matchedProducts", "availableInventory", "incomingInventory", "filterForm", "keywordFilter",
+  "rdcFilter", "clearButton", "productResults", "productResultsTitle", "productResultsCount", "productList",
+  "inventoryBody", "emptyState", "emptyStateText",
   "loadingState", "resultRange", "pageSize", "previousPage", "nextPage", "pageIndicator",
   "notice", "noticeText", "noticeClose", "tableFrame",
 ].map((id) => [id, document.getElementById(id)]));
 
 const state = {
   payload: null,
+  catalog: null,
+  products: [],
+  searchBuckets: new Map(),
   data: null,
   metadata: null,
   columns: null,
   lowerDictionaries: null,
   password: "",
   currentShard: null,
+  selectedSku: "",
   filteredRows: [],
   page: 1,
   pageCount: 1,
@@ -26,8 +35,7 @@ const state = {
 
 const numberFormatter = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 2 });
 const rowLabels = [
-  "状态", "RDC", "SKU", "商品名称", "品牌", "可用库存", "可订购库存",
-  "采购未到货", "28日有货天数", "近7日出库", "报告日期",
+  "京东码", "商品名称", "RDC", "可用库存", "采购未到货库存", "全国采购价", "条形码",
 ];
 
 function bytesFromBase64(value) {
@@ -76,9 +84,9 @@ async function fetchEncryptedPayload(url, reportProgress) {
     const receivedMb = (receivedBytes / 1024 / 1024).toFixed(1);
     if (hasReliableTotal) {
       const progress = Math.min(99, Math.round((receivedBytes / totalBytes) * 100));
-      reportProgress(`正在下载 SKU 数据… ${progress}%`);
+      reportProgress(`正在下载加密数据… ${progress}%`);
     } else {
-      reportProgress(`正在下载 SKU 数据… ${receivedMb} MB`);
+      reportProgress(`正在下载加密数据… ${receivedMb} MB`);
     }
   }
 
@@ -117,10 +125,6 @@ async function decryptInventory(payload, password) {
   return JSON.parse(new TextDecoder().decode(decoded));
 }
 
-function isExactSku(value) {
-  return /^\d+$/.test(value.trim());
-}
-
 async function skuShardIndex(sku) {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(sku));
   return new Uint8Array(digest)[0] % SHARD_COUNT;
@@ -139,6 +143,44 @@ async function downloadSkuShard(sku, password, reportProgress) {
     throw new Error("SKU 分片校验失败");
   }
   return { payload, decrypted, shardIndex };
+}
+
+function decodeCatalog(decrypted) {
+  if (!decrypted.data || decrypted.data.format !== "product-search-manifest-v1") {
+    throw new Error("商品搜索清单格式不受支持");
+  }
+  state.catalog = decrypted.data;
+  state.products = [];
+  state.searchBuckets.clear();
+  state.metadata = decrypted.metadata || {};
+  updateReportMeta();
+}
+
+function decodeProducts(data) {
+  if (!data || data.format !== "product-catalog-v1") {
+    throw new Error("商品搜索分片格式不受支持");
+  }
+  const columns = Object.fromEntries(data.columns.map((column, index) => [column, index]));
+  const value = (row, column) => data.dictionaries[column][row[columns[column]]] || "";
+  return data.rows.map((row) => {
+    const sku = value(row, "SKU");
+    const name = value(row, "商品名称");
+    const barcode = value(row, "条形码");
+    return {
+      sku,
+      name,
+      barcode,
+      searchText: `${sku}\n${name}\n${barcode}`.toLocaleLowerCase("zh-CN"),
+    };
+  });
+}
+
+function updateReportMeta() {
+  const reportDate = state.metadata?.report_date || "日期未知";
+  const generated = state.metadata?.generated_at
+    ? new Date(state.metadata.generated_at).toLocaleString("zh-CN", { hour12: false })
+    : "时间未知";
+  elements.reportMeta.textContent = `报告 ${reportDate} · 加密更新 ${generated}`;
 }
 
 function setUnlockStatus(message, info = false) {
@@ -166,14 +208,19 @@ function showApp() {
 
 function clearDecryptedData() {
   state.payload = null;
+  state.catalog = null;
+  state.products = [];
+  state.searchBuckets.clear();
   state.data = null;
   state.metadata = null;
   state.columns = null;
   state.lowerDictionaries = null;
   state.password = "";
   state.currentShard = null;
+  state.selectedSku = "";
   state.filteredRows = [];
   elements.inventoryBody.replaceChildren();
+  elements.productList.replaceChildren();
 }
 
 function lockPage(message = "") {
@@ -235,20 +282,11 @@ function initializeData(decrypted) {
     ]),
   );
   const selectedRdc = elements.rdcFilter.value;
-  const selectedBrand = elements.brandFilter.value;
   populateSelect(elements.rdcFilter, "RDC", "全部 RDC");
-  populateSelect(elements.brandFilter, "品牌", "全部品牌");
   if (Array.from(elements.rdcFilter.options).some((option) => option.value === selectedRdc)) {
     elements.rdcFilter.value = selectedRdc;
   }
-  if (Array.from(elements.brandFilter.options).some((option) => option.value === selectedBrand)) {
-    elements.brandFilter.value = selectedBrand;
-  }
-  const reportDate = state.metadata.report_date || "日期未知";
-  const generated = state.metadata.generated_at
-    ? new Date(state.metadata.generated_at).toLocaleString("zh-CN", { hour12: false })
-    : "时间未知";
-  elements.reportMeta.textContent = `报告 ${reportDate} · 加密更新 ${generated}`;
+  updateReportMeta();
 }
 
 async function handleUnlock(event) {
@@ -257,29 +295,23 @@ async function handleUnlock(event) {
     setUnlockStatus("当前环境不支持安全解密，请使用 HTTPS 打开本页");
     return;
   }
-  const initialSku = elements.initialSku.value.trim();
-  if (!isExactSku(initialSku)) {
-    setUnlockStatus("请输入完整的数字 SKU");
-    elements.initialSku.focus();
-    return;
-  }
   const password = elements.password.value;
   setUnlockLoading(true);
-  setUnlockStatus("正在定位 SKU 数据…", true);
+  setUnlockStatus("正在下载轻量商品目录…", true);
   try {
-    const { payload, decrypted, shardIndex } = await downloadSkuShard(
-      initialSku,
-      password,
+    const payload = await fetchEncryptedPayload(
+      CATALOG_URL,
       (message) => setUnlockStatus(message, true),
     );
+    setUnlockStatus("正在本地验证密码并解密…", true);
+    const decrypted = await decryptInventory(payload, password);
     state.payload = payload;
     state.password = password;
-    state.currentShard = shardIndex;
-    initializeData(decrypted);
-    elements.keywordFilter.value = initialSku;
+    decodeCatalog(decrypted);
     elements.password.value = "";
     showApp();
-    applyFilters();
+    clearSearchResults();
+    elements.keywordFilter.focus();
   } catch (error) {
     const wrongPassword = error && error.name === "OperationError";
     setUnlockStatus(wrongPassword ? "密码不正确" : (error.message || "解锁失败"));
@@ -289,65 +321,165 @@ async function handleUnlock(event) {
   }
 }
 
-async function ensureSkuShard(sku) {
-  if (!isExactSku(sku)) {
-    showNotice("请输入完整的数字 SKU");
-    return false;
-  }
-  const shardIndex = await skuShardIndex(sku);
-  if (state.data && state.currentShard === shardIndex) return true;
+async function searchShardIndex(character) {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(character),
+  );
+  return new Uint8Array(digest)[0] % SEARCH_SHARD_COUNT;
+}
 
+async function loadSearchProducts(query) {
+  const tokens = new Set(
+    query.toLocaleLowerCase("zh-CN").split("").filter((character) => !/\s/.test(character)),
+  );
+  const candidates = [];
+  for (const token of tokens) {
+    const shardIndex = await searchShardIndex(token);
+    candidates.push({
+      shardIndex,
+      count: Number(state.catalog.bucket_counts[shardIndex]) || Number.MAX_SAFE_INTEGER,
+    });
+  }
+  candidates.sort((left, right) => left.count - right.count);
+  const shardIndex = candidates[0]?.shardIndex;
+  if (!Number.isInteger(shardIndex)) return [];
+  if (state.searchBuckets.has(shardIndex)) return state.searchBuckets.get(shardIndex);
+
+  showNotice("正在下载商品搜索索引…");
+  const shardName = String(shardIndex).padStart(2, "0");
+  const payload = await fetchEncryptedPayload(
+    `${SEARCH_BASE_URL}/${shardName}.enc.json`,
+    (message) => showNotice(message),
+  );
+  showNotice("正在解密商品搜索索引…");
+  const decrypted = await decryptInventory(payload, state.password);
+  if (Number(decrypted.metadata?.search_shard_index) !== shardIndex) {
+    throw new Error("商品搜索分片校验失败");
+  }
+  const products = decodeProducts(decrypted.data);
+  state.searchBuckets.set(shardIndex, products);
+  return products;
+}
+
+function findProducts(products, query) {
+  const keyword = query.trim().toLocaleLowerCase("zh-CN");
+  if (!keyword) return [];
+  return products.filter((product) => product.searchText.includes(keyword));
+}
+
+function hideProductMatches() {
+  elements.productResults.hidden = true;
+  elements.productList.replaceChildren();
+}
+
+function renderProductMatches(matches) {
+  const visibleMatches = matches.slice(0, MAX_PRODUCT_MATCHES);
+  const fragment = document.createDocumentFragment();
+  for (const product of visibleMatches) {
+    const button = document.createElement("button");
+    button.className = "product-option";
+    button.type = "button";
+
+    const name = document.createElement("strong");
+    name.textContent = product.name || "未命名商品";
+    const details = document.createElement("span");
+    details.textContent = `京东码 ${product.sku}${product.barcode ? ` · 条形码 ${product.barcode}` : ""}`;
+    button.append(name, details);
+    button.addEventListener("click", () => loadProductInventory(product));
+    fragment.appendChild(button);
+  }
+  elements.productList.replaceChildren(fragment);
+  elements.productResultsTitle.textContent = "选择商品查看 RDC 库存";
+  elements.productResultsCount.textContent = matches.length > MAX_PRODUCT_MATCHES
+    ? `找到 ${numberFormatter.format(matches.length)} 个，显示前 ${MAX_PRODUCT_MATCHES} 个，请细化关键词`
+    : `找到 ${numberFormatter.format(matches.length)} 个`;
+  elements.productResults.hidden = false;
+  elements.matchedProducts.textContent = numberFormatter.format(matches.length);
+}
+
+async function loadProductInventory(product) {
+  const shardIndex = await skuShardIndex(product.sku);
   setFiltering(true);
-  showNotice("正在定位 SKU 数据…");
+  showNotice("正在加载商品库存…");
   try {
-    const result = await downloadSkuShard(
-      sku,
-      state.password,
-      (message) => showNotice(message),
-    );
-    state.payload = result.payload;
-    state.currentShard = result.shardIndex;
-    elements.initialSku.value = sku;
-    initializeData(result.decrypted);
+    if (!state.data || state.currentShard !== shardIndex) {
+      const result = await downloadSkuShard(
+        product.sku,
+        state.password,
+        (message) => showNotice(message),
+      );
+      state.payload = result.payload;
+      state.currentShard = result.shardIndex;
+      initializeData(result.decrypted);
+    }
+    if (!(state.data.dictionaries.SKU || []).includes(product.sku)) {
+      clearSearchResults("没有匹配的商品");
+      return;
+    }
+    state.selectedSku = product.sku;
+    state.page = 1;
+    hideProductMatches();
     hideNotice();
-    return true;
+    applyFilters();
   } catch (error) {
     if (error && error.name === "OperationError") {
-      lockPage("库存已更新，请重新输入密码和 SKU");
-      return false;
+      lockPage("库存已更新，请重新输入密码");
+      return;
     }
-    showNotice(error.message || "SKU 数据加载失败");
-    return false;
+    showNotice(error.message || "商品库存加载失败");
   } finally {
     setFiltering(false);
   }
 }
 
-function rowMatchesKeyword(row, keyword) {
-  if (!keyword) return true;
-  for (const column of ["SKU", "商品名称", "品牌", "RDC"]) {
-    const code = row[state.columns[column]];
-    const value = state.lowerDictionaries[column][code] || "";
-    if (value.includes(keyword)) return true;
+async function searchProducts() {
+  const query = elements.keywordFilter.value.trim();
+  if (!query) {
+    showNotice("请输入京东码或商品名称");
+    return;
   }
-  return false;
+  if (/^\d{5,}$/.test(query)) {
+    await loadProductInventory({ sku: query, name: "", barcode: "" });
+    return;
+  }
+  let products;
+  try {
+    products = await loadSearchProducts(query);
+    hideNotice();
+  } catch (error) {
+    if (error && error.name === "OperationError") {
+      lockPage("商品目录已更新，请重新输入密码");
+      return;
+    }
+    showNotice(error.message || "商品搜索索引加载失败");
+    return;
+  }
+  const matches = findProducts(products, query);
+  if (matches.length === 0) {
+    clearSearchResults("没有匹配的商品");
+    return;
+  }
+  const exactMatch = matches.find(
+    (product) => product.sku === query || product.barcode === query,
+  );
+  if (exactMatch || matches.length === 1) {
+    await loadProductInventory(exactMatch || matches[0]);
+    return;
+  }
+  resetInventoryResults();
+  renderProductMatches(matches);
 }
 
 function filterRows() {
-  const keyword = elements.keywordFilter.value.trim().toLocaleLowerCase("zh-CN");
   const rdcValue = elements.rdcFilter.value;
-  const brandValue = elements.brandFilter.value;
-  const status = elements.statusFilter.value;
+  const skuIndex = state.columns.SKU;
   const rdcIndex = state.columns.RDC;
-  const brandIndex = state.columns["品牌"];
-  const availableIndex = state.columns["可用库存"];
   const matches = [];
   for (let index = 0; index < state.data.rows.length; index += 1) {
     const row = state.data.rows[index];
+    if (dictionaryValue("SKU", row[skuIndex]) !== state.selectedSku) continue;
     if (rdcValue && dictionaryValue("RDC", row[rdcIndex]) !== rdcValue) continue;
-    if (brandValue && dictionaryValue("品牌", row[brandIndex]) !== brandValue) continue;
-    if (status && stockStatus(row[availableIndex]).key !== status) continue;
-    if (!rowMatchesKeyword(row, keyword)) continue;
     matches.push(index);
   }
   return matches;
@@ -379,25 +511,15 @@ function renderRows() {
   const fragment = document.createDocumentFragment();
   for (const dataIndex of state.filteredRows.slice(start, end)) {
     const rowData = state.data.rows[dataIndex];
-    const status = stockStatus(valueAt(rowData, "可用库存"));
     const row = document.createElement("tr");
-    const statusCell = document.createElement("td");
-    const badge = document.createElement("span");
-    badge.className = `status-badge ${status.className}`;
-    badge.textContent = status.label;
-    statusCell.appendChild(badge);
     row.append(
-      statusCell,
-      textCell(valueAt(rowData, "RDC")),
       textCell(valueAt(rowData, "SKU"), "sku-cell"),
       textCell(valueAt(rowData, "商品名称")),
-      textCell(valueAt(rowData, "品牌")),
+      textCell(valueAt(rowData, "RDC")),
       numberCell(valueAt(rowData, "可用库存")),
-      numberCell(valueAt(rowData, "可订购库存")),
       numberCell(valueAt(rowData, "采购未到货")),
-      numberCell(valueAt(rowData, "28日有货天数")),
-      numberCell(valueAt(rowData, "近7日出库商品件数")),
-      textCell(valueAt(rowData, "时间")),
+      numberCell(valueAt(rowData, "全国采购价")),
+      textCell(valueAt(rowData, "条形码")),
     );
     Array.from(row.cells).forEach((cell, index) => {
       cell.dataset.label = rowLabels[index];
@@ -417,22 +539,20 @@ function renderRows() {
 function renderSummary() {
   let availableTotal = 0;
   let incomingTotal = 0;
-  let outCount = 0;
   for (const dataIndex of state.filteredRows) {
     const row = state.data.rows[dataIndex];
     const available = valueAt(row, "可用库存");
     const incoming = valueAt(row, "采购未到货");
     if (available !== null && available !== undefined && !Number.isNaN(Number(available))) {
       availableTotal += Number(available);
-      if (Number(available) <= 0) outCount += 1;
     }
     if (incoming !== null && incoming !== undefined && !Number.isNaN(Number(incoming))) {
       incomingTotal += Number(incoming);
     }
   }
   elements.totalRecords.textContent = numberFormatter.format(state.filteredRows.length);
+  elements.matchedProducts.textContent = state.selectedSku ? "1" : "0";
   elements.availableInventory.textContent = numberFormatter.format(availableTotal);
-  elements.outOfStock.textContent = numberFormatter.format(outCount);
   elements.incomingInventory.textContent = numberFormatter.format(incomingTotal);
 }
 
@@ -456,28 +576,34 @@ function applyFilters() {
   });
 }
 
-function clearFilters() {
-  elements.keywordFilter.value = "";
-  elements.rdcFilter.value = "";
-  elements.brandFilter.value = "";
-  elements.statusFilter.value = "";
-  state.data = null;
-  state.columns = null;
-  state.lowerDictionaries = null;
-  state.currentShard = null;
+function resetInventoryResults(message = "输入京东码或商品名称后查询") {
+  state.selectedSku = "";
   state.filteredRows = [];
   state.page = 1;
   elements.inventoryBody.replaceChildren();
-  elements.emptyStateText.textContent = "输入完整 SKU 后查询";
+  elements.emptyStateText.textContent = message;
   elements.emptyState.hidden = false;
-  elements.resultRange.textContent = "等待输入 SKU";
+  elements.resultRange.textContent = "等待查询";
   elements.pageIndicator.textContent = "第 1 / 1 页";
   elements.previousPage.disabled = true;
   elements.nextPage.disabled = true;
   elements.totalRecords.textContent = "0";
+  elements.matchedProducts.textContent = "0";
   elements.availableInventory.textContent = "0";
-  elements.outOfStock.textContent = "0";
   elements.incomingInventory.textContent = "0";
+}
+
+function clearSearchResults(message) {
+  hideProductMatches();
+  hideNotice();
+  resetInventoryResults(message);
+}
+
+function clearFilters() {
+  elements.keywordFilter.value = "";
+  elements.rdcFilter.value = "";
+  clearSearchResults();
+  elements.keywordFilter.focus();
 }
 
 function showNotice(message) {
@@ -503,16 +629,13 @@ elements.filterForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   state.page = 1;
   hideNotice();
-  const ready = await ensureSkuShard(elements.keywordFilter.value.trim());
-  if (!ready) return;
+  await searchProducts();
+});
+elements.rdcFilter.addEventListener("change", () => {
+  if (!state.data || !state.selectedSku) return;
+  state.page = 1;
   applyFilters();
 });
-for (const select of [elements.rdcFilter, elements.brandFilter, elements.statusFilter]) {
-  select.addEventListener("change", () => {
-    state.page = 1;
-    applyFilters();
-  });
-}
 elements.clearButton.addEventListener("click", clearFilters);
 elements.pageSize.addEventListener("change", () => {
   if (!state.data) return;

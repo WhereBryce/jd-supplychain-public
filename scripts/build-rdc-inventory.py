@@ -26,28 +26,28 @@ DEFAULT_SOURCE = Path(
     r"\7. AI Order\Low Inventory Alert\RDC库存报告.xlsx"
 )
 DEFAULT_OUTPUT = REPO_ROOT / "data" / "rdc-inventory.enc.json"
+DEFAULT_CATALOG_OUTPUT = REPO_ROOT / "data" / "rdc-product-catalog.enc.json"
 DEFAULT_SHARD_DIRECTORY = REPO_ROOT / "data" / "rdc-inventory-shards"
+DEFAULT_SEARCH_DIRECTORY = REPO_ROOT / "data" / "rdc-product-search"
 ITERATIONS = 600_000
 SHARD_COUNT = 64
+SEARCH_SHARD_COUNT = 64
+REPORT_DATE_COLUMN = "时间"
 REQUIRED_COLUMNS = (
-    "时间",
-    "RDC",
     "SKU",
     "商品名称",
-    "品牌",
+    "RDC",
     "可用库存",
-    "可订购库存",
     "采购未到货",
-    "28日有货天数",
-    "近7日出库商品件数",
+    "全国采购价",
+    "条形码",
 )
-TEXT_COLUMNS = ("RDC", "SKU", "商品名称", "品牌")
+SOURCE_COLUMNS = (REPORT_DATE_COLUMN, *REQUIRED_COLUMNS)
+TEXT_COLUMNS = ("SKU", "商品名称", "RDC", "条形码")
 NUMERIC_COLUMNS = (
     "可用库存",
-    "可订购库存",
     "采购未到货",
-    "28日有货天数",
-    "近7日出库商品件数",
+    "全国采购价",
 )
 
 
@@ -62,9 +62,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument(
+        "--catalog-output",
+        type=Path,
+        default=DEFAULT_CATALOG_OUTPUT,
+    )
+    parser.add_argument(
         "--shard-directory",
         type=Path,
         default=DEFAULT_SHARD_DIRECTORY,
+    )
+    parser.add_argument(
+        "--search-directory",
+        type=Path,
+        default=DEFAULT_SEARCH_DIRECTORY,
     )
     parser.add_argument(
         "--password-env",
@@ -101,31 +111,28 @@ def load_inventory(source: Path) -> tuple[dict[str, Any], dict[str, str]]:
     try:
         frame = pd.read_excel(
             source,
-            dtype={"SKU": "string"},
-            usecols=lambda column: str(column).strip() in REQUIRED_COLUMNS,
+            dtype={"SKU": "string", "条形码": "string"},
+            usecols=lambda column: str(column).strip() in SOURCE_COLUMNS,
         )
     except Exception as exc:
         raise BuildError(f"库存报告读取失败：{exc}") from exc
 
     frame.columns = [str(column).strip() for column in frame.columns]
-    missing = [column for column in REQUIRED_COLUMNS if column not in frame.columns]
+    missing = [column for column in SOURCE_COLUMNS if column not in frame.columns]
     if missing:
         raise BuildError("库存报告缺少字段：" + "、".join(missing))
 
-    frame = frame[list(REQUIRED_COLUMNS)].copy()
-    parsed_time = pd.to_datetime(frame["时间"], errors="coerce")
-    original_time = frame["时间"].astype("string").fillna("").str.strip()
-    frame["时间"] = parsed_time.dt.strftime("%Y-%m-%d").where(
-        parsed_time.notna(), original_time
-    )
+    frame = frame[list(SOURCE_COLUMNS)].copy()
+    parsed_time = pd.to_datetime(frame[REPORT_DATE_COLUMN], errors="coerce")
     for column in TEXT_COLUMNS:
         frame[column] = frame[column].astype("string").fillna("").str.strip()
     frame["SKU"] = frame["SKU"].str.replace(r"\.0$", "", regex=True)
+    frame["条形码"] = frame["条形码"].str.replace(r"\.0$", "", regex=True)
     for column in NUMERIC_COLUMNS:
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
 
-    frame = frame.where(pd.notna(frame), None)
-    dictionary_columns = ("时间", *TEXT_COLUMNS)
+    frame = frame[list(REQUIRED_COLUMNS)].where(pd.notna(frame), None)
+    dictionary_columns = TEXT_COLUMNS
     dictionaries: dict[str, list[str]] = {}
     encoded_columns: list[list[int | float | None]] = []
     for column in REQUIRED_COLUMNS:
@@ -135,7 +142,9 @@ def load_inventory(source: Path) -> tuple[dict[str, Any], dict[str, str]]:
             dictionaries[column] = unique_values.tolist()
             encoded_columns.append(codes.tolist())
         else:
-            encoded_columns.append(frame[column].tolist())
+            encoded_columns.append(
+                [None if pd.isna(value) else value for value in frame[column].tolist()]
+            )
     rows = [list(row) for row in zip(*encoded_columns)]
     packed_data = {
         "format": "dictionary-rows-v1",
@@ -270,6 +279,104 @@ def build_shard_data(data: dict[str, Any]) -> list[dict[str, Any]]:
     return [compact_shard_data(data, rows) for rows in shard_rows]
 
 
+def build_catalog_data(data: dict[str, Any]) -> dict[str, Any]:
+    catalog_columns = ("SKU", "商品名称", "条形码")
+    column_indexes = {
+        column: data["columns"].index(column) for column in catalog_columns
+    }
+    products_by_sku: dict[str, tuple[str, str, str]] = {}
+    for row in data["rows"]:
+        product = tuple(
+            data["dictionaries"][column][int(row[column_indexes[column]])]
+            for column in catalog_columns
+        )
+        sku, name, barcode = product
+        current = products_by_sku.get(sku)
+        if current is None:
+            products_by_sku[sku] = (sku, name, barcode)
+        else:
+            products_by_sku[sku] = (
+                sku,
+                current[1] or name,
+                current[2] or barcode,
+            )
+    products = sorted(products_by_sku.values())
+    dictionaries: dict[str, list[str]] = {}
+    code_maps: dict[str, dict[str, int]] = {}
+    for column_index, column in enumerate(catalog_columns):
+        values = sorted({product[column_index] for product in products})
+        dictionaries[column] = values
+        code_maps[column] = {value: code for code, value in enumerate(values)}
+    rows = [
+        [
+            code_maps[column][product[column_index]]
+            for column_index, column in enumerate(catalog_columns)
+        ]
+        for product in products
+    ]
+    return {
+        "format": "product-catalog-v1",
+        "columns": list(catalog_columns),
+        "dictionaries": dictionaries,
+        "rows": rows,
+    }
+
+
+def search_shard_index(character: str) -> int:
+    return hashlib.sha256(character.encode("utf-8")).digest()[0] % SEARCH_SHARD_COUNT
+
+
+def build_search_shard_data(catalog: dict[str, Any]) -> list[dict[str, Any]]:
+    columns = catalog["columns"]
+    column_indexes = {column: columns.index(column) for column in columns}
+    shard_rows: list[list[list[int]]] = [[] for _ in range(SEARCH_SHARD_COUNT)]
+    for row in catalog["rows"]:
+        search_text = "\n".join(
+            catalog["dictionaries"][column][int(row[column_indexes[column]])]
+            for column in columns
+        ).lower()
+        shard_indexes = {
+            search_shard_index(character)
+            for character in search_text
+            if not character.isspace()
+        }
+        for shard_index in shard_indexes:
+            shard_rows[shard_index].append(row)
+    shards = [compact_shard_data(catalog, rows) for rows in shard_rows]
+    for shard in shards:
+        shard["format"] = "product-catalog-v1"
+    return shards
+
+
+def encrypt_search_catalog(
+    catalog: dict[str, Any], metadata: dict[str, str], password: str
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    search_shards = build_search_shard_data(catalog)
+    salt = os.urandom(16)
+    key = derive_key(password, salt)
+    search_payloads = [
+        encrypt_payload(
+            shard,
+            {
+                **metadata,
+                "search_shard_index": shard_index,
+                "search_shard_count": SEARCH_SHARD_COUNT,
+            },
+            password,
+            salt=salt,
+            key=key,
+        )
+        for shard_index, shard in enumerate(search_shards)
+    ]
+    manifest = {
+        "format": "product-search-manifest-v1",
+        "product_count": len(catalog["rows"]),
+        "search_shard_count": SEARCH_SHARD_COUNT,
+        "bucket_counts": [len(shard["rows"]) for shard in search_shards],
+    }
+    return encrypt_payload(manifest, metadata, password), search_payloads
+
+
 def encrypt_shards(
     data: dict[str, Any], metadata: dict[str, str], password: str
 ) -> list[dict[str, Any]]:
@@ -324,6 +431,10 @@ def main() -> int:
     encryption_started_at = time.perf_counter()
     print("正在加密库存数据...", flush=True)
     payload = encrypt_payload(data, metadata, password)
+    catalog = build_catalog_data(data)
+    catalog_payload, search_payloads = encrypt_search_catalog(
+        catalog, metadata, password
+    )
     shard_payloads = encrypt_shards(data, metadata, password)
     print(
         f"加密完成，耗时 {time.perf_counter() - encryption_started_at:.1f} 秒",
@@ -336,11 +447,21 @@ def main() -> int:
         restored_shard = decrypt_payload(shard_payloads[0], password)
         if restored_shard["metadata"].get("shard_count") != SHARD_COUNT:
             raise BuildError("加密自检失败：SKU 分片无法解密")
+        restored_catalog = decrypt_payload(catalog_payload, password)
+        if restored_catalog["data"].get("product_count") != len(catalog["rows"]):
+            raise BuildError("加密自检失败：商品搜索清单无法解密")
+        restored_search = decrypt_payload(search_payloads[0], password)
+        if restored_search["data"].get("format") != "product-catalog-v1":
+            raise BuildError("加密自检失败：商品搜索分片无法解密")
     print(f"正在写入：{args.output}", flush=True)
     write_shards(args.shard_directory, shard_payloads)
+    write_shards(args.search_directory, search_payloads)
+    write_payload(args.catalog_output, catalog_payload)
     write_payload(args.output, payload)
     print(f"已生成加密库存：{args.output}")
     print(f"SKU 分片：{SHARD_COUNT} 个，目录：{args.shard_directory}")
+    print(f"商品搜索清单：{len(catalog['rows']):,} 个，文件：{args.catalog_output}")
+    print(f"商品搜索分片：{SEARCH_SHARD_COUNT} 个，目录：{args.search_directory}")
     print(f"记录数：{len(data['rows']):,}；报告日期：{metadata['report_date'] or '未知'}")
     return 0
 

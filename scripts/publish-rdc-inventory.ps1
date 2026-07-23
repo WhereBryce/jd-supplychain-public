@@ -12,10 +12,14 @@ $ErrorActionPreference = 'Stop'
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $RelativeOutputs = @(
     'data/rdc-inventory.enc.json'
+    'data/rdc-product-catalog.enc.json'
     'data/rdc-inventory-shards'
+    'data/rdc-product-search'
 )
 $Output = Join-Path $RepoRoot 'data\rdc-inventory.enc.json'
+$CatalogOutput = Join-Path $RepoRoot 'data\rdc-product-catalog.enc.json'
 $ShardDirectory = Join-Path $RepoRoot 'data\rdc-inventory-shards'
+$SearchDirectory = Join-Path $RepoRoot 'data\rdc-product-search'
 $Builder = Join-Path $PSScriptRoot 'build-rdc-inventory.ps1'
 
 function Invoke-Git {
@@ -79,7 +83,13 @@ $sourceFingerprint = [ordered]@{
     source_length = $sourceItem.Length
 }
 $shardCount = @(Get-ChildItem -LiteralPath $ShardDirectory -Filter '*.enc.json' -File -ErrorAction SilentlyContinue).Count
-$needsBuild = $Force -or -not (Test-Path -LiteralPath $Output) -or $shardCount -ne 64
+$searchShardCount = @(Get-ChildItem -LiteralPath $SearchDirectory -Filter '*.enc.json' -File -ErrorAction SilentlyContinue).Count
+$needsBuild = `
+    $Force -or `
+    -not (Test-Path -LiteralPath $Output) -or `
+    -not (Test-Path -LiteralPath $CatalogOutput) -or `
+    $shardCount -ne 64 -or `
+    $searchShardCount -ne 64
 if (-not $needsBuild -and (Test-Path -LiteralPath $StatePath)) {
     try {
         $previousState = Get-Content -LiteralPath $StatePath -Raw | ConvertFrom-Json

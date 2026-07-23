@@ -6,10 +6,10 @@
 <meta name="color-scheme" content="dark" />
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'" />
 <title>RDC 库存查询 · JD Supply Chain</title>
-<meta name="description" content="带加密密码保护的 JD RDC 库存查询页，按完整 SKU 加载小分片并支持 RDC、品牌和库存状态筛选。" />
+<meta name="description" content="带加密密码保护的轻量 JD RDC 库存查询页，支持京东码搜索和商品名称中文模糊搜索。" />
 <link rel="icon" href="data:," />
-<link rel="stylesheet" href="../assets/rdc-inventory-query.css?v=20260723c" />
-<script src="../assets/rdc-inventory-query.js?v=20260723c" defer></script>
+<link rel="stylesheet" href="../assets/rdc-inventory-query.css?v=20260723d" />
+<script src="../assets/rdc-inventory-query.js?v=20260723d" defer></script>
 </head>
 <body>
 
@@ -18,13 +18,11 @@
     <div class="lock-mark" aria-hidden="true">RDC</div>
     <p class="eyebrow">ENCRYPTED INVENTORY</p>
     <h1 id="unlockTitle">RDC 库存查询</h1>
-    <p class="unlock-copy">输入完整 SKU 和访问密码，仅下载该 SKU 所在的加密分片。</p>
+    <p class="unlock-copy">输入访问密码，加载轻量商品目录后即可搜索。</p>
     <form id="unlockForm" method="post" action="#">
-      <label for="initialSku">SKU</label>
-      <input class="unlock-input" id="initialSku" name="sku" type="text" inputmode="numeric" pattern="[0-9]+" maxlength="32" autocomplete="off" placeholder="输入完整数字 SKU" required autofocus />
       <label for="password">访问密码</label>
       <div class="password-row">
-        <input id="password" name="password" type="password" minlength="12" maxlength="256" autocomplete="current-password" required />
+        <input id="password" name="password" type="password" minlength="12" maxlength="256" autocomplete="current-password" required autofocus />
         <button id="togglePassword" class="reveal-button" type="button">显示</button>
       </div>
       <p class="unlock-status" id="unlockStatus" role="status" aria-live="polite"></p>
@@ -65,12 +63,12 @@
       </div>
       <dl class="metric-list">
         <div>
+          <dt>匹配商品</dt>
+          <dd id="matchedProducts">--</dd>
+        </div>
+        <div>
           <dt>可用库存合计</dt>
           <dd id="availableInventory">--</dd>
-        </div>
-        <div class="danger-metric">
-          <dt>缺货记录</dt>
-          <dd id="outOfStock">--</dd>
         </div>
         <div>
           <dt>采购未到货合计</dt>
@@ -86,28 +84,22 @@
       </div>
       <form class="filter-grid" id="filterForm">
         <label class="filter-field search-field">
-          <span>SKU</span>
-          <input id="keywordFilter" type="search" inputmode="numeric" maxlength="32" placeholder="输入完整数字 SKU" autocomplete="off" />
+          <span>京东码 / 商品名称</span>
+          <input id="keywordFilter" type="search" maxlength="100" placeholder="输入京东码或中文商品名称" autocomplete="off" />
         </label>
         <label class="filter-field">
           <span>RDC</span>
           <select id="rdcFilter"><option value="">全部 RDC</option></select>
         </label>
-        <label class="filter-field">
-          <span>品牌</span>
-          <select id="brandFilter"><option value="">全部品牌</option></select>
-        </label>
-        <label class="filter-field">
-          <span>库存状态</span>
-          <select id="statusFilter">
-            <option value="">全部状态</option>
-            <option value="out">缺货</option>
-            <option value="in">有库存</option>
-            <option value="missing">数据缺失</option>
-          </select>
-        </label>
         <button class="primary-button query-button" type="submit">查询</button>
       </form>
+      <div class="product-results" id="productResults" hidden>
+        <div class="product-results-head">
+          <strong id="productResultsTitle">匹配商品</strong>
+          <span id="productResultsCount"></span>
+        </div>
+        <div class="product-list" id="productList"></div>
+      </div>
     </section>
 
     <section class="results-section" aria-labelledby="resultsTitle">
@@ -127,17 +119,13 @@
         <table>
           <thead>
             <tr>
-              <th scope="col">状态</th>
-              <th scope="col">RDC</th>
-              <th scope="col">SKU</th>
+              <th scope="col">京东码</th>
               <th scope="col">商品名称</th>
-              <th scope="col">品牌</th>
+              <th scope="col">RDC</th>
               <th scope="col" class="numeric">可用库存</th>
-              <th scope="col" class="numeric">可订购库存</th>
-              <th scope="col" class="numeric">采购未到货</th>
-              <th scope="col" class="numeric">28日有货天数</th>
-              <th scope="col" class="numeric">近7日出库</th>
-              <th scope="col">报告日期</th>
+              <th scope="col" class="numeric">采购未到货库存</th>
+              <th scope="col" class="numeric">全国采购价</th>
+              <th scope="col">条形码</th>
             </tr>
           </thead>
           <tbody id="inventoryBody"></tbody>
