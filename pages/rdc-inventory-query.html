@@ -8,8 +8,8 @@
 <title>RDC 库存查询 · JD Supply Chain</title>
 <meta name="description" content="带加密密码保护的轻量 JD RDC 库存查询页，支持京东码搜索和商品名称中文模糊搜索。" />
 <link rel="icon" href="data:," />
-<link rel="stylesheet" href="../assets/rdc-inventory-query.css?v=20260723d" />
-<script src="../assets/rdc-inventory-query.js?v=20260723d" defer></script>
+<link rel="stylesheet" href="../assets/rdc-inventory-query.css?v=20260723e" />
+<script src="../assets/rdc-inventory-query.js?v=20260723e" defer></script>
 </head>
 <body>
 
@@ -83,10 +83,11 @@
         <button class="quiet-button" id="clearButton" type="button">清除</button>
       </div>
       <form class="filter-grid" id="filterForm">
-        <label class="filter-field search-field">
-          <span>京东码 / 商品名称</span>
-          <input id="keywordFilter" type="search" maxlength="100" placeholder="输入京东码或中文商品名称" autocomplete="off" />
-        </label>
+        <div class="filter-field search-field">
+          <label for="keywordFilter">京东码 / 商品名称</label>
+          <input id="keywordFilter" type="search" maxlength="100" placeholder="输入京东码或中文商品名称" autocomplete="off" aria-autocomplete="list" aria-controls="searchSuggestions" aria-expanded="false" />
+          <div class="search-suggestions" id="searchSuggestions" role="listbox" aria-label="商品联想" hidden></div>
+        </div>
         <label class="filter-field">
           <span>RDC</span>
           <select id="rdcFilter"><option value="">全部 RDC</option></select>

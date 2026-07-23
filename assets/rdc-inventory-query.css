@@ -19,7 +19,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 .eyebrow{margin:0;color:var(--brand2);font-size:11px;font-weight:800}
 .unlock-panel h1{margin:8px 0 10px;font-size:clamp(30px,8vw,42px);line-height:1.15}
 .unlock-copy{margin:0 0 34px;color:var(--muted);font-size:15px}
-.unlock-panel label,.filter-field>span{display:block;margin-bottom:7px;color:var(--muted);font-size:12px;font-weight:700}
+.unlock-panel label,.filter-field>span,.filter-field>label{display:block;margin-bottom:7px;color:var(--muted);font-size:12px;font-weight:700}
 .unlock-input{width:100%;height:48px;margin-bottom:18px;border:1px solid var(--line);padding:0 14px;color:var(--ink);background:#090f22}
 .unlock-input:focus{border-color:var(--brand2)}
 .password-row{height:48px;display:flex;background:#090f22;border:1px solid var(--line)}
@@ -75,9 +75,13 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 .quiet-button{color:var(--muted)}
 .filter-grid{display:grid;grid-template-columns:minmax(280px,2fr) minmax(170px,1fr) auto;align-items:end;gap:12px;margin-top:18px}
 .filter-field{min-width:0}
+.search-field{position:relative}
 .filter-field input,.filter-field select,.pagination-bar select{width:100%;height:40px;border:1px solid var(--line);border-radius:3px;padding:0 11px;color:var(--ink);background:#090f22}
 .filter-field input:hover,.filter-field select:hover,.pagination-bar select:hover{border-color:#4c5a91}
 .query-button{height:40px}
+.search-suggestions{position:absolute;z-index:40;top:calc(100% + 5px);right:0;left:0;max-height:320px;overflow-y:auto;border:1px solid var(--line);background:#090f22;box-shadow:0 18px 45px rgba(0,0,0,.38)}
+.suggestion-option{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:4px;border:0;border-bottom:1px solid var(--line);padding:10px 12px;color:var(--ink);background:transparent;text-align:left}.suggestion-option:last-child{border-bottom:0}.suggestion-option:hover,.suggestion-option:focus-visible{background:#182144}.suggestion-option strong{max-width:100%;overflow:hidden;font-size:12px;text-overflow:ellipsis;white-space:nowrap}.suggestion-option span{color:var(--muted);font-size:10px}
+.suggestion-state{padding:11px 12px;color:var(--muted);font-size:11px}
 .product-results{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
 .product-results-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:10px}
 .product-results-head strong{font-size:13px}.product-results-head span{color:var(--muted);font-size:11px;text-align:right}

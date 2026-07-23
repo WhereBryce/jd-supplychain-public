@@ -10,7 +10,7 @@ const elements = Object.fromEntries([
   "unlockView", "appView", "unlockForm", "password", "togglePassword", "unlockButton",
   "unlockStatus", "lockButton", "refreshButton", "reportMeta", "totalRecords",
   "matchedProducts", "availableInventory", "incomingInventory", "filterForm", "keywordFilter",
-  "rdcFilter", "clearButton", "productResults", "productResultsTitle", "productResultsCount", "productList",
+  "searchSuggestions", "rdcFilter", "clearButton", "productResults", "productResultsTitle", "productResultsCount", "productList",
   "inventoryBody", "emptyState", "emptyStateText",
   "loadingState", "resultRange", "pageSize", "previousPage", "nextPage", "pageIndicator",
   "notice", "noticeText", "noticeClose", "tableFrame",
@@ -21,6 +21,7 @@ const state = {
   catalog: null,
   products: [],
   searchBuckets: new Map(),
+  searchBucketPromises: new Map(),
   data: null,
   metadata: null,
   columns: null,
@@ -31,7 +32,10 @@ const state = {
   filteredRows: [],
   page: 1,
   pageCount: 1,
+  suggestionRequest: 0,
 };
+
+let suggestionTimer = 0;
 
 const numberFormatter = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 2 });
 const rowLabels = [
@@ -152,7 +156,9 @@ function decodeCatalog(decrypted) {
   state.catalog = decrypted.data;
   state.products = [];
   state.searchBuckets.clear();
+  state.searchBucketPromises.clear();
   state.metadata = decrypted.metadata || {};
+  populateSelectValues(elements.rdcFilter, state.catalog.rdc_values || [], "全部 RDC");
   updateReportMeta();
 }
 
@@ -170,6 +176,7 @@ function decodeProducts(data) {
       sku,
       name,
       barcode,
+      lowerName: name.toLocaleLowerCase("zh-CN"),
       searchText: `${sku}\n${name}\n${barcode}`.toLocaleLowerCase("zh-CN"),
     };
   });
@@ -211,6 +218,7 @@ function clearDecryptedData() {
   state.catalog = null;
   state.products = [];
   state.searchBuckets.clear();
+  state.searchBucketPromises.clear();
   state.data = null;
   state.metadata = null;
   state.columns = null;
@@ -221,6 +229,7 @@ function clearDecryptedData() {
   state.filteredRows = [];
   elements.inventoryBody.replaceChildren();
   elements.productList.replaceChildren();
+  hideSuggestions();
 }
 
 function lockPage(message = "") {
@@ -252,7 +261,10 @@ function stockStatus(available) {
 }
 
 function populateSelect(select, column, emptyLabel) {
-  const values = state.data.dictionaries[column] || [];
+  populateSelectValues(select, state.data.dictionaries[column] || [], emptyLabel);
+}
+
+function populateSelectValues(select, values, emptyLabel) {
   const fragment = document.createDocumentFragment();
   const empty = document.createElement("option");
   empty.value = "";
@@ -281,11 +293,6 @@ function initializeData(decrypted) {
       values.map((value) => String(value).toLocaleLowerCase("zh-CN")),
     ]),
   );
-  const selectedRdc = elements.rdcFilter.value;
-  populateSelect(elements.rdcFilter, "RDC", "全部 RDC");
-  if (Array.from(elements.rdcFilter.options).some((option) => option.value === selectedRdc)) {
-    elements.rdcFilter.value = selectedRdc;
-  }
   updateReportMeta();
 }
 
@@ -329,7 +336,7 @@ async function searchShardIndex(character) {
   return new Uint8Array(digest)[0] % SEARCH_SHARD_COUNT;
 }
 
-async function loadSearchProducts(query) {
+async function loadSearchProducts(query, reportProgress = showNotice) {
   const tokens = new Set(
     query.toLocaleLowerCase("zh-CN").split("").filter((character) => !/\s/.test(character)),
   );
@@ -345,27 +352,132 @@ async function loadSearchProducts(query) {
   const shardIndex = candidates[0]?.shardIndex;
   if (!Number.isInteger(shardIndex)) return [];
   if (state.searchBuckets.has(shardIndex)) return state.searchBuckets.get(shardIndex);
-
-  showNotice("正在下载商品搜索索引…");
-  const shardName = String(shardIndex).padStart(2, "0");
-  const payload = await fetchEncryptedPayload(
-    `${SEARCH_BASE_URL}/${shardName}.enc.json`,
-    (message) => showNotice(message),
-  );
-  showNotice("正在解密商品搜索索引…");
-  const decrypted = await decryptInventory(payload, state.password);
-  if (Number(decrypted.metadata?.search_shard_index) !== shardIndex) {
-    throw new Error("商品搜索分片校验失败");
+  if (state.searchBucketPromises.has(shardIndex)) {
+    return state.searchBucketPromises.get(shardIndex);
   }
-  const products = decodeProducts(decrypted.data);
-  state.searchBuckets.set(shardIndex, products);
-  return products;
+
+  const loadPromise = (async () => {
+    reportProgress("正在下载商品搜索索引…");
+    const shardName = String(shardIndex).padStart(2, "0");
+    const payload = await fetchEncryptedPayload(
+      `${SEARCH_BASE_URL}/${shardName}.enc.json`,
+      reportProgress,
+    );
+    reportProgress("正在解密商品搜索索引…");
+    const decrypted = await decryptInventory(payload, state.password);
+    if (Number(decrypted.metadata?.search_shard_index) !== shardIndex) {
+      throw new Error("商品搜索分片校验失败");
+    }
+    const products = decodeProducts(decrypted.data);
+    state.searchBuckets.set(shardIndex, products);
+    return products;
+  })();
+  state.searchBucketPromises.set(shardIndex, loadPromise);
+  try {
+    return await loadPromise;
+  } finally {
+    state.searchBucketPromises.delete(shardIndex);
+  }
+}
+
+function searchTerms(query) {
+  return query
+    .trim()
+    .toLocaleLowerCase("zh-CN")
+    .split(/\s+/)
+    .filter(Boolean);
 }
 
 function findProducts(products, query) {
-  const keyword = query.trim().toLocaleLowerCase("zh-CN");
-  if (!keyword) return [];
-  return products.filter((product) => product.searchText.includes(keyword));
+  const terms = searchTerms(query);
+  if (terms.length === 0) return [];
+  const nameOnly = terms.some((term) => /[\u3400-\u9fff]/.test(term));
+  const matches = products.filter(
+    (product) => terms.every(
+      (term) => (nameOnly ? product.lowerName : product.searchText).includes(term),
+    ),
+  );
+  const firstTerm = terms[0];
+  return matches.sort((left, right) => {
+    const leftName = left.name.toLocaleLowerCase("zh-CN");
+    const rightName = right.name.toLocaleLowerCase("zh-CN");
+    const leftStarts = leftName.startsWith(firstTerm) ? 0 : 1;
+    const rightStarts = rightName.startsWith(firstTerm) ? 0 : 1;
+    return leftStarts - rightStarts
+      || leftName.indexOf(firstTerm) - rightName.indexOf(firstTerm)
+      || leftName.length - rightName.length
+      || left.sku.localeCompare(right.sku);
+  });
+}
+
+function hideSuggestions() {
+  state.suggestionRequest += 1;
+  elements.searchSuggestions.hidden = true;
+  elements.searchSuggestions.replaceChildren();
+  elements.keywordFilter.setAttribute("aria-expanded", "false");
+}
+
+function renderSuggestionState(message) {
+  const status = document.createElement("div");
+  status.className = "suggestion-state";
+  status.textContent = message;
+  elements.searchSuggestions.replaceChildren(status);
+  elements.searchSuggestions.hidden = false;
+  elements.keywordFilter.setAttribute("aria-expanded", "true");
+}
+
+function renderSuggestions(products) {
+  if (products.length === 0) {
+    renderSuggestionState("没有匹配的商品");
+    return;
+  }
+  const fragment = document.createDocumentFragment();
+  for (const product of products.slice(0, 5)) {
+    const button = document.createElement("button");
+    button.className = "suggestion-option";
+    button.type = "button";
+    button.setAttribute("role", "option");
+
+    const name = document.createElement("strong");
+    name.textContent = product.name || "未命名商品";
+    const details = document.createElement("span");
+    details.textContent = `京东码 ${product.sku}`;
+    button.append(name, details);
+    button.addEventListener("mousedown", (event) => event.preventDefault());
+    button.addEventListener("click", async () => {
+      elements.keywordFilter.value = product.name;
+      hideSuggestions();
+      await loadProductInventory(product);
+    });
+    fragment.appendChild(button);
+  }
+  elements.searchSuggestions.replaceChildren(fragment);
+  elements.searchSuggestions.hidden = false;
+  elements.keywordFilter.setAttribute("aria-expanded", "true");
+}
+
+async function updateSuggestions() {
+  const query = elements.keywordFilter.value.trim();
+  const compactLength = query.replace(/\s/g, "").length;
+  if (compactLength < 2 || /^\d{5,}$/.test(query)) {
+    hideSuggestions();
+    return;
+  }
+  const requestId = ++state.suggestionRequest;
+  renderSuggestionState("正在联想商品…");
+  try {
+    const products = await loadSearchProducts(
+      query,
+      (message) => {
+        if (requestId === state.suggestionRequest) renderSuggestionState(message);
+      },
+    );
+    if (requestId !== state.suggestionRequest) return;
+    renderSuggestions(findProducts(products, query));
+  } catch (error) {
+    if (requestId !== state.suggestionRequest) return;
+    renderSuggestionState(error.message || "商品联想加载失败");
+  }
 }
 
 function hideProductMatches() {
@@ -594,6 +706,7 @@ function resetInventoryResults(message = "输入京东码或商品名称后查�
 }
 
 function clearSearchResults(message) {
+  hideSuggestions();
   hideProductMatches();
   hideNotice();
   resetInventoryResults(message);
@@ -628,8 +741,29 @@ elements.refreshButton.addEventListener("click", () => lockPage("加密库存可
 elements.filterForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   state.page = 1;
+  hideSuggestions();
   hideNotice();
   await searchProducts();
+});
+elements.keywordFilter.addEventListener("input", () => {
+  window.clearTimeout(suggestionTimer);
+  hideSuggestions();
+  suggestionTimer = window.setTimeout(updateSuggestions, 300);
+});
+elements.keywordFilter.addEventListener("focus", () => {
+  if (elements.keywordFilter.value.trim().replace(/\s/g, "").length >= 2) {
+    window.clearTimeout(suggestionTimer);
+    suggestionTimer = window.setTimeout(updateSuggestions, 150);
+  }
+});
+elements.keywordFilter.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") hideSuggestions();
+});
+document.addEventListener("click", (event) => {
+  if (!elements.searchSuggestions.contains(event.target)
+      && event.target !== elements.keywordFilter) {
+    hideSuggestions();
+  }
 });
 elements.rdcFilter.addEventListener("change", () => {
   if (!state.data || !state.selectedSku) return;

@@ -349,7 +349,10 @@ def build_search_shard_data(catalog: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def encrypt_search_catalog(
-    catalog: dict[str, Any], metadata: dict[str, str], password: str
+    catalog: dict[str, Any],
+    rdc_values: list[str],
+    metadata: dict[str, str],
+    password: str,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     search_shards = build_search_shard_data(catalog)
     salt = os.urandom(16)
@@ -373,6 +376,7 @@ def encrypt_search_catalog(
         "product_count": len(catalog["rows"]),
         "search_shard_count": SEARCH_SHARD_COUNT,
         "bucket_counts": [len(shard["rows"]) for shard in search_shards],
+        "rdc_values": sorted(value for value in rdc_values if value),
     }
     return encrypt_payload(manifest, metadata, password), search_payloads
 
@@ -433,7 +437,10 @@ def main() -> int:
     payload = encrypt_payload(data, metadata, password)
     catalog = build_catalog_data(data)
     catalog_payload, search_payloads = encrypt_search_catalog(
-        catalog, metadata, password
+        catalog,
+        data["dictionaries"]["RDC"],
+        metadata,
+        password,
     )
     shard_payloads = encrypt_shards(data, metadata, password)
     print(
