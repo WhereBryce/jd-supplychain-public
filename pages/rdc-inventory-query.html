@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="color-scheme" content="dark" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<title>RDC 库存查询 · JD Supply Chain</title>
+<meta name="description" content="带加密密码保护的 JD RDC 库存查询页，支持 SKU、商品、RDC、品牌和库存状态筛选。" />
+<link rel="stylesheet" href="../assets/rdc-inventory-query.css?v=20260723" />
+<script src="../assets/rdc-inventory-query.js?v=20260723" defer></script>
+</head>
+<body>
+
+<section class="unlock-view" id="unlockView" aria-labelledby="unlockTitle">
+  <div class="unlock-panel">
+    <div class="lock-mark" aria-hidden="true">RDC</div>
+    <p class="eyebrow">ENCRYPTED INVENTORY</p>
+    <h1 id="unlockTitle">RDC 库存查询</h1>
+    <p class="unlock-copy">库存明细已加密。输入访问密码后在当前浏览器本地解密。</p>
+    <form id="unlockForm" method="post" action="#">
+      <label for="password">访问密码</label>
+      <div class="password-row">
+        <input id="password" name="password" type="password" minlength="12" maxlength="256" autocomplete="current-password" required autofocus />
+        <button id="togglePassword" class="reveal-button" type="button">显示</button>
+      </div>
+      <p class="unlock-status" id="unlockStatus" role="status" aria-live="polite"></p>
+      <button id="unlockButton" class="primary-button unlock-button" type="submit">解锁库存</button>
+    </form>
+    <div class="privacy-note">
+      <span class="note-line" aria-hidden="true"></span>
+      <p>密码不会上传或保存。关闭或锁定页面后，解密数据会从当前页面释放。</p>
+    </div>
+    <a class="home-link" href="../">← 返回知识库首页</a>
+  </div>
+</section>
+
+<main class="app-view" id="appView" hidden>
+  <nav class="topbar">
+    <div class="topbar-inner">
+      <div class="identity">
+        <span class="identity-mark" aria-hidden="true">RDC</span>
+        <div>
+          <p>JD SUPPLY CHAIN</p>
+          <h1>库存查询</h1>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <span class="report-meta" id="reportMeta">报告日期读取中</span>
+        <button class="icon-button" id="refreshButton" type="button" title="重新读取加密库存" aria-label="重新读取加密库存">↻</button>
+        <button class="text-button" id="lockButton" type="button">锁定</button>
+        <a class="text-link" href="../">首页</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="workspace">
+    <section class="summary-band" aria-label="查询汇总">
+      <div class="summary-lead">
+        <p>查询结果</p>
+        <div><strong id="totalRecords">--</strong><span>条</span></div>
+      </div>
+      <dl class="metric-list">
+        <div>
+          <dt>可用库存合计</dt>
+          <dd id="availableInventory">--</dd>
+        </div>
+        <div class="danger-metric">
+          <dt>缺货记录</dt>
+          <dd id="outOfStock">--</dd>
+        </div>
+        <div>
+          <dt>采购未到货合计</dt>
+          <dd id="incomingInventory">--</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="query-section" aria-labelledby="queryTitle">
+      <div class="section-title">
+        <div><span>01</span><h2 id="queryTitle">查询条件</h2></div>
+        <button class="quiet-button" id="clearButton" type="button">清除</button>
+      </div>
+      <form class="filter-grid" id="filterForm">
+        <label class="filter-field search-field">
+          <span>SKU / 商品</span>
+          <input id="keywordFilter" type="search" maxlength="100" placeholder="输入 SKU、商品名称或品牌" autocomplete="off" />
+        </label>
+        <label class="filter-field">
+          <span>RDC</span>
+          <select id="rdcFilter"><option value="">全部 RDC</option></select>
+        </label>
+        <label class="filter-field">
+          <span>品牌</span>
+          <select id="brandFilter"><option value="">全部品牌</option></select>
+        </label>
+        <label class="filter-field">
+          <span>库存状态</span>
+          <select id="statusFilter">
+            <option value="">全部状态</option>
+            <option value="out">缺货</option>
+            <option value="in">有库存</option>
+            <option value="missing">数据缺失</option>
+          </select>
+        </label>
+        <button class="primary-button query-button" type="submit">查询</button>
+      </form>
+    </section>
+
+    <section class="results-section" aria-labelledby="resultsTitle">
+      <header class="results-header">
+        <div class="section-title compact-title">
+          <div><span>02</span><h2 id="resultsTitle">库存明细</h2></div>
+        </div>
+        <p id="resultRange">等待查询</p>
+      </header>
+
+      <div class="notice" id="notice" role="alert" hidden>
+        <span id="noticeText"></span>
+        <button id="noticeClose" type="button" aria-label="关闭">×</button>
+      </div>
+
+      <div class="table-frame" id="tableFrame">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">状态</th>
+              <th scope="col">RDC</th>
+              <th scope="col">SKU</th>
+              <th scope="col">商品名称</th>
+              <th scope="col">品牌</th>
+              <th scope="col" class="numeric">可用库存</th>
+              <th scope="col" class="numeric">可订购库存</th>
+              <th scope="col" class="numeric">采购未到货</th>
+              <th scope="col" class="numeric">28日有货天数</th>
+              <th scope="col" class="numeric">近7日出库</th>
+              <th scope="col">报告日期</th>
+            </tr>
+          </thead>
+          <tbody id="inventoryBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyState" hidden>
+          <span aria-hidden="true"></span>
+          <strong>没有匹配的库存记录</strong>
+        </div>
+        <div class="loading-state" id="loadingState" hidden>
+          <span class="loading-line" aria-hidden="true"></span>
+          <span>正在筛选库存</span>
+        </div>
+      </div>
+
+      <footer class="pagination-bar">
+        <label><span>每页</span>
+          <select id="pageSize">
+            <option value="20">20</option>
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+          </select>
+        </label>
+        <div class="page-controls">
+          <button class="pager-button" id="previousPage" type="button" aria-label="上一页" title="上一页">←</button>
+          <span id="pageIndicator">第 1 / 1 页</span>
+          <button class="pager-button" id="nextPage" type="button" aria-label="下一页" title="下一页">→</button>
+        </div>
+      </footer>
+    </section>
+  </div>
+</main>
+
+</body>
+</html>
