@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import base64
 import getpass
+import gzip
 import json
 import os
 import time
@@ -174,13 +175,15 @@ def encrypt_payload(data: dict[str, Any], metadata: dict[str, str], password: st
         separators=(",", ":"),
         allow_nan=False,
     ).encode("utf-8")
+    compressed = gzip.compress(plaintext, compresslevel=9, mtime=0)
     salt = os.urandom(16)
     iv = os.urandom(12)
     key = derive_key(password, salt)
-    ciphertext = AESGCM(key).encrypt(iv, plaintext, None)
+    ciphertext = AESGCM(key).encrypt(iv, compressed, None)
     return {
         "version": 1,
         "algorithm": "AES-256-GCM",
+        "compression": "gzip",
         "kdf": {
             "name": "PBKDF2",
             "hash": "SHA-256",
@@ -198,6 +201,8 @@ def decrypt_payload(payload: dict[str, Any], password: str) -> dict[str, Any]:
     ciphertext = decode_base64(payload["ciphertext"])
     key = derive_key(password, salt, int(payload["kdf"]["iterations"]))
     plaintext = AESGCM(key).decrypt(iv, ciphertext, None)
+    if payload.get("compression") == "gzip":
+        plaintext = gzip.decompress(plaintext)
     return json.loads(plaintext.decode("utf-8"))
 
 

@@ -54,12 +54,46 @@ async function deriveKey(password, salt, iterations) {
 }
 
 async function fetchEncryptedPayload() {
-  const url = `${DATA_URL}?v=${Date.now()}`;
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(DATA_URL, { cache: "no-cache" });
   if (!response.ok) {
     throw new Error(response.status === 404 ? "加密库存尚未发布" : "加密库存下载失败");
   }
-  return response.json();
+  if (!response.body) return response.json();
+
+  const totalBytes = Number(response.headers.get("Content-Length")) || 0;
+  const hasReliableTotal = totalBytes > 0 && !response.headers.get("Content-Encoding");
+  const reader = response.body.getReader();
+  const chunks = [];
+  let receivedBytes = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    receivedBytes += value.byteLength;
+    const receivedMb = (receivedBytes / 1024 / 1024).toFixed(1);
+    if (hasReliableTotal) {
+      const progress = Math.min(99, Math.round((receivedBytes / totalBytes) * 100));
+      setUnlockStatus(`正在下载加密库存… ${progress}%`, true);
+    } else {
+      setUnlockStatus(`正在下载加密库存… ${receivedMb} MB`, true);
+    }
+  }
+
+  const bytes = new Uint8Array(receivedBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+async function decompressGzip(bytes) {
+  if (!("DecompressionStream" in window)) {
+    throw new Error("当前浏览器版本过旧，不支持库存解压，请升级浏览器");
+  }
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
 }
 
 async function decryptInventory(payload, password) {
@@ -71,7 +105,13 @@ async function decryptInventory(payload, password) {
   const ciphertext = bytesFromBase64(payload.ciphertext);
   const key = await deriveKey(password, salt, Number(payload.kdf.iterations));
   const plaintext = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
-  return JSON.parse(new TextDecoder().decode(plaintext));
+  let decoded = new Uint8Array(plaintext);
+  if (payload.compression === "gzip") {
+    decoded = await decompressGzip(decoded);
+  } else if (payload.compression) {
+    throw new Error("库存压缩格式不受支持");
+  }
+  return JSON.parse(new TextDecoder().decode(decoded));
 }
 
 function setUnlockStatus(message, info = false) {
