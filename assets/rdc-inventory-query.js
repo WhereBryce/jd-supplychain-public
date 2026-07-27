@@ -187,7 +187,7 @@ function updateReportMeta() {
   const generated = state.metadata?.generated_at
     ? new Date(state.metadata.generated_at).toLocaleString("zh-CN", { hour12: false })
     : "时间未知";
-  elements.reportMeta.textContent = `报告 ${reportDate} · 加密更新 ${generated}`;
+  elements.reportMeta.textContent = `库存数据日期 ${reportDate} · 网站更新 ${generated}`;
 }
 
 function setUnlockStatus(message, info = false) {
