@@ -8,8 +8,8 @@
 <title>RDC 库存查询 · JD Supply Chain</title>
 <meta name="description" content="带加密密码保护的轻量 JD RDC 库存查询页，支持京东码搜索和商品名称中文模糊搜索。" />
 <link rel="icon" href="data:," />
-<link rel="stylesheet" href="../assets/rdc-inventory-query.css?v=20260723e" />
-<script src="../assets/rdc-inventory-query.js?v=20260723e" defer></script>
+<link rel="stylesheet" href="../assets/rdc-inventory-query.css?v=20260727" />
+<script src="../assets/rdc-inventory-query.js?v=20260727" defer></script>
 </head>
 <body>
 
@@ -19,6 +19,12 @@
     <p class="eyebrow">ENCRYPTED INVENTORY</p>
     <h1 id="unlockTitle">RDC 库存查询</h1>
     <p class="unlock-copy">输入访问密码，加载轻量商品目录后即可搜索。</p>
+    <dl class="unlock-freshness" id="unlockFreshness" aria-label="库存更新时间">
+      <div><dt>库存数据日期</dt><dd id="unlockReportDate">读取中</dd></div>
+      <div><dt>本地报告更新时间</dt><dd id="unlockLocalUpdated">读取中</dd></div>
+      <div><dt>网站更新时间</dt><dd id="unlockWebsiteUpdated">读取中</dd></div>
+      <div><dt>库存记录</dt><dd id="unlockRecordCount">读取中</dd></div>
+    </dl>
     <form id="unlockForm" method="post" action="#">
       <label for="password">访问密码</label>
       <div class="password-row">

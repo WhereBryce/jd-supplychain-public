@@ -2,12 +2,14 @@
 
 const SHARD_BASE_URL = "../data/rdc-inventory-shards";
 const CATALOG_URL = "../data/rdc-product-catalog.enc.json";
+const STATUS_URL = "../data/rdc-inventory-status.json";
 const SEARCH_BASE_URL = "../data/rdc-product-search";
 const SHARD_COUNT = 64;
 const SEARCH_SHARD_COUNT = 256;
 const MAX_PRODUCT_MATCHES = 100;
 const elements = Object.fromEntries([
   "unlockView", "appView", "unlockForm", "password", "togglePassword", "unlockButton",
+  "unlockReportDate", "unlockLocalUpdated", "unlockWebsiteUpdated", "unlockRecordCount",
   "unlockStatus", "lockButton", "refreshButton", "reportMeta", "totalRecords",
   "matchedProducts", "availableInventory", "incomingInventory", "filterForm", "keywordFilter",
   "searchSuggestions", "rdcFilter", "clearButton", "productResults", "productResultsTitle", "productResultsCount", "productList",
@@ -41,6 +43,33 @@ const numberFormatter = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 
 const rowLabels = [
   "京东码", "商品名称", "RDC", "可用库存", "采购未到货库存", "全国采购价", "条形码",
 ];
+
+function formatStatusTime(value) {
+  if (!value) return "未知";
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime())
+    ? String(value)
+    : parsed.toLocaleString("zh-CN", { hour12: false });
+}
+
+async function loadPublicStatus() {
+  try {
+    const response = await fetch(STATUS_URL, { cache: "no-cache" });
+    if (!response.ok) throw new Error("状态读取失败");
+    const status = await response.json();
+    elements.unlockReportDate.textContent = status.report_date || "未知";
+    elements.unlockLocalUpdated.textContent = formatStatusTime(status.local_file_updated_at);
+    elements.unlockWebsiteUpdated.textContent = formatStatusTime(status.website_generated_at);
+    elements.unlockRecordCount.textContent = Number.isFinite(Number(status.record_count))
+      ? numberFormatter.format(Number(status.record_count))
+      : "未知";
+  } catch {
+    elements.unlockReportDate.textContent = "暂时无法读取";
+    elements.unlockLocalUpdated.textContent = "暂时无法读取";
+    elements.unlockWebsiteUpdated.textContent = "暂时无法读取";
+    elements.unlockRecordCount.textContent = "暂时无法读取";
+  }
+}
 
 function bytesFromBase64(value) {
   const binary = atob(value);
@@ -787,3 +816,5 @@ elements.noticeClose.addEventListener("click", hideNotice);
 if (!window.isSecureContext) {
   setUnlockStatus("请通过 GitHub Pages 的 HTTPS 地址打开本页");
 }
+
+loadPublicStatus();

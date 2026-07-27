@@ -19,6 +19,9 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{ou
 .eyebrow{margin:0;color:var(--brand2);font-size:11px;font-weight:800}
 .unlock-panel h1{margin:8px 0 10px;font-size:clamp(30px,8vw,42px);line-height:1.15}
 .unlock-copy{margin:0 0 34px;color:var(--muted);font-size:15px}
+.unlock-freshness{display:grid;gap:8px;margin:0 0 26px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.unlock-freshness>div{display:flex;align-items:baseline;justify-content:space-between;gap:16px}
+.unlock-freshness dt{color:var(--muted);font-size:11px}.unlock-freshness dd{margin:0;color:var(--ink);font-size:12px;font-variant-numeric:tabular-nums;text-align:right}
 .unlock-panel label,.filter-field>span,.filter-field>label{display:block;margin-bottom:7px;color:var(--muted);font-size:12px;font-weight:700}
 .unlock-input{width:100%;height:48px;margin-bottom:18px;border:1px solid var(--line);padding:0 14px;color:var(--ink);background:#090f22}
 .unlock-input:focus{border-color:var(--brand2)}

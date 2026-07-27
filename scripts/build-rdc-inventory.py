@@ -27,6 +27,7 @@ DEFAULT_SOURCE = Path(
 )
 DEFAULT_OUTPUT = REPO_ROOT / "data" / "rdc-inventory.enc.json"
 DEFAULT_CATALOG_OUTPUT = REPO_ROOT / "data" / "rdc-product-catalog.enc.json"
+DEFAULT_STATUS_OUTPUT = REPO_ROOT / "data" / "rdc-inventory-status.json"
 DEFAULT_SHARD_DIRECTORY = REPO_ROOT / "data" / "rdc-inventory-shards"
 DEFAULT_SEARCH_DIRECTORY = REPO_ROOT / "data" / "rdc-product-search"
 ITERATIONS = 600_000
@@ -65,6 +66,11 @@ def parse_args() -> argparse.Namespace:
         "--catalog-output",
         type=Path,
         default=DEFAULT_CATALOG_OUTPUT,
+    )
+    parser.add_argument(
+        "--status-output",
+        type=Path,
+        default=DEFAULT_STATUS_OUTPUT,
     )
     parser.add_argument(
         "--shard-directory",
@@ -165,6 +171,20 @@ def load_inventory(source: Path) -> tuple[dict[str, Any], dict[str, str]]:
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
     }
     return packed_data, metadata
+
+
+def build_public_status(
+    metadata: dict[str, str], source: Path, record_count: int
+) -> dict[str, str | int]:
+    return {
+        "version": 1,
+        "report_date": metadata["report_date"],
+        "local_file_updated_at": datetime.fromtimestamp(
+            source.stat().st_mtime
+        ).astimezone().isoformat(timespec="seconds"),
+        "website_generated_at": metadata["generated_at"],
+        "record_count": record_count,
+    }
 
 
 def derive_key(password: str, salt: bytes, iterations: int = ITERATIONS) -> bytes:
@@ -415,6 +435,16 @@ def write_payload(output: Path, payload: dict[str, Any]) -> None:
     temporary.replace(output)
 
 
+def write_public_status(output: Path, status: dict[str, str | int]) -> None:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    temporary = output.with_suffix(output.suffix + ".tmp")
+    temporary.write_text(
+        json.dumps(status, ensure_ascii=False, separators=(",", ":")) + "\n",
+        encoding="utf-8",
+    )
+    temporary.replace(output)
+
+
 def write_shards(directory: Path, payloads: list[dict[str, Any]]) -> None:
     directory.mkdir(parents=True, exist_ok=True)
     for shard_index, payload in enumerate(payloads):
@@ -464,11 +494,16 @@ def main() -> int:
     write_shards(args.shard_directory, shard_payloads)
     write_shards(args.search_directory, search_payloads)
     write_payload(args.catalog_output, catalog_payload)
+    write_public_status(
+        args.status_output,
+        build_public_status(metadata, args.source, len(data["rows"])),
+    )
     write_payload(args.output, payload)
     print(f"已生成加密库存：{args.output}")
     print(f"SKU 分片：{SHARD_COUNT} 个，目录：{args.shard_directory}")
     print(f"商品搜索清单：{len(catalog['rows']):,} 个，文件：{args.catalog_output}")
     print(f"商品搜索分片：{SEARCH_SHARD_COUNT} 个，目录：{args.search_directory}")
+    print(f"公开更新时间：{args.status_output}")
     print(f"记录数：{len(data['rows']):,}；报告日期：{metadata['report_date'] or '未知'}")
     return 0
 

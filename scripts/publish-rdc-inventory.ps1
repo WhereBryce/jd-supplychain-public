@@ -12,11 +12,13 @@ $ErrorActionPreference = 'Stop'
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $RelativeOutputs = @(
     'data/rdc-inventory.enc.json'
+    'data/rdc-inventory-status.json'
     'data/rdc-product-catalog.enc.json'
     'data/rdc-inventory-shards'
     'data/rdc-product-search'
 )
 $Output = Join-Path $RepoRoot 'data\rdc-inventory.enc.json'
+$StatusOutput = Join-Path $RepoRoot 'data\rdc-inventory-status.json'
 $CatalogOutput = Join-Path $RepoRoot 'data\rdc-product-catalog.enc.json'
 $ShardDirectory = Join-Path $RepoRoot 'data\rdc-inventory-shards'
 $SearchDirectory = Join-Path $RepoRoot 'data\rdc-product-search'
@@ -88,6 +90,7 @@ $searchShardCount = @(Get-ChildItem -LiteralPath $SearchDirectory -Filter '*.enc
 $needsBuild = `
     $Force -or `
     -not (Test-Path -LiteralPath $Output) -or `
+    -not (Test-Path -LiteralPath $StatusOutput) -or `
     -not (Test-Path -LiteralPath $CatalogOutput) -or `
     $shardCount -ne 64 -or `
     $searchShardCount -ne 256
