@@ -21,11 +21,12 @@ $CatalogOutput = Join-Path $RepoRoot 'data\rdc-product-catalog.enc.json'
 $ShardDirectory = Join-Path $RepoRoot 'data\rdc-inventory-shards'
 $SearchDirectory = Join-Path $RepoRoot 'data\rdc-product-search'
 $Builder = Join-Path $PSScriptRoot 'build-rdc-inventory.ps1'
+$GitBaseArguments = @('-c', "safe.directory=$RepoRoot", '-C', $RepoRoot)
 
 function Invoke-Git {
     param([Parameter(Mandatory)][string[]]$Arguments)
 
-    & git -C $RepoRoot @Arguments
+    & git @GitBaseArguments @Arguments
     if ($LASTEXITCODE -ne 0) {
         throw "git $($Arguments -join ' ') 失败，退出码 $LASTEXITCODE"
     }
@@ -48,7 +49,7 @@ if (-not (Test-Path -LiteralPath $Source)) {
 }
 
 if (-not $NoPush) {
-    $trackedChanges = @(& git -C $RepoRoot status --porcelain --untracked-files=no)
+    $trackedChanges = @(& git @GitBaseArguments status --porcelain --untracked-files=no)
     if ($LASTEXITCODE -ne 0) {
         throw '无法读取 Git 工作区状态'
     }
@@ -60,7 +61,7 @@ if (-not $NoPush) {
     }
 
     Invoke-Git @('fetch', 'origin', 'main')
-    $counts = (& git -C $RepoRoot rev-list --left-right --count origin/main...HEAD) -split '\s+'
+    $counts = (& git @GitBaseArguments rev-list --left-right --count origin/main...HEAD) -split '\s+'
     if ($LASTEXITCODE -ne 0 -or $counts.Count -lt 2) {
         throw '无法比较本地 main 与 origin/main'
     }
@@ -144,7 +145,7 @@ if ($NoPush) {
 
 $addArguments = @('add', '--') + $RelativeOutputs
 Invoke-Git $addArguments
-& git -C $RepoRoot diff --cached --quiet -- @RelativeOutputs
+& git @GitBaseArguments diff --cached --quiet -- @RelativeOutputs
 if ($LASTEXITCODE -eq 0) {
     Write-Host '密文内容没有变化，无需提交'
     exit 0
