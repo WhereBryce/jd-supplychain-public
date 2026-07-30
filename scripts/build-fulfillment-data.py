@@ -5,8 +5,10 @@ from __future__ import annotations
 import argparse
 import base64
 import gzip
+import hashlib
 import json
 import os
+import shutil
 import sys
 from collections import Counter, defaultdict
 from datetime import datetime
@@ -26,6 +28,7 @@ DEFAULT_APP_ASSETS = Path(
 DEFAULT_OUTPUT_DIR = REPO_ROOT / "data" / "fulfillment-snapshots"
 DEFAULT_STATUS_OUTPUT = REPO_ROOT / "data" / "fulfillment-status.json"
 ITERATIONS = 600_000
+SHARD_COUNT = 64
 
 
 class BuildError(RuntimeError):
@@ -96,8 +99,13 @@ def encrypt(
     }
 
 
-def decrypt(payload: Mapping[str, Any], password: str) -> dict[str, Any]:
-    key = derive_key(password, decode64(payload["kdf"]["salt"]))
+def decrypt(
+    payload: Mapping[str, Any],
+    password: str = "",
+    *,
+    key: bytes | None = None,
+) -> dict[str, Any]:
+    key = key or derive_key(password, decode64(payload["kdf"]["salt"]))
     plaintext = AESGCM(key).decrypt(
         decode64(payload["iv"]), decode64(payload["ciphertext"]), None
     )
@@ -156,11 +164,15 @@ def demand_by_source_city(
     return output
 
 
+def sku_shard_index(sku: str) -> int:
+    return hashlib.sha256(sku.encode("utf-8")).digest()[0] % SHARD_COUNT
+
+
 def compact_bundle(
     bundle: Any,
     config: Mapping[str, Any],
     fulfillment_data: Any,
-) -> dict[str, Any]:
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     demand = demand_by_source_city(bundle, config, fulfillment_data)
     stock_skus = {
         sku
@@ -190,12 +202,13 @@ def compact_bundle(
         )
 
     warehouse_rows = []
-    for warehouse in bundle.warehouses:
-        stock = sorted(
-            [sku_indexes[sku], int(quantity)]
-            for sku, quantity in warehouse.stock.items()
-            if sku in sku_indexes and int(quantity) > 0
-        )
+    stock_by_sku: dict[int, list[list[int]]] = defaultdict(list)
+    for warehouse_index, warehouse in enumerate(bundle.warehouses):
+        for sku, quantity in warehouse.stock.items():
+            if sku in sku_indexes and int(quantity) > 0:
+                stock_by_sku[sku_indexes[sku]].append(
+                    [warehouse_index, int(quantity)]
+                )
         covered = (
             sorted(city_indexes[city] for city in warehouse.covered_cities)
             if warehouse.covered_cities is not None
@@ -210,21 +223,30 @@ def compact_bundle(
                 region_indexes[warehouse.region],
                 network_indexes[warehouse.network],
                 covered,
-                stock,
             ]
         )
 
-    demand_rows = [
-        [
-            sku_indexes[sku],
-            sorted([city_indexes[city], quantity] for city, quantity in by_city.items()),
-        ]
-        for sku, by_city in sorted(demand.items())
+    demand_by_sku = {
+        sku_indexes[sku]: sorted(
+            [city_indexes[city], quantity] for city, quantity in by_city.items()
+        )
+        for sku, by_city in demand.items()
         if sku in sku_indexes
-    ]
+    }
+    shard_rows: list[list[list[Any]]] = [[] for _ in range(SHARD_COUNT)]
+    for sku_index, sku in enumerate(sku_values):
+        shard_rows[sku_shard_index(sku)].append(
+            [
+                sku_index,
+                sorted(stock_by_sku.get(sku_index, [])),
+                demand_by_sku.get(sku_index, []),
+            ]
+        )
+
     rules = fulfillment_data.charge_rules(config)
-    return {
-        "format": "fulfillment-snapshot-v1",
+    base = {
+        "format": "fulfillment-snapshot-v2-base",
+        "shard_count": SHARD_COUNT,
         "cities": cities,
         "regions": regions,
         "networks": networks,
@@ -238,8 +260,16 @@ def compact_bundle(
         ],
         "skus": sku_rows,
         "warehouses": warehouse_rows,
-        "demand": demand_rows,
     }
+    shards = [
+        {
+            "format": "fulfillment-sku-shard-v1",
+            "shard_index": shard_index,
+            "rows": rows,
+        }
+        for shard_index, rows in enumerate(shard_rows)
+    ]
+    return base, shards
 
 
 def main() -> int:
@@ -265,57 +295,106 @@ def main() -> int:
     for snapshot in selected:
         print(f"读取并压缩 {snapshot.name}", flush=True)
         bundle = fulfillment_data.build_bundle(config, snapshot.name)
-        data = compact_bundle(bundle, config, fulfillment_data)
+        base, shards = compact_bundle(bundle, config, fulfillment_data)
         metadata = {
             "snapshot_date": bundle.snapshot_date,
             "generated_at": generated_at,
             "warehouse_count": len(bundle.warehouses),
             "network_counts": dict(Counter(warehouse.network for warehouse in bundle.warehouses)),
             "city_count": len(bundle.city_to_region),
-            "sku_count": len(data["skus"]),
+            "sku_count": len(base["skus"]),
         }
-        payload = encrypt(
-            data,
+        snapshot_directory = args.output_dir / bundle.snapshot_date
+        shard_directory = snapshot_directory / "shards"
+        base_payload = encrypt(
+            base,
             metadata,
             password,
             salt=common_salt,
             key=common_key,
         )
-        output_name = f"{bundle.snapshot_date}.enc.json"
-        output_path = args.output_dir / output_name
-        atomic_json(output_path, payload)
-        expected_names.add(output_name)
+        base_path = snapshot_directory / "base.enc.json"
+        atomic_json(base_path, base_payload)
+        shard_sizes = []
+        restored_sku_indexes: set[int] = set()
+        for shard_index, shard in enumerate(shards):
+            shard_metadata = {
+                "snapshot_date": bundle.snapshot_date,
+                "generated_at": generated_at,
+                "shard_index": shard_index,
+                "sku_count": len(shard["rows"]),
+            }
+            shard_payload = encrypt(
+                shard,
+                shard_metadata,
+                password,
+                salt=common_salt,
+                key=common_key,
+            )
+            shard_path = shard_directory / f"{shard_index:02d}.enc.json"
+            atomic_json(shard_path, shard_payload)
+            shard_sizes.append(shard_path.stat().st_size)
+            if args.self_test:
+                restored = decrypt(shard_payload, key=common_key)
+                if (
+                    restored["data"].get("format") != "fulfillment-sku-shard-v1"
+                    or restored["data"].get("shard_index") != shard_index
+                    or restored["metadata"].get("snapshot_date") != bundle.snapshot_date
+                ):
+                    raise BuildError(
+                        f"SKU分片加密自检失败：{bundle.snapshot_date}/{shard_index:02d}"
+                    )
+                for row in restored["data"]["rows"]:
+                    sku_index = int(row[0])
+                    sku = base["skus"][sku_index][0]
+                    if sku_shard_index(sku) != shard_index:
+                        raise BuildError(f"SKU分片路由错误：{sku}")
+                    if sku_index in restored_sku_indexes:
+                        raise BuildError(f"SKU重复进入分片：{sku}")
+                    restored_sku_indexes.add(sku_index)
+        expected_names.add(bundle.snapshot_date)
         if args.self_test:
-            restored = decrypt(payload, password)
+            restored = decrypt(base_payload, key=common_key)
             if (
-                restored["data"].get("format") != "fulfillment-snapshot-v1"
+                restored["data"].get("format") != "fulfillment-snapshot-v2-base"
                 or restored["metadata"].get("snapshot_date") != bundle.snapshot_date
             ):
                 raise BuildError(f"加密自检失败：{bundle.snapshot_date}")
+            if restored_sku_indexes != set(range(len(base["skus"]))):
+                raise BuildError(f"SKU分片不完整：{bundle.snapshot_date}")
+        total_size = base_path.stat().st_size + sum(shard_sizes)
         status_rows.append(
             {
                 "date": bundle.snapshot_date,
-                "file": output_name,
-                "size": output_path.stat().st_size,
+                "format": "v2-sharded",
+                "base": f"{bundle.snapshot_date}/base.enc.json",
+                "shard_base": f"{bundle.snapshot_date}/shards",
+                "shard_count": SHARD_COUNT,
+                "base_size": base_path.stat().st_size,
+                "total_size": total_size,
                 "warehouse_count": len(bundle.warehouses),
                 "city_count": len(bundle.city_to_region),
-                "sku_count": len(data["skus"]),
+                "sku_count": len(base["skus"]),
             }
         )
         print(
-            f"  {output_path.name}: {output_path.stat().st_size / 1024 / 1024:.2f} MB, "
-            f"SKU={len(data['skus']):,}",
+            f"  base={base_path.stat().st_size / 1024:.1f} KB, "
+            f"64分片={sum(shard_sizes) / 1024 / 1024:.2f} MB, "
+            f"SKU={len(base['skus']):,}",
             flush=True,
         )
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    for stale in args.output_dir.glob("*.enc.json"):
+    for stale in args.output_dir.iterdir():
         if stale.name not in expected_names:
-            stale.unlink()
+            if stale.is_dir():
+                shutil.rmtree(stale)
+            else:
+                stale.unlink()
     atomic_json(
         args.status_output,
         {
-            "version": 1,
+            "version": 2,
             "generated_at": generated_at,
             "snapshots": status_rows,
         },

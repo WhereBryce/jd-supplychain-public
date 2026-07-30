@@ -30,7 +30,11 @@
   }
 
   function decodeSnapshot(payload) {
-    if (!payload || payload.format !== "fulfillment-snapshot-v1") {
+    const supported = new Set([
+      "fulfillment-snapshot-v1",
+      "fulfillment-snapshot-v2-base",
+    ]);
+    if (!payload || !supported.has(payload.format)) {
       throw new Error("履约数据格式不受支持");
     }
     const skus = payload.skus.map((row, index) => ({
@@ -50,10 +54,13 @@
       regionIndex: row[4],
       networkIndex: row[5],
       coveredCities: row[6] === null ? null : new Set(row[6]),
-      stock: new Map(row[7]),
+      stock: new Map(row[7] || []),
     }));
-    const demand = new Map(payload.demand.map((row) => [row[0], new Map(row[1])]));
+    const demand = new Map((payload.demand || []).map((row) => [row[0], new Map(row[1])]));
     return {
+      format: payload.format,
+      shardCount: Number(payload.shard_count || 0),
+      loadedShards: new Set(),
       cities: payload.cities,
       regions: payload.regions,
       networks: payload.networks,
@@ -70,6 +77,34 @@
       warehouses,
       demand,
     };
+  }
+
+  function mergeSkuShard(snapshot, payload) {
+    if (!payload || payload.format !== "fulfillment-sku-shard-v1") {
+      throw new Error("SKU分片格式不受支持");
+    }
+    const shardIndex = Number(payload.shard_index);
+    if (!Number.isInteger(shardIndex) || shardIndex < 0 || shardIndex >= snapshot.shardCount) {
+      throw new Error("SKU分片编号无效");
+    }
+    if (snapshot.loadedShards.has(shardIndex)) return;
+    for (const row of payload.rows || []) {
+      const skuIndex = Number(row[0]);
+      if (!Number.isInteger(skuIndex) || !snapshot.skus[skuIndex]) {
+        throw new Error("SKU分片包含无效SKU索引");
+      }
+      for (const stockRow of row[1] || []) {
+        const warehouseIndex = Number(stockRow[0]);
+        const quantity = Number(stockRow[1]);
+        const warehouse = snapshot.warehouses[warehouseIndex];
+        if (!warehouse || !Number.isFinite(quantity) || quantity < 0) {
+          throw new Error("SKU分片包含无效库存记录");
+        }
+        warehouse.stock.set(skuIndex, quantity);
+      }
+      snapshot.demand.set(skuIndex, new Map(row[2] || []));
+    }
+    snapshot.loadedShards.add(shardIndex);
   }
 
   function canServe(warehouse, destinationCityIndex) {
@@ -249,7 +284,7 @@
     return [...byDestination].sort((a, b) => a[0] - b[0]).map(([cityIndex, quantity]) => ({ cityIndex, quantity, weight: quantity / total }));
   }
 
-  const api = { decodeSnapshot, decide, mechanismWeights };
+  const api = { decodeSnapshot, mergeSkuShard, decide, mechanismWeights };
   root.FulfillmentEngine = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

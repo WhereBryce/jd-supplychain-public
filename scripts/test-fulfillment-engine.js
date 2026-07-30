@@ -66,4 +66,22 @@ data = snapshot([warehouse("北京大仓", 0, 0, 0, [[0, 1]], [0, 1, 2, 3])]);
 assert.equal(engine.decide(data, 1, { A: 1 }).fulfilled, true);
 assert.equal(engine.decide(data, 4, { A: 1 }).fulfilled, false);
 
-console.log("fulfillment-engine: 6 business scenarios passed");
+const v2 = engine.decodeSnapshot({
+  format: "fulfillment-snapshot-v2-base",
+  shard_count: 64,
+  cities: ["北京"], regions: ["北京"], networks: ["普通C仓"],
+  city_regions: [0], city_mapping: [0], rules: [150, 300, 450, 450],
+  skus: [["A", "A", "", ""]],
+  warehouses: [["北京", "北京", "A库", 0, 0, 0, null]],
+});
+assert.equal(engine.decide(v2, 0, { A: 1 }).fulfilled, false);
+engine.mergeSkuShard(v2, {
+  format: "fulfillment-sku-shard-v1",
+  shard_index: 3,
+  rows: [[0, [[0, 1]], [[0, 100]]]],
+});
+assert.equal(engine.decide(v2, 0, { A: 1 }).fulfilled, true);
+assert.equal(engine.mechanismWeights(v2, "A", [0])[0].quantity, 100);
+assert.equal(v2.loadedShards.has(3), true);
+
+console.log("fulfillment-engine: 6 business scenarios + v2 shard merge passed");

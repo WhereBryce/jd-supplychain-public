@@ -4,13 +4,13 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="color-scheme" content="dark" />
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'" />
 <title>订单履约分析 · JD Supply Chain</title>
 <meta name="description" content="加密访问的JD订单履约与绑赠机制模拟工具，计算发货模式比例和upcharge。" />
 <link rel="icon" href="data:," />
-<link rel="stylesheet" href="../assets/fulfillment-decision.css?v=20260730b" />
-<script src="../assets/fulfillment-engine.js?v=20260730b" defer></script>
-<script src="../assets/fulfillment-decision.js?v=20260730b" defer></script>
+<link rel="stylesheet" href="../assets/fulfillment-decision.css?v=20260730c" />
+<script src="../assets/fulfillment-engine.js?v=20260730c" defer></script>
+<script src="../assets/fulfillment-decision.js?v=20260730c" defer></script>
 </head>
 <body>
 
@@ -19,7 +19,7 @@
     <div class="lock-mark" aria-hidden="true">FD</div>
     <p class="eyebrow">ENCRYPTED FULFILLMENT DATA</p>
     <h1 id="unlockTitle">订单履约分析</h1>
-    <p class="unlock-copy">库存、仓网与销量数据均为加密密文。输入访问密码后，计算只在当前浏览器完成。后台每天12:00检查本机库存及基础关系，发现更新后自动重新加密发布。</p>
+    <p class="unlock-copy">库存、仓网与销量数据均为加密密文。解锁时只加载轻量基础数据；输入订单或机制后，再按涉及SKU加载小分片。密码验证、解密和解析在后台线程完成。后台每天12:00检查本机数据并按需发布。</p>
     <dl class="unlock-freshness">
       <div><dt>最新库存切片</dt><dd id="unlockSnapshotDate">读取中</dd></div>
       <div><dt>可切换切片</dt><dd id="unlockSnapshotCount">读取中</dd></div>

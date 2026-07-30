@@ -2,6 +2,7 @@
 
 const STATUS_URL = "../data/fulfillment-status.json";
 const SNAPSHOT_BASE_URL = "../data/fulfillment-snapshots";
+const DECRYPT_WORKER_URL = "../assets/fulfillment-decrypt-worker.js?v=20260730c";
 const STORAGE_KEY = "jd.fulfillment.localConfig.v1";
 const byId = (id) => document.getElementById(id);
 const elements = Object.fromEntries([
@@ -17,38 +18,70 @@ const elements = Object.fromEntries([
   "fromCountExplanation", "ordinaryCount", "lightCount", "cityWarehouseCount",
 ].map((id) => [id, byId(id)]));
 
-const state = { status: null, password: "", keyCache: new Map(), snapshot: null, snapshotFile: "", cityMapping: [], rules: null, mechanismRows: 0 };
+const state = { status: null, password: "", decryptor: null, snapshot: null, snapshotEntry: null, snapshotMetadata: null, shardPromises: new Map(), lastTiming: null, cityMapping: [], rules: null, mechanismRows: 0 };
 const money = new Intl.NumberFormat("zh-CN", { style: "currency", currency: "CNY" });
 const integer = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 0 });
 
-function bytesFromBase64(value) {
-  const binary = atob(value); const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-  return bytes;
-}
-
-async function deriveKey(password, salt, iterations) {
-  const material = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]);
-  return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations, hash: "SHA-256" }, material, { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
-}
-
-async function decryptPayload(payload, password) {
-  if (payload.version !== 1 || payload.algorithm !== "AES-256-GCM") throw new Error("加密数据格式不受支持");
-  const keyId = payload.kdf.salt;
-  let key = state.keyCache.get(keyId);
-  if (!key) {
-    key = await deriveKey(password, bytesFromBase64(keyId), Number(payload.kdf.iterations));
-    state.keyCache.set(keyId, key);
+class DecryptWorkerClient {
+  constructor() {
+    if (!("Worker" in window)) throw new Error("当前浏览器不支持后台解密，请升级Chrome或Edge");
+    this.nextId = 1;
+    this.pending = new Map();
+    this.worker = new Worker(DECRYPT_WORKER_URL);
+    this.worker.addEventListener("message", (event) => this.handleMessage(event.data || {}));
+    this.worker.addEventListener("error", () => this.failAll(new Error("后台解密线程异常")));
   }
-  const plaintext = await crypto.subtle.decrypt({ name: "AES-GCM", iv: bytesFromBase64(payload.iv) }, key, bytesFromBase64(payload.ciphertext));
-  if (!("DecompressionStream" in window)) throw new Error("浏览器版本过旧，请升级Chrome或Edge");
-  const stream = new Blob([plaintext]).stream().pipeThrough(new DecompressionStream("gzip"));
-  return JSON.parse(new TextDecoder().decode(await new Response(stream).arrayBuffer()));
+
+  handleMessage(message) {
+    const request = this.pending.get(message.id);
+    if (!request) return;
+    if (message.type === "progress") {
+      request.onProgress?.(message.stage);
+      return;
+    }
+    this.pending.delete(message.id);
+    if (message.type === "result") request.resolve(message);
+    else if (message.type === "error") {
+      const error = new Error(message.message || "解密失败");
+      error.name = message.name || "Error";
+      request.reject(error);
+    }
+  }
+
+  failAll(error) {
+    for (const request of this.pending.values()) request.reject(error);
+    this.pending.clear();
+  }
+
+  decrypt(payloadText, password, onProgress) {
+    const id = this.nextId++;
+    return new Promise((resolve, reject) => {
+      this.pending.set(id, { resolve, reject, onProgress });
+      this.worker.postMessage({ type: "decrypt", id, payloadText, password });
+    });
+  }
+
+  dispose() {
+    this.failAll(new Error("解密会话已关闭"));
+    this.worker.terminate();
+  }
+}
+
+async function fetchText(url, cache = "default") {
+  const started = performance.now();
+  const response = await fetch(url, { cache });
+  if (!response.ok) throw new Error(response.status === 404 ? "加密履约数据尚未发布" : "数据下载失败");
+  const text = await response.text();
+  return {
+    text,
+    bytes: new TextEncoder().encode(text).byteLength,
+    downloadMs: performance.now() - started,
+  };
 }
 
 async function fetchJson(url) {
   const response = await fetch(url, { cache: "no-cache" });
-  if (!response.ok) throw new Error(response.status === 404 ? "加密履约数据尚未发布" : "数据下载失败");
+  if (!response.ok) throw new Error("数据下载失败");
   return response.json();
 }
 
@@ -70,34 +103,82 @@ async function loadStatus() {
   }
 }
 
-async function loadSnapshot(file, password = state.password) {
-  setUnlockStatus("正在下载加密履约数据…", true);
-  const payload = await fetchJson(`${SNAPSHOT_BASE_URL}/${file}`);
-  setUnlockStatus("正在本地验证密码并解密…", true);
-  let decrypted;
-  try { decrypted = await decryptPayload(payload, password); }
-  catch (error) { if (error.name === "OperationError") throw new Error("密码不正确，或加密数据已损坏"); throw error; }
-  state.snapshot = FulfillmentEngine.decodeSnapshot(decrypted.data);
-  state.snapshotFile = file;
+function snapshotUrl(path) {
+  const version = encodeURIComponent(state.status?.generated_at || "current");
+  return `${SNAPSHOT_BASE_URL}/${path}?v=${version}`;
+}
+
+function progressLabel(stage) {
+  return {
+    derive: "正在验证密码（PBKDF2 600,000轮）…",
+    decrypt: "正在解密基础数据…",
+    decompress: "正在解压基础数据…",
+    parse: "正在解析基础数据…",
+  }[stage] || "正在处理基础数据…";
+}
+
+function seconds(value) {
+  return `${(Math.max(0, value) / 1000).toFixed(2)}秒`;
+}
+
+function timingSummary(timing) {
+  if (!timing) return "";
+  const worker = timing.worker || {};
+  const verify = worker.deriveMs || 0;
+  const processing = (worker.encryptedParseMs || 0) + (worker.decryptMs || 0)
+    + (worker.decompressMs || 0) + (worker.dataParseMs || 0) + (timing.decodeMs || 0);
+  return ` · 解锁${seconds(timing.totalMs)}（下载${seconds(timing.downloadMs)} / 验证${seconds(verify)} / 解密解压解析${seconds(processing)}）`;
+}
+
+async function loadSnapshot(entry, password = state.password) {
+  if (!entry?.base) throw new Error("库存切片清单格式不受支持");
+  const totalStarted = performance.now();
+  setUnlockStatus("正在下载轻量基础数据…", true);
+  const downloaded = await fetchText(snapshotUrl(entry.base));
+  if (!state.decryptor) state.decryptor = new DecryptWorkerClient();
+  let output;
+  try {
+    output = await state.decryptor.decrypt(
+      downloaded.text,
+      password,
+      (stage) => setUnlockStatus(progressLabel(stage), true),
+    );
+  } catch (error) {
+    if (error.name === "OperationError") throw new Error("密码不正确，或加密数据已损坏");
+    throw error;
+  }
+  const decodeStarted = performance.now();
+  state.snapshot = FulfillmentEngine.decodeSnapshot(output.result.data);
+  const decodeMs = performance.now() - decodeStarted;
+  state.snapshotEntry = entry;
+  state.snapshotMetadata = output.result.metadata;
+  state.shardPromises = new Map();
   state.password = password;
+  state.lastTiming = {
+    bytes: downloaded.bytes,
+    downloadMs: downloaded.downloadMs,
+    worker: output.timings,
+    decodeMs,
+    totalMs: performance.now() - totalStarted,
+  };
   applyStoredConfig();
-  renderSnapshotMeta(decrypted.metadata);
+  renderSnapshotMeta(output.result.metadata, state.lastTiming);
   renderSkuSuggestions();
   renderCityMappings();
-  return decrypted;
+  return output.result;
 }
 
 function populateSnapshotSelects() {
   [elements.orderSnapshot, elements.mechanismSnapshot].forEach((select) => {
     select.replaceChildren(...state.status.snapshots.map((item) => {
-      const option = document.createElement("option"); option.value = item.file; option.textContent = item.date; return option;
+      const option = document.createElement("option"); option.value = item.base; option.textContent = item.date; return option;
     }));
-    select.value = state.snapshotFile;
+    select.value = state.snapshotEntry?.base || "";
   });
 }
 
-function renderSnapshotMeta(metadata) {
-  elements.reportMeta.textContent = `库存切片 ${metadata.snapshot_date} · ${metadata.warehouse_count} 个履约from`;
+function renderSnapshotMeta(metadata, timing = state.lastTiming) {
+  elements.reportMeta.textContent = `库存切片 ${metadata.snapshot_date} · ${metadata.warehouse_count} 个履约from${timingSummary(timing)}`;
   elements.warehouseCount.textContent = metadata.warehouse_count;
   elements.cityCount.textContent = metadata.city_count;
   elements.skuCount.textContent = integer.format(metadata.sku_count);
@@ -124,28 +205,31 @@ function applyStoredConfig() {
 async function unlock(event) {
   event.preventDefault(); const password = elements.password.value;
   if (!state.status?.snapshots?.length) { setUnlockStatus("没有可用库存切片"); return; }
-  state.keyCache.clear();
+  state.decryptor?.dispose();
+  state.decryptor = new DecryptWorkerClient();
   setBusy(elements.unlockButton, true, "正在解锁", "解锁并进入");
   try {
-    await loadSnapshot(state.status.snapshots[0].file, password);
+    await loadSnapshot(state.status.snapshots[0], password);
     elements.unlockView.hidden = true; elements.appView.hidden = false; setUnlockStatus("");
-  } catch (error) { state.keyCache.clear(); setUnlockStatus(error.message); elements.password.select(); }
+  } catch (error) { state.decryptor?.dispose(); state.decryptor = null; setUnlockStatus(error.message); elements.password.select(); }
   finally { setBusy(elements.unlockButton, false, "正在解锁", "解锁并进入"); }
 }
 
 function lock() {
-  state.password = ""; state.keyCache.clear(); state.snapshot = null; state.snapshotFile = ""; state.cityMapping = []; state.rules = null;
+  state.password = ""; state.decryptor?.dispose(); state.decryptor = null; state.snapshot = null; state.snapshotEntry = null; state.snapshotMetadata = null; state.shardPromises = new Map(); state.lastTiming = null; state.cityMapping = []; state.rules = null;
   elements.password.value = ""; elements.appView.hidden = true; elements.unlockView.hidden = false;
   elements.orderResults.hidden = true; elements.mechanismResults.hidden = true; window.setTimeout(() => elements.password.focus(), 0);
 }
 
-async function switchSnapshot(file) {
-  if (!file || file === state.snapshotFile) return;
+async function switchSnapshot(basePath) {
+  if (!basePath || basePath === state.snapshotEntry?.base) return;
+  const entry = state.status.snapshots.find((item) => item.base === basePath);
+  if (!entry) throw new Error("库存切片不存在");
   hideNotice();
   elements.orderSnapshot.disabled = true;
   elements.mechanismSnapshot.disabled = true;
   elements.reportMeta.textContent = "正在切换库存切片…";
-  try { const decrypted = await loadSnapshot(file); renderSnapshotMeta(decrypted.metadata); elements.orderResults.hidden = true; elements.mechanismResults.hidden = true; }
+  try { await loadSnapshot(entry); elements.orderResults.hidden = true; elements.mechanismResults.hidden = true; }
   catch (error) { showNotice(error.message); populateSnapshotSelects(); }
   finally { elements.orderSnapshot.disabled = false; elements.mechanismSnapshot.disabled = false; }
 }
@@ -168,6 +252,77 @@ function destinationIndex(cityName) {
   return destination;
 }
 
+async function skuShardIndex(sku, shardCount) {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(sku),
+  );
+  return new Uint8Array(digest)[0] % shardCount;
+}
+
+async function loadSkuShard(shardIndex) {
+  if (state.snapshot.loadedShards.has(shardIndex)) return { bytes: 0, totalMs: 0 };
+  if (state.shardPromises.has(shardIndex)) return state.shardPromises.get(shardIndex);
+  const entry = state.snapshotEntry;
+  const snapshot = state.snapshot;
+  const promise = (async () => {
+    const started = performance.now();
+    const name = String(shardIndex).padStart(2, "0");
+    elements.reportMeta.textContent = `正在加载SKU数据分片 ${name}…`;
+    const downloaded = await fetchText(snapshotUrl(`${entry.shard_base}/${name}.enc.json`));
+    const output = await state.decryptor.decrypt(
+      downloaded.text,
+      state.password,
+      (stage) => {
+        const label = stage === "decompress" || stage === "parse" ? "解压解析" : "解密";
+        elements.reportMeta.textContent = `正在${label}SKU数据分片 ${name}…`;
+      },
+    );
+    if (state.snapshot !== snapshot || state.snapshotEntry !== entry) {
+      throw new Error("库存切片已切换，请重新分析");
+    }
+    if (
+      Number(output.result.metadata?.shard_index) !== shardIndex
+      || output.result.metadata?.snapshot_date !== state.snapshotMetadata?.snapshot_date
+    ) {
+      throw new Error("SKU数据分片校验失败");
+    }
+    FulfillmentEngine.mergeSkuShard(snapshot, output.result.data);
+    return {
+      bytes: downloaded.bytes,
+      downloadMs: downloaded.downloadMs,
+      worker: output.timings,
+      totalMs: performance.now() - started,
+    };
+  })();
+  state.shardPromises.set(shardIndex, promise);
+  try {
+    return await promise;
+  } catch (error) {
+    state.shardPromises.delete(shardIndex);
+    throw error;
+  }
+}
+
+async function ensureSkuData(rawSkus) {
+  const skus = [...new Set(rawSkus.map((value) => String(value || "").trim().replace(/\.0$/, "")))];
+  const shardIndexes = new Set();
+  for (const sku of skus) {
+    if (!state.snapshot.skuIndex.has(sku)) throw new Error(`库存切片没有SKU：${sku}`);
+    shardIndexes.add(await skuShardIndex(sku, state.snapshot.shardCount));
+  }
+  const missing = [...shardIndexes].filter((index) => !state.snapshot.loadedShards.has(index));
+  if (!missing.length) {
+    renderSnapshotMeta(state.snapshotMetadata);
+    return;
+  }
+  const started = performance.now();
+  const results = await Promise.all(missing.map(loadSkuShard));
+  const bytes = results.reduce((sum, item) => sum + item.bytes, 0);
+  const elapsed = performance.now() - started;
+  elements.reportMeta.textContent = `库存切片 ${state.snapshotMetadata.snapshot_date} · 按需加载${missing.length}个SKU分片 ${(bytes / 1024).toFixed(1)} KB / ${seconds(elapsed)}`;
+}
+
 function renderModeBars(target, distribution) {
   target.replaceChildren(...distribution.map((item) => {
     const row = document.createElement("div"); row.className = "mode-row";
@@ -177,8 +332,9 @@ function renderModeBars(target, distribution) {
   }));
 }
 
-function analyzeOrders() {
+async function analyzeOrders() {
   hideNotice();
+  setBusy(elements.analyzeOrders, true, "正在加载SKU数据", "执行判定");
   try {
     const rows = parseOrderRows(elements.orderPaste.value); if (!rows.length) throw new Error("请先粘贴订单明细");
     const grouped = new Map();
@@ -188,6 +344,7 @@ function analyzeOrders() {
       if (item.city !== row.city) throw new Error(`订单 ${row.orderId} 出现多个收货城市`);
       item.demand[row.sku] = (item.demand[row.sku] || 0) + row.quantity; grouped.set(row.orderId, item);
     });
+    await ensureSkuData([...grouped.values()].flatMap((item) => Object.keys(item.demand)));
     const details = [...grouped].map(([orderId, item]) => {
       const destination = destinationIndex(item.city);
       const result = FulfillmentEngine.decide(state.snapshot, destination, item.demand, { rules: state.rules });
@@ -200,6 +357,7 @@ function analyzeOrders() {
     elements.orderResultBody.replaceChildren(...details.map((item) => tableRow([item.orderId, item.consumerCity, item.destinationCity, item.mode, item.warehouseMode, item.fromCount, money.format(item.upchargeCents / 100)])));
     elements.orderResults.hidden = false;
   } catch (error) { showNotice(error.message); }
+  finally { setBusy(elements.analyzeOrders, false, "正在加载SKU数据", "执行判定"); }
 }
 
 function addMechanismRow(values = {}) {
@@ -209,12 +367,14 @@ function addMechanismRow(values = {}) {
   row.querySelector(".remove").addEventListener("click", () => row.remove()); elements.mechanismBody.append(row);
 }
 
-function analyzeMechanism() {
+async function analyzeMechanism() {
   hideNotice();
+  setBusy(elements.analyzeMechanism, true, "正在加载SKU数据", "开始模拟");
   try {
     const items = [...elements.mechanismBody.rows].map((row) => ({ sku: row.querySelector("[data-field=sku]").value.trim(), quantity: Number(row.querySelector("[data-field=quantity]").value) }));
     const demand = {}; items.forEach((item) => { if (!item.sku || !Number.isInteger(item.quantity) || item.quantity <= 0) throw new Error("机制SKU不能为空，单套数量必须大于0"); demand[item.sku] = (demand[item.sku] || 0) + item.quantity; });
     const primarySku = elements.primarySku.value.trim(); if (!(primarySku in demand)) throw new Error("地域分布基准主品必须包含在机制中");
+    await ensureSkuData([...Object.keys(demand), primarySku]);
     const weights = FulfillmentEngine.mechanismWeights(state.snapshot, primarySku, state.cityMapping);
     const cityResults = weights.map((item) => ({ ...item, result: FulfillmentEngine.decide(state.snapshot, item.cityIndex, demand, { rules: state.rules }) }));
     const modes = new Map(); let averageCents = 0;
@@ -224,6 +384,7 @@ function analyzeMechanism() {
     elements.mechanismResultBody.replaceChildren(...cityResults.map((item) => tableRow([state.snapshot.cities[item.cityIndex], `${(item.weight * 100).toFixed(1)}%`, item.result.mode, item.result.warehouseMode, item.result.fromCount, money.format(item.result.upchargeCents / 100)])));
     elements.mechanismResults.hidden = false;
   } catch (error) { showNotice(error.message); }
+  finally { setBusy(elements.analyzeMechanism, false, "正在加载SKU数据", "开始模拟"); }
 }
 
 function tableRow(values) { const row = document.createElement("tr"); values.forEach((value) => { const cell = document.createElement("td"); cell.textContent = value; cell.title = value; row.append(cell); }); return row; }

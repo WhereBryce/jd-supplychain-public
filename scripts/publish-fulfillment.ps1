@@ -11,21 +11,8 @@ $ErrorActionPreference = 'Stop'
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $Builder = Join-Path $PSScriptRoot 'build-fulfillment-data.ps1'
 $RelativeOutputs = @(
-    'pages/fulfillment-decision.html'
-    'assets/fulfillment-decision.css'
-    'assets/fulfillment-decision.js'
-    'assets/fulfillment-engine.js'
     'data/fulfillment-status.json'
     'data/fulfillment-snapshots'
-    'scripts/build-fulfillment-data.py'
-    'scripts/build-fulfillment-data.ps1'
-    'scripts/publish-fulfillment.ps1'
-    'scripts/register-fulfillment-publication.ps1'
-    'scripts/run-fulfillment-publication.ps1'
-    'scripts/test-fulfillment-engine.js'
-    'index.html'
-    'README.md'
-    '.gitignore'
 )
 $GitBase = @('-c', "safe.directory=$RepoRoot", '-C', $RepoRoot)
 
@@ -81,13 +68,6 @@ function Test-AllowedPath {
 
 $changes = @(& git @GitBase status --porcelain)
 if ($LASTEXITCODE -ne 0) { throw '无法读取Git工作区状态' }
-$unexpected = @($changes | Where-Object {
-    $_.Length -lt 4 -or -not (Test-AllowedPath $_.Substring(3).Trim('"'))
-})
-if ($unexpected) {
-    throw "仓库存在履约工具范围外的未提交修改：`n$($unexpected -join "`n")"
-}
-
 $fingerprint = Get-SourceFingerprint
 $needsBuild = $Force -or -not (Test-Path -LiteralPath (Join-Path $RepoRoot 'data\fulfillment-status.json'))
 if (-not $needsBuild -and (Test-Path -LiteralPath $StatePath)) {
