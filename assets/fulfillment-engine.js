@@ -72,6 +72,9 @@
         crossRegion: payload.rules[2],
         crossNetwork: payload.rules[3],
       },
+      defaultRouting: {
+        ordinaryCNationalFallback: Boolean(payload.routing?.[0]),
+      },
       skus,
       skuIndex,
       warehouses,
@@ -111,18 +114,27 @@
     return warehouse.coveredCities === null || warehouse.coveredCities.has(destinationCityIndex);
   }
 
+  function coverageRank(snapshot, warehouse, destinationCityIndex, ordinaryCNationalFallback) {
+    if (canServe(warehouse, destinationCityIndex)) return 0;
+    const network = snapshot.networks[warehouse.networkIndex];
+    if (network === "轻货仓") return 1;
+    if (network === "普通C仓" && ordinaryCNationalFallback) return 2;
+    return null;
+  }
+
   function stockQuantity(warehouse, skuIndex) {
     return Math.max(0, Number(warehouse.stock.get(skuIndex) || 0));
   }
 
-  function nodeCharge(warehouse, destinationCityIndex, destinationRegionIndex, referenceNetwork, rules) {
+  function nodeCharge(snapshot, warehouse, destinationCityIndex, destinationRegionIndex, referenceNetwork, rules) {
     if (warehouse.networkIndex !== referenceNetwork) return rules.crossNetwork;
+    if (snapshot.networks[warehouse.networkIndex] === "轻货仓") return 0;
     if (warehouse.cityIndex === destinationCityIndex) return rules.localExtra;
     if (warehouse.regionIndex === destinationRegionIndex) return rules.sameRegion;
     return rules.crossRegion;
   }
 
-  function cover(needsMap, warehouses, costs) {
+  function cover(needsMap, warehouses, costs, priorities) {
     const active = [...needsMap.entries()].filter(([, quantity]) => quantity > 0).sort((a, b) => a[0] - b[0]);
     if (!active.length) return [];
     const skuIndexes = active.map(([sku]) => sku);
@@ -134,7 +146,7 @@
     const memo = new Map();
 
     function solve(needs, available) {
-      if (needs.every((value) => value === 0)) return [0, 0, []];
+      if (needs.every((value) => value === 0)) return [0, 0, 0, []];
       const key = `${needs.join(",")}|${available.join(",")}`;
       if (memo.has(key)) return memo.get(key);
       const availableSet = new Set(available);
@@ -150,8 +162,13 @@
         const remaining = needs.map((need, position) => Math.max(0, need - vectors[index][position]));
         const tail = solve(remaining, available.filter((value) => value !== index));
         if (tail === null) continue;
-        const selected = [index, ...tail[2]].sort((a, b) => a - b);
-        const candidate = [(costs.get(candidates[index].id) || 0) + tail[0], 1 + tail[1], selected];
+        const selected = [index, ...tail[3]].sort((a, b) => a - b);
+        const candidate = [
+          (priorities.get(candidates[index].id) || 0) + tail[0],
+          (costs.get(candidates[index].id) || 0) + tail[1],
+          1 + tail[2],
+          selected,
+        ];
         if (best === null || compareTuples(candidate, best) < 0) best = candidate;
       }
       memo.set(key, best);
@@ -159,7 +176,7 @@
     }
 
     const result = solve(initialNeeds, candidates.map((_, index) => index));
-    return result === null ? null : result[2].map((index) => candidates[index]);
+    return result === null ? null : result[3].map((index) => candidates[index]);
   }
 
   function allocate(needsMap, warehouses) {
@@ -179,6 +196,8 @@
 
   function decide(snapshot, destinationCityIndex, demandObject, options = {}) {
     const rules = options.rules || snapshot.defaultRules;
+    const ordinaryCNationalFallback = options.ordinaryCNationalFallback
+      ?? snapshot.defaultRouting.ordinaryCNationalFallback;
     const cleaned = cleanDemand(demandObject);
     const indexedDemand = new Map();
     for (const [sku, quantity] of cleaned) {
@@ -186,7 +205,18 @@
       indexedDemand.set(snapshot.skuIndex.get(sku), quantity);
     }
     const destinationRegionIndex = snapshot.cityRegions[destinationCityIndex];
-    const candidates = snapshot.warehouses.filter((warehouse) => canServe(warehouse, destinationCityIndex));
+    const candidateRanks = new Map();
+    const candidates = snapshot.warehouses.filter((warehouse) => {
+      const rank = coverageRank(
+        snapshot,
+        warehouse,
+        destinationCityIndex,
+        ordinaryCNationalFallback,
+      );
+      if (rank === null) return false;
+      candidateRanks.set(warehouse.id, rank);
+      return true;
+    });
     const shortage = {};
     for (const [skuIndex, quantity] of indexedDemand) {
       const total = candidates.reduce((sum, warehouse) => sum + stockQuantity(warehouse, skuIndex), 0);
@@ -211,25 +241,30 @@
       for (const base of bases) {
         const afterBase = new Map([...localTargets].map(([skuIndex, quantity]) => [skuIndex, Math.max(0, quantity - stockQuantity(base, skuIndex))]));
         const otherLocal = local.filter((warehouse) => warehouse.id !== base.id);
-        const localCosts = new Map(otherLocal.map((warehouse) => [warehouse.id, nodeCharge(warehouse, destinationCityIndex, destinationRegionIndex, base.networkIndex, rules)]));
-        const selectedLocal = cover(afterBase, otherLocal, localCosts);
+        const localCosts = new Map(otherLocal.map((warehouse) => [warehouse.id, nodeCharge(snapshot, warehouse, destinationCityIndex, destinationRegionIndex, base.networkIndex, rules)]));
+        const localPriorities = new Map(otherLocal.map((warehouse) => [warehouse.id, candidateRanks.get(warehouse.id)]));
+        const selectedLocal = cover(afterBase, otherLocal, localCosts, localPriorities);
         if (selectedLocal === null) continue;
-        const externalCosts = new Map(nonlocal.map((warehouse) => [warehouse.id, nodeCharge(warehouse, destinationCityIndex, destinationRegionIndex, base.networkIndex, rules)]));
-        const selectedExternal = cover(externalNeeds, nonlocal, externalCosts);
+        const externalCosts = new Map(nonlocal.map((warehouse) => [warehouse.id, nodeCharge(snapshot, warehouse, destinationCityIndex, destinationRegionIndex, base.networkIndex, rules)]));
+        const externalPriorities = new Map(nonlocal.map((warehouse) => [warehouse.id, candidateRanks.get(warehouse.id)]));
+        const selectedExternal = cover(externalNeeds, nonlocal, externalCosts, externalPriorities);
         if (selectedExternal === null) continue;
         const selected = [base, ...selectedLocal, ...selectedExternal];
         const cost = selectedLocal.reduce((sum, warehouse) => sum + localCosts.get(warehouse.id), 0)
           + selectedExternal.reduce((sum, warehouse) => sum + externalCosts.get(warehouse.id), 0);
-        plans.push({ cost, base, selected, key: [cost, selected.length, selected.map((item) => item.id).sort(), base.id] });
+        const routePriority = selected.reduce((sum, warehouse) => sum + candidateRanks.get(warehouse.id), 0);
+        plans.push({ cost, base, selected, key: [routePriority, cost, selected.length, selected.map((item) => item.id).sort(), base.id] });
       }
     } else {
       const networks = [...new Set(nonlocal.map((warehouse) => warehouse.networkIndex))].sort((a, b) => a - b);
       for (const referenceNetwork of networks) {
-        const costs = new Map(nonlocal.map((warehouse) => [warehouse.id, nodeCharge(warehouse, destinationCityIndex, destinationRegionIndex, referenceNetwork, rules)]));
-        const selected = cover(indexedDemand, nonlocal, costs);
+        const costs = new Map(nonlocal.map((warehouse) => [warehouse.id, nodeCharge(snapshot, warehouse, destinationCityIndex, destinationRegionIndex, referenceNetwork, rules)]));
+        const priorities = new Map(nonlocal.map((warehouse) => [warehouse.id, candidateRanks.get(warehouse.id)]));
+        const selected = cover(indexedDemand, nonlocal, costs, priorities);
         if (selected === null || !selected.some((warehouse) => warehouse.networkIndex === referenceNetwork)) continue;
         const cost = selected.reduce((sum, warehouse) => sum + costs.get(warehouse.id), 0);
-        plans.push({ cost, base: null, referenceNetwork, selected, key: [cost, selected.length, selected.map((item) => item.id).sort(), ""] });
+        const routePriority = selected.reduce((sum, warehouse) => sum + candidateRanks.get(warehouse.id), 0);
+        plans.push({ cost, base: null, referenceNetwork, selected, key: [routePriority, cost, selected.length, selected.map((item) => item.id).sort(), ""] });
       }
     }
     if (!plans.length) throw new Error("库存合计可满足，但未找到有效分仓方案");
@@ -243,7 +278,7 @@
     const referenceNetwork = plan.base ? plan.base.networkIndex : plan.referenceNetwork;
     const charges = new Map(plan.selected.map((warehouse) => [
       warehouse.id,
-      plan.base && warehouse.id === plan.base.id ? 0 : nodeCharge(warehouse, destinationCityIndex, destinationRegionIndex, referenceNetwork, rules),
+      plan.base && warehouse.id === plan.base.id ? 0 : nodeCharge(snapshot, warehouse, destinationCityIndex, destinationRegionIndex, referenceNetwork, rules),
     ]));
     const allocations = [...localRows, ...externalRows].map(([warehouse, skuIndex, quantity]) => ({
       fulfillmentFrom: warehouse.id,

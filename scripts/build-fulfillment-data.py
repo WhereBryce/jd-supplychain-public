@@ -258,6 +258,9 @@ def compact_bundle(
             rules.cross_region,
             rules.cross_network,
         ],
+        "routing": [
+            bool(config["routing"]["ordinary_c_national_fallback"]),
+        ],
         "skus": sku_rows,
         "warehouses": warehouse_rows,
     }

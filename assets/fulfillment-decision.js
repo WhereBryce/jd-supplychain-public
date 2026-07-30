@@ -15,10 +15,11 @@ const elements = Object.fromEntries([
   "mechanismResults", "mechanismQuantity", "mechanismAverage", "mechanismThousand",
   "mechanismModeBars", "mechanismResultBody", "cityFilter", "cityMappingList", "ruleLocal",
   "ruleRegion", "ruleCrossRegion", "ruleCrossNetwork", "saveSettings", "resetSettings",
+  "ordinaryCNationalFallback",
   "fromCountExplanation", "ordinaryCount", "lightCount", "cityWarehouseCount",
 ].map((id) => [id, byId(id)]));
 
-const state = { status: null, password: "", decryptor: null, snapshot: null, snapshotEntry: null, snapshotMetadata: null, shardPromises: new Map(), lastTiming: null, cityMapping: [], rules: null, mechanismRows: 0 };
+const state = { status: null, password: "", decryptor: null, snapshot: null, snapshotEntry: null, snapshotMetadata: null, shardPromises: new Map(), lastTiming: null, cityMapping: [], rules: null, routing: null, mechanismRows: 0 };
 const money = new Intl.NumberFormat("zh-CN", { style: "currency", currency: "CNY" });
 const integer = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 0 });
 
@@ -194,12 +195,17 @@ function applyStoredConfig() {
   const saved = storedConfig();
   state.cityMapping = [...state.snapshot.defaultCityMapping];
   state.rules = { ...state.snapshot.defaultRules };
+  state.routing = { ...state.snapshot.defaultRouting };
   if (saved?.cityMapping && saved.cityMapping.length === state.cityMapping.length) state.cityMapping = saved.cityMapping.map(Number);
   if (saved?.rules) state.rules = { ...state.rules, ...saved.rules };
+  if (saved?.routing) state.routing = { ...state.routing, ...saved.routing };
   elements.ruleLocal.value = state.rules.localExtra / 100;
   elements.ruleRegion.value = state.rules.sameRegion / 100;
   elements.ruleCrossRegion.value = state.rules.crossRegion / 100;
   elements.ruleCrossNetwork.value = state.rules.crossNetwork / 100;
+  elements.ordinaryCNationalFallback.checked = Boolean(
+    state.routing.ordinaryCNationalFallback,
+  );
 }
 
 async function unlock(event) {
@@ -216,7 +222,7 @@ async function unlock(event) {
 }
 
 function lock() {
-  state.password = ""; state.decryptor?.dispose(); state.decryptor = null; state.snapshot = null; state.snapshotEntry = null; state.snapshotMetadata = null; state.shardPromises = new Map(); state.lastTiming = null; state.cityMapping = []; state.rules = null;
+  state.password = ""; state.decryptor?.dispose(); state.decryptor = null; state.snapshot = null; state.snapshotEntry = null; state.snapshotMetadata = null; state.shardPromises = new Map(); state.lastTiming = null; state.cityMapping = []; state.rules = null; state.routing = null;
   elements.password.value = ""; elements.appView.hidden = true; elements.unlockView.hidden = false;
   elements.orderResults.hidden = true; elements.mechanismResults.hidden = true; window.setTimeout(() => elements.password.focus(), 0);
 }
@@ -347,7 +353,10 @@ async function analyzeOrders() {
     await ensureSkuData([...grouped.values()].flatMap((item) => Object.keys(item.demand)));
     const details = [...grouped].map(([orderId, item]) => {
       const destination = destinationIndex(item.city);
-      const result = FulfillmentEngine.decide(state.snapshot, destination, item.demand, { rules: state.rules });
+      const result = FulfillmentEngine.decide(state.snapshot, destination, item.demand, {
+        rules: state.rules,
+        ordinaryCNationalFallback: state.routing.ordinaryCNationalFallback,
+      });
       return { orderId, consumerCity: item.city, destinationCity: state.snapshot.cities[destination], ...result };
     });
     const modes = new Map(); details.forEach((item) => modes.set(item.mode, (modes.get(item.mode) || 0) + 1));
@@ -376,7 +385,13 @@ async function analyzeMechanism() {
     const primarySku = elements.primarySku.value.trim(); if (!(primarySku in demand)) throw new Error("地域分布基准主品必须包含在机制中");
     await ensureSkuData([...Object.keys(demand), primarySku]);
     const weights = FulfillmentEngine.mechanismWeights(state.snapshot, primarySku, state.cityMapping);
-    const cityResults = weights.map((item) => ({ ...item, result: FulfillmentEngine.decide(state.snapshot, item.cityIndex, demand, { rules: state.rules }) }));
+    const cityResults = weights.map((item) => ({
+      ...item,
+      result: FulfillmentEngine.decide(state.snapshot, item.cityIndex, demand, {
+        rules: state.rules,
+        ordinaryCNationalFallback: state.routing.ordinaryCNationalFallback,
+      }),
+    }));
     const modes = new Map(); let averageCents = 0;
     cityResults.forEach((item) => { modes.set(item.result.mode, (modes.get(item.result.mode) || 0) + item.weight); averageCents += item.result.upchargeCents * item.weight; });
     elements.mechanismQuantity.textContent = integer.format(weights.reduce((sum, item) => sum + item.quantity, 0)); elements.mechanismAverage.textContent = money.format(averageCents / 100); elements.mechanismThousand.textContent = money.format(averageCents * 10);
@@ -404,7 +419,15 @@ function saveSettings() {
   const values = [elements.ruleLocal.value, elements.ruleRegion.value, elements.ruleCrossRegion.value, elements.ruleCrossNetwork.value].map(Number);
   if (values.some((value) => !Number.isFinite(value) || value < 0)) { showNotice("费率必须是大于等于0的数字"); return; }
   state.rules = { localExtra: Math.round(values[0] * 100), sameRegion: Math.round(values[1] * 100), crossRegion: Math.round(values[2] * 100), crossNetwork: Math.round(values[3] * 100) };
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ cityMapping: state.cityMapping, rules: state.rules })); showNotice("配置已保存到当前浏览器");
+  state.routing = {
+    ordinaryCNationalFallback: elements.ordinaryCNationalFallback.checked,
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    cityMapping: state.cityMapping,
+    rules: state.rules,
+    routing: state.routing,
+  }));
+  showNotice("配置已保存到当前浏览器");
 }
 
 function resetSettings() { localStorage.removeItem(STORAGE_KEY); applyStoredConfig(); renderCityMappings(); showNotice("已恢复团队默认规则"); }

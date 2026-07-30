@@ -8,9 +8,9 @@
 <title>订单履约分析 · JD Supply Chain</title>
 <meta name="description" content="加密访问的JD订单履约与绑赠机制模拟工具，计算发货模式比例和upcharge。" />
 <link rel="icon" href="data:," />
-<link rel="stylesheet" href="../assets/fulfillment-decision.css?v=20260730c" />
-<script src="../assets/fulfillment-engine.js?v=20260730c" defer></script>
-<script src="../assets/fulfillment-decision.js?v=20260730c" defer></script>
+<link rel="stylesheet" href="../assets/fulfillment-decision.css?v=20260730d" />
+<script src="../assets/fulfillment-engine.js?v=20260730d" defer></script>
+<script src="../assets/fulfillment-decision.js?v=20260730d" defer></script>
 </head>
 <body>
 
@@ -85,7 +85,7 @@
       <div class="settings-note"><strong>配置影响范围：</strong>A修改参数后，只影响A当前浏览器；不会修改团队默认密文，也不会影响B或其他用户。<br><strong>同仓定义：</strong>订单只使用1个履约from，即同一个“配送中心 + 库房名称”；使用2个及以上履约from为跨仓，同一配送中心下两个不同库房仍算跨仓。<br><strong><span id="fromCountExplanation">履约from</span>：</strong>宝洁直送明细中唯一“配送中心 + 库房名称”的数量；不是配送中心与库房的笛卡尔积。当前包含<span id="ordinaryCount">--</span>个普通C仓、<span id="lightCount">--</span>个轻货仓、<span id="cityWarehouseCount">--</span>个城市仓。</div>
       <div class="settings-grid">
         <section class="editor-panel"><header><div><h3>城市收敛映射</h3><small>消费者城市 → 应发货城市</small></div><input id="cityFilter" type="search" placeholder="筛选城市" /></header><div class="mapping-list" id="cityMappingList"></div></section>
-        <section class="editor-panel"><header><div><h3>Upcharge规则</h3><small>元 / 收费履约from</small></div></header><div class="rule-fields"><label>本地额外from，同网<input id="ruleLocal" type="number" min="0" step="0.1" /></label><label>同区跨城，同网<input id="ruleRegion" type="number" min="0" step="0.1" /></label><label>跨区<input id="ruleCrossRegion" type="number" min="0" step="0.1" /></label><label>跨网络<input id="ruleCrossNetwork" type="number" min="0" step="0.1" /></label></div><div class="rule-example"><strong>计费基准</strong><span>有本地from：一个本地from免费；无本地from：所有外地from均收费。</span><span>单个节点命中多项时只计最高费率。</span></div><button class="quiet-button" id="resetSettings" type="button">恢复团队默认规则</button></section>
+        <section class="editor-panel"><header><div><h3>路由与 Upcharge 规则</h3><small>普通C仓全国代发需人工申请</small></div></header><label class="routing-toggle"><input id="ordinaryCNationalFallback" type="checkbox" /><span><strong>启用普通C仓全国代发兜底</strong><small>关闭时普通C仓只在所属11区域内自动候选；开启后可跨区服务全国，并按跨区规则收取upcharge。</small></span></label><div class="rule-fields"><label>本地额外from，同网<input id="ruleLocal" type="number" min="0" step="0.1" /></label><label>同区跨城，同网<input id="ruleRegion" type="number" min="0" step="0.1" /></label><label>跨区<input id="ruleCrossRegion" type="number" min="0" step="0.1" /></label><label>跨网络<input id="ruleCrossNetwork" type="number" min="0" step="0.1" /></label></div><div class="rule-example"><strong>轻货仓自动兜底</strong><span>原覆盖关系内轻货仓优先；缺货时其他轻货仓自动跨区代发全国。同一轻货仓网络内跨区不增加upcharge，跨网络仍按跨网费率。</span><strong>计费基准</strong><span>有本地from：一个本地from免费；无本地from：所有外地from均收费。单个节点命中多项时只计最高费率。</span></div><button class="quiet-button" id="resetSettings" type="button">恢复团队默认规则</button></section>
       </div>
     </section>
   </div>

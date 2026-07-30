@@ -84,4 +84,15 @@ assert.equal(engine.decide(v2, 0, { A: 1 }).fulfilled, true);
 assert.equal(engine.mechanismWeights(v2, "A", [0])[0].quantity, 100);
 assert.equal(v2.loadedShards.has(3), true);
 
-console.log("fulfillment-engine: 6 business scenarios + v2 shard merge passed");
+data = snapshot([warehouse("北京轻", 0, 0, 1, [[0, 1]], [0])]);
+result = engine.decide(data, 4, { A: 1 });
+assert.equal(result.fulfilled, true);
+assert.equal(result.upchargeCents, 0);
+
+data = snapshot([warehouse("北京C", 0, 0, 0, [[0, 1]], [0])]);
+assert.equal(engine.decide(data, 4, { A: 1 }).fulfilled, false);
+result = engine.decide(data, 4, { A: 1 }, { ordinaryCNationalFallback: true });
+assert.equal(result.fulfilled, true);
+assert.equal(result.upchargeCents, 450);
+
+console.log("fulfillment-engine: business + v2 + fallback scenarios passed");
