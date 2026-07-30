@@ -158,7 +158,7 @@
       if (total < quantity) shortage[snapshot.skus[skuIndex].sku] = quantity - total;
     }
     if (Object.keys(shortage).length) {
-      return { fulfilled: false, mode: "库存不足", geography: "无法履约", network: "无法判断", parcel: "无法判断", fromCount: 0, upchargeCents: 0, allocations: [], shortage };
+      return { fulfilled: false, mode: "库存不足", geography: "无法履约", network: "无法判断", parcel: "无法判断", warehouseMode: "无法判断", fromCount: 0, upchargeCents: 0, allocations: [], shortage };
     }
 
     const local = candidates.filter((warehouse) => warehouse.cityIndex === destinationCityIndex);
@@ -229,7 +229,8 @@
         ? "同区跨城发货" : "跨区发货";
     const network = new Set(plan.selected.map((warehouse) => warehouse.networkIndex)).size === 1 ? "同网" : "跨网";
     const parcel = plan.selected.length === 1 ? "整单发货" : "拆单发货";
-    return { fulfilled: true, geography, network, parcel, mode: `${geography} / ${network} / ${parcel}`, fromCount: plan.selected.length, upchargeCents: plan.cost, allocations, shortage: {} };
+    const warehouseMode = plan.selected.length === 1 ? "同仓" : "跨仓";
+    return { fulfilled: true, geography, network, parcel, warehouseMode, mode: `${geography} / ${network} / ${parcel}`, fromCount: plan.selected.length, upchargeCents: plan.cost, allocations, shortage: {} };
   }
 
   function mechanismWeights(snapshot, primarySku, cityMapping) {

@@ -14,6 +14,7 @@ const elements = Object.fromEntries([
   "mechanismResults", "mechanismQuantity", "mechanismAverage", "mechanismThousand",
   "mechanismModeBars", "mechanismResultBody", "cityFilter", "cityMappingList", "ruleLocal",
   "ruleRegion", "ruleCrossRegion", "ruleCrossNetwork", "saveSettings", "resetSettings",
+  "fromCountExplanation", "ordinaryCount", "lightCount", "cityWarehouseCount",
 ].map((id) => [id, byId(id)]));
 
 const state = { status: null, password: "", keyCache: new Map(), snapshot: null, snapshotFile: "", cityMapping: [], rules: null, mechanismRows: 0 };
@@ -100,6 +101,10 @@ function renderSnapshotMeta(metadata) {
   elements.warehouseCount.textContent = metadata.warehouse_count;
   elements.cityCount.textContent = metadata.city_count;
   elements.skuCount.textContent = integer.format(metadata.sku_count);
+  elements.fromCountExplanation.textContent = `${metadata.warehouse_count}个履约from`;
+  elements.ordinaryCount.textContent = metadata.network_counts?.["普通C仓"] ?? 0;
+  elements.lightCount.textContent = metadata.network_counts?.["轻货仓"] ?? 0;
+  elements.cityWarehouseCount.textContent = metadata.network_counts?.["城市仓"] ?? 0;
   populateSnapshotSelects();
 }
 
@@ -192,7 +197,7 @@ function analyzeOrders() {
     const total = details.reduce((sum, item) => sum + item.upchargeCents, 0);
     elements.orderCount.textContent = details.length; elements.orderAverage.textContent = money.format(total / 100 / details.length); elements.orderTotal.textContent = money.format(total / 100); elements.orderFulfilled.textContent = details.filter((item) => item.fulfilled).length;
     renderModeBars(elements.orderModeBars, [...modes].map(([mode, count]) => ({ mode, ratio: count / details.length })));
-    elements.orderResultBody.replaceChildren(...details.map((item) => tableRow([item.orderId, item.consumerCity, item.destinationCity, item.mode, item.fromCount, money.format(item.upchargeCents / 100)])));
+    elements.orderResultBody.replaceChildren(...details.map((item) => tableRow([item.orderId, item.consumerCity, item.destinationCity, item.mode, item.warehouseMode, item.fromCount, money.format(item.upchargeCents / 100)])));
     elements.orderResults.hidden = false;
   } catch (error) { showNotice(error.message); }
 }
@@ -216,7 +221,7 @@ function analyzeMechanism() {
     cityResults.forEach((item) => { modes.set(item.result.mode, (modes.get(item.result.mode) || 0) + item.weight); averageCents += item.result.upchargeCents * item.weight; });
     elements.mechanismQuantity.textContent = integer.format(weights.reduce((sum, item) => sum + item.quantity, 0)); elements.mechanismAverage.textContent = money.format(averageCents / 100); elements.mechanismThousand.textContent = money.format(averageCents * 10);
     renderModeBars(elements.mechanismModeBars, [...modes].map(([mode, ratio]) => ({ mode, ratio })));
-    elements.mechanismResultBody.replaceChildren(...cityResults.map((item) => tableRow([state.snapshot.cities[item.cityIndex], `${(item.weight * 100).toFixed(1)}%`, item.result.mode, item.result.fromCount, money.format(item.result.upchargeCents / 100)])));
+    elements.mechanismResultBody.replaceChildren(...cityResults.map((item) => tableRow([state.snapshot.cities[item.cityIndex], `${(item.weight * 100).toFixed(1)}%`, item.result.mode, item.result.warehouseMode, item.result.fromCount, money.format(item.result.upchargeCents / 100)])));
     elements.mechanismResults.hidden = false;
   } catch (error) { showNotice(error.message); }
 }

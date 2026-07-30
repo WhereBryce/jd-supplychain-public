@@ -8,7 +8,7 @@ import gzip
 import json
 import os
 import sys
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Mapping
@@ -247,8 +247,8 @@ def main() -> int:
     if not 1 <= args.snapshot_count <= 10:
         raise BuildError("snapshot-count必须在1到10之间")
     password = os.getenv(args.password_env, "")
-    if len(password) < 12:
-        raise BuildError(f"环境变量{args.password_env}未设置或密码少于12位")
+    if len(password) < 8:
+        raise BuildError(f"环境变量{args.password_env}未设置或密码少于8位")
 
     fulfillment_data, _ = load_app_modules(args.app_assets)
     config = fulfillment_data.load_config()
@@ -270,6 +270,7 @@ def main() -> int:
             "snapshot_date": bundle.snapshot_date,
             "generated_at": generated_at,
             "warehouse_count": len(bundle.warehouses),
+            "network_counts": dict(Counter(warehouse.network for warehouse in bundle.warehouses)),
             "city_count": len(bundle.city_to_region),
             "sku_count": len(data["skus"]),
         }

@@ -130,12 +130,18 @@ cd C:\Users\yao.q.1\repos\jd-supplychain-public
 
 默认发布最近3个库存切片，每个切片独立加密。页面解锁后只下载用户选择的切片，并在浏览器中执行确定性分仓与upcharge计算。用户在“数据与规则”页面修改的城市映射和费率只保存在当前浏览器`localStorage`，不影响团队默认密文。
 
-构建与推送复用RDC查询页的DPAPI密码：
+履约页使用独立DPAPI密码文件`%LOCALAPPDATA%\JD-SupplyChain\fulfillment-pages-password.xml`。当前访问密码为8位小写字母；静态密文可被离线尝试破解，建议后续提高到至少12位。构建与推送：
 
 ```powershell
 cd C:\Users\yao.q.1\repos\jd-supplychain-public
 .\scripts\build-fulfillment-data.ps1
 .\scripts\publish-fulfillment.ps1
+```
+
+自动更新任务`JD-Fulfillment-Pages-Publish`每30分钟检查最新库存切片、宝洁直送明细、11区域关系和轻货仓关系。指纹未变化时不重建、不联网；变化时生成最近3个加密切片并推送，通常在源文件落地后30分钟内被网页捕捉。注册任务：
+
+```powershell
+.\scripts\register-fulfillment-publication.ps1
 ```
 
 浏览器求解器回归测试：

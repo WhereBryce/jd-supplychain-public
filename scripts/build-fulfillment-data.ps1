@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$CredentialPath = (Join-Path $env:LOCALAPPDATA 'JD-SupplyChain\rdc-pages-password.xml'),
+    [string]$CredentialPath = (Join-Path $env:LOCALAPPDATA 'JD-SupplyChain\fulfillment-pages-password.xml'),
     [ValidateRange(1, 10)][int]$SnapshotCount = 3
 )
 
@@ -13,7 +13,7 @@ if (-not (Test-Path -LiteralPath $Python)) {
     throw '找不到公开站构建环境，请先运行 build-rdc-inventory.ps1'
 }
 if (-not (Test-Path -LiteralPath $CredentialPath)) {
-    throw "未找到加密密码文件，请先运行 setup-rdc-publication.ps1：$CredentialPath"
+    throw "未找到履约页加密密码文件：$CredentialPath"
 }
 $securePassword = Import-Clixml -LiteralPath $CredentialPath
 if ($securePassword -isnot [Security.SecureString]) {

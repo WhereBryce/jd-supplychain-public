@@ -28,6 +28,7 @@ let data = snapshot([
 ]);
 let result = engine.decide(data, 1, { A: 1, B: 2 });
 assert.equal(result.mode, "本地同城发货 / 同网 / 拆单发货");
+assert.equal(result.warehouseMode, "跨仓");
 assert.equal(result.upchargeCents, 150);
 
 data = snapshot([
@@ -50,6 +51,7 @@ assert.equal(result.allocations.filter((row) => row.isLocal).reduce((sum, row) =
 data = snapshot([warehouse("唐山", 2, 0, 0, [[0, 1]])]);
 result = engine.decide(data, 0, { A: 1 });
 assert.equal(result.parcel, "整单发货");
+assert.equal(result.warehouseMode, "同仓");
 assert.equal(result.upchargeCents, 300);
 
 data = snapshot([
