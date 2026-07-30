@@ -88,21 +88,6 @@ if ($unexpected) {
     throw "仓库存在履约工具范围外的未提交修改：`n$($unexpected -join "`n")"
 }
 
-if (-not $NoPush) {
-    Invoke-Git @('fetch', 'origin', 'main')
-    $counts = (& git @GitBase rev-list --left-right --count origin/main...HEAD) -split '\s+'
-    if ($LASTEXITCODE -ne 0 -or $counts.Count -lt 2) { throw '无法比较本地main与origin/main' }
-    $behind = [int]$counts[0]
-    $ahead = [int]$counts[1]
-    if ($behind -gt 0 -and $ahead -gt 0) { throw '本地main与origin/main已分叉，请人工处理' }
-    if ($behind -gt 0) {
-        if ($changes) { throw '远端有更新且本地有未提交修改，自动发布已停止' }
-        Invoke-Git @('pull', '--ff-only', 'origin', 'main')
-    } elseif ($ahead -gt 0) {
-        Invoke-Git @('-c', 'http.postBuffer=524288000', 'push', 'origin', 'main')
-    }
-}
-
 $fingerprint = Get-SourceFingerprint
 $needsBuild = $Force -or -not (Test-Path -LiteralPath (Join-Path $RepoRoot 'data\fulfillment-status.json'))
 if (-not $needsBuild -and (Test-Path -LiteralPath $StatePath)) {
@@ -119,6 +104,21 @@ if (-not $needsBuild -and (Test-Path -LiteralPath $StatePath)) {
 if (-not $needsBuild) {
     Write-Host '履约数据源没有变化，无需重建或推送'
     exit 0
+}
+
+if (-not $NoPush) {
+    Invoke-Git @('fetch', 'origin', 'main')
+    $counts = (& git @GitBase rev-list --left-right --count origin/main...HEAD) -split '\s+'
+    if ($LASTEXITCODE -ne 0 -or $counts.Count -lt 2) { throw '无法比较本地main与origin/main' }
+    $behind = [int]$counts[0]
+    $ahead = [int]$counts[1]
+    if ($behind -gt 0 -and $ahead -gt 0) { throw '本地main与origin/main已分叉，请人工处理' }
+    if ($behind -gt 0) {
+        if ($changes) { throw '远端有更新且本地有未提交修改，自动发布已停止' }
+        Invoke-Git @('pull', '--ff-only', 'origin', 'main')
+    } elseif ($ahead -gt 0) {
+        Invoke-Git @('-c', 'http.postBuffer=524288000', 'push', 'origin', 'main')
+    }
 }
 
 & $Builder -SnapshotCount $SnapshotCount
