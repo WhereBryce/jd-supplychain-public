@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="color-scheme" content="dark" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<title>订单履约分析 · JD Supply Chain</title>
+<meta name="description" content="加密访问的JD订单履约与绑赠机制模拟工具，计算发货模式比例和upcharge。" />
+<link rel="icon" href="data:," />
+<link rel="stylesheet" href="../assets/fulfillment-decision.css?v=20260730" />
+<script src="../assets/fulfillment-engine.js?v=20260730" defer></script>
+<script src="../assets/fulfillment-decision.js?v=20260730" defer></script>
+</head>
+<body>
+
+<section class="unlock-view" id="unlockView" aria-labelledby="unlockTitle">
+  <div class="unlock-panel">
+    <div class="lock-mark" aria-hidden="true">FD</div>
+    <p class="eyebrow">ENCRYPTED FULFILLMENT DATA</p>
+    <h1 id="unlockTitle">订单履约分析</h1>
+    <p class="unlock-copy">库存、仓网与销量数据均为加密密文。输入访问密码后，计算只在当前浏览器完成。</p>
+    <dl class="unlock-freshness">
+      <div><dt>最新库存切片</dt><dd id="unlockSnapshotDate">读取中</dd></div>
+      <div><dt>可切换切片</dt><dd id="unlockSnapshotCount">读取中</dd></div>
+      <div><dt>履约from</dt><dd id="unlockWarehouseCount">读取中</dd></div>
+      <div><dt>相关SKU</dt><dd id="unlockSkuCount">读取中</dd></div>
+    </dl>
+    <form id="unlockForm" method="post" action="#">
+      <label for="password">访问密码</label>
+      <div class="password-row">
+        <input id="password" name="password" type="password" minlength="12" maxlength="256" autocomplete="current-password" required autofocus />
+        <button id="togglePassword" class="reveal-button" type="button">显示</button>
+      </div>
+      <p class="unlock-status" id="unlockStatus" role="status" aria-live="polite"></p>
+      <button id="unlockButton" class="primary-button unlock-button" type="submit">解锁并进入</button>
+    </form>
+    <div class="privacy-note"><span aria-hidden="true"></span><p>密码不会上传或保存。锁定或关闭页面后，解密数据会从当前页面释放。</p></div>
+    <a class="home-link" href="../">← 返回知识库首页</a>
+  </div>
+</section>
+
+<main class="app-view" id="appView" hidden>
+  <nav class="topbar">
+    <div class="topbar-inner">
+      <div class="identity"><span class="identity-mark">FD</span><div><p>JD SUPPLY CHAIN</p><h1>订单履约分析</h1></div></div>
+      <div class="topbar-actions"><span class="report-meta" id="reportMeta">库存切片读取中</span><button class="text-button" id="lockButton" type="button">锁定</button><a class="text-link" href="../">首页</a></div>
+    </div>
+  </nav>
+
+  <div class="workspace">
+    <nav class="view-tabs" aria-label="工具视图">
+      <button class="active" data-view="orders" type="button">真实订单</button>
+      <button data-view="mechanism" type="button">绑赠机制</button>
+      <button data-view="settings" type="button">数据与规则</button>
+    </nav>
+    <div class="notice" id="notice" role="alert" hidden><span id="noticeText"></span><button id="noticeClose" type="button" aria-label="关闭">×</button></div>
+
+    <section class="tool-view active" id="ordersView">
+      <header class="view-heading"><div><p>ACTUAL ORDERS</p><h2>真实消费者订单</h2></div><button class="primary-button" id="analyzeOrders" type="button">执行判定</button></header>
+      <div class="input-grid">
+        <label class="field"><span>批量粘贴订单明细</span><textarea id="orderPaste" rows="7" spellcheck="false" placeholder="订单号&#9;收货城市&#9;JD码&#9;数量&#10;O001&#9;石家庄&#9;100000000001&#9;1"></textarea><small>支持从Excel直接粘贴，也支持英文逗号分隔；同一订单多行会合并。</small></label>
+        <aside class="basis-panel"><label for="orderSnapshot">参考库存切片</label><select id="orderSnapshot"></select><dl><div><dt>履约from</dt><dd id="warehouseCount">--</dd></div><div><dt>城市</dt><dd id="cityCount">--</dd></div><div><dt>相关SKU</dt><dd id="skuCount">--</dd></div></dl></aside>
+      </div>
+      <section class="results" id="orderResults" hidden>
+        <dl class="metric-strip"><div><dt>订单数</dt><dd id="orderCount">0</dd></div><div><dt>平均每单upcharge</dt><dd id="orderAverage">¥0.00</dd></div><div><dt>总upcharge</dt><dd id="orderTotal">¥0.00</dd></div><div><dt>完全满足</dt><dd id="orderFulfilled">0</dd></div></dl>
+        <div class="result-grid"><section><h3>发货模式比例</h3><div class="mode-bars" id="orderModeBars"></div></section><section><h3>订单判定</h3><div class="table-wrap"><table><thead><tr><th>订单</th><th>消费者城市</th><th>应发货地</th><th>模式</th><th>from数</th><th>upcharge</th></tr></thead><tbody id="orderResultBody"></tbody></table></div></section></div>
+      </section>
+    </section>
+
+    <section class="tool-view" id="mechanismView">
+      <header class="view-heading"><div><p>BUNDLE SIMULATION</p><h2>绑赠机制模拟</h2></div><button class="primary-button" id="analyzeMechanism" type="button">开始模拟</button></header>
+      <div class="mechanism-grid">
+        <section class="editor-panel"><header><h3>单套构成</h3><button class="square-button" id="addMechanismRow" type="button" title="增加SKU">＋</button></header><div class="table-wrap"><table><thead><tr><th>JD码</th><th>单套数量</th><th>角色</th><th></th></tr></thead><tbody id="mechanismBody"></tbody></table></div></section>
+        <aside class="basis-panel"><label for="primarySku">地域分布基准主品</label><input id="primarySku" list="skuSuggestions" placeholder="输入主品JD码" /><datalist id="skuSuggestions"></datalist><label for="mechanismSnapshot">参考库存切片</label><select id="mechanismSnapshot"></select><p>城市权重取主品近90日收货地商品件数；同一配送中心跨RDC重复值只计一次。</p></aside>
+      </div>
+      <section class="results" id="mechanismResults" hidden>
+        <dl class="metric-strip three"><div><dt>主品90日件数</dt><dd id="mechanismQuantity">0</dd></div><div><dt>平均每单upcharge</dt><dd id="mechanismAverage">¥0.00</dd></div><div><dt>每1000单upcharge</dt><dd id="mechanismThousand">¥0</dd></div></dl>
+        <div class="result-grid"><section><h3>预计发货模式比例</h3><div class="mode-bars" id="mechanismModeBars"></div></section><section><h3>城市模拟结果</h3><div class="table-wrap"><table><thead><tr><th>应发货地</th><th>权重</th><th>模式</th><th>from数</th><th>upcharge</th></tr></thead><tbody id="mechanismResultBody"></tbody></table></div></section></div>
+      </section>
+    </section>
+
+    <section class="tool-view" id="settingsView">
+      <header class="view-heading"><div><p>LOCAL CONFIGURATION</p><h2>数据与计费规则</h2></div><button class="primary-button" id="saveSettings" type="button">保存到本浏览器</button></header>
+      <div class="settings-note">这些改动只保存在当前浏览器，不会修改团队默认密文或影响其他用户。</div>
+      <div class="settings-grid">
+        <section class="editor-panel"><header><div><h3>城市收敛映射</h3><small>消费者城市 → 应发货城市</small></div><input id="cityFilter" type="search" placeholder="筛选城市" /></header><div class="mapping-list" id="cityMappingList"></div></section>
+        <section class="editor-panel"><header><div><h3>Upcharge规则</h3><small>元 / 收费履约from</small></div></header><div class="rule-fields"><label>本地额外from，同网<input id="ruleLocal" type="number" min="0" step="0.1" /></label><label>同区跨城，同网<input id="ruleRegion" type="number" min="0" step="0.1" /></label><label>跨区<input id="ruleCrossRegion" type="number" min="0" step="0.1" /></label><label>跨网络<input id="ruleCrossNetwork" type="number" min="0" step="0.1" /></label></div><div class="rule-example"><strong>计费基准</strong><span>有本地from：一个本地from免费；无本地from：所有外地from均收费。</span><span>单个节点命中多项时只计最高费率。</span></div><button class="quiet-button" id="resetSettings" type="button">恢复团队默认规则</button></section>
+      </div>
+    </section>
+  </div>
+</main>
+</body>
+</html>

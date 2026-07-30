@@ -21,3 +21,4 @@ __pycache__/
 *.xlsx
 *.xls
 data/*.tmp
+data/**/*.tmp

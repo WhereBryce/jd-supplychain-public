@@ -15,6 +15,7 @@ JD 供应链团队知识库的**对外发布站**（GitHub Pages 托管）。所
 | 轻货仓入门 | 新人·轻货仓 | 六仓网络、低成本逻辑、SKU 准入、消费者路由、库存边界、MOQ，以及与城市仓的核心区别 | <https://wherebryce.github.io/jd-supplychain-public/pages/light-warehouse-primer.html> |
 | JD 库存报告字段词典 | 参考·库存字段 | 商智库存报告全字段逐条识别（现货/可用/可订购公式、滞销库龄、出库销量口径、PV现货率），带即时筛选 | <https://wherebryce.github.io/jd-supplychain-public/pages/jd-inventory-report-fields.html> |
 | RDC 库存查询 | 工具·加密访问 | 密码直入，中文商品名实时联想 5 个候选，支持空格分词、京东码搜索与全部 RDC 筛选 | <https://wherebryce.github.io/jd-supplychain-public/pages/rdc-inventory-query.html> |
+| 订单履约分析 | 工具·履约决策 | 使用加密库存与仓网关系分析真实订单或绑赠机制，输出发货模式比例、逐单及平均 upcharge | <https://wherebryce.github.io/jd-supplychain-public/pages/fulfillment-decision.html> |
 
 ## 📁 目录结构
 
@@ -28,20 +29,28 @@ jd-supplychain-public/          # Pages 从 /(root) 发布
     light-warehouse-primer.html     # 轻货仓入门
     jd-inventory-report-fields.html # JD 库存报告字段词典
     rdc-inventory-query.html        # RDC 库存加密查询
+    fulfillment-decision.html       # 加密订单履约分析
   assets/
     rdc-inventory-query.css         # 查询页样式
     rdc-inventory-query.js          # 浏览器解密与查询逻辑
+    fulfillment-engine.js           # 浏览器确定性履约求解器
+    fulfillment-decision.{css,js}   # 履约分析页面与交互
   data/
     rdc-inventory.enc.json          # AES-GCM 加密库存（无明文）
     rdc-inventory-shards/           # 64 个按 SKU 哈希拆分的加密查询分片
     rdc-product-catalog.enc.json    # 极小加密搜索清单（密码验证）
     rdc-product-search/             # 256 个中文/编码字符搜索分片
+    fulfillment-status.json         # 非敏感切片日期清单
+    fulfillment-snapshots/          # 最近3个加密履约切片
   scripts/
     build-rdc-inventory.py          # 从 RDC 报告生成加密库存
     build-rdc-inventory.ps1         # Windows 一键构建入口
     publish-rdc-inventory.ps1       # 检测更新、生成密文并推送
     run-rdc-publication.ps1         # 计划任务日志入口
     setup-rdc-publication.ps1       # DPAPI 密码及计划任务初始化
+    build-fulfillment-data.py       # 生成紧凑加密履约切片
+    build-fulfillment-data.ps1      # 复用DPAPI密码的一键构建入口
+    publish-fulfillment.ps1         # 受限提交并推送履约工具
   .nojekyll                     # 关闭 Jekyll 处理
   README.md
 ```
@@ -114,6 +123,28 @@ cd C:\Users\yao.q.1\repos\jd-supplychain-public
 ```
 
 必须使用至少 12 位且不可猜测的密码。静态密文可被下载并离线尝试破解，因此密码强度是安全边界；不要把明文 Excel、密码或解密后的 JSON 提交到本仓库。
+
+## 🔐 更新订单履约分析
+
+订单履约页是纯静态浏览器应用：GitHub Pages只保存AES-256-GCM密文，用户输入与计算结果不会上传。加密数据包含履约求解必需的SKU库存、主品近90日收货地件数、城市收敛、仓型与仓城覆盖关系；不包含原始Excel、消费者订单或访问密码。
+
+默认发布最近3个库存切片，每个切片独立加密。页面解锁后只下载用户选择的切片，并在浏览器中执行确定性分仓与upcharge计算。用户在“数据与规则”页面修改的城市映射和费率只保存在当前浏览器`localStorage`，不影响团队默认密文。
+
+构建与推送复用RDC查询页的DPAPI密码：
+
+```powershell
+cd C:\Users\yao.q.1\repos\jd-supplychain-public
+.\scripts\build-fulfillment-data.ps1
+.\scripts\publish-fulfillment.ps1
+```
+
+浏览器求解器回归测试：
+
+```powershell
+node .\scripts\test-fulfillment-engine.js
+```
+
+`publish-fulfillment.ps1`只允许暂存履约页面、前端资源、构建脚本和加密履约数据；发现其他未提交修改时停止。
 
 ## ➕ 怎么新增页面
 
