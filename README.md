@@ -138,7 +138,7 @@ cd C:\Users\yao.q.1\repos\jd-supplychain-public
 .\scripts\publish-fulfillment.ps1
 ```
 
-自动更新任务`JD-Fulfillment-Pages-Publish`每30分钟检查最新库存切片、宝洁直送明细、11区域关系和轻货仓关系。指纹未变化时不重建、不联网；变化时生成最近3个加密切片并推送，通常在源文件落地后30分钟内被网页捕捉。注册任务：
+自动更新任务`JD-Fulfillment-Pages-Publish`每天12:00检查一次最新库存切片、宝洁直送明细、11区域关系和轻货仓关系。指纹未变化时不重建、不联网；变化时生成最近3个加密切片并推送，GitHub Pages通常再需1–3分钟完成部署。当天12:00之后才落地的数据会在次日12:00捕捉。注册任务：
 
 ```powershell
 .\scripts\register-fulfillment-publication.ps1

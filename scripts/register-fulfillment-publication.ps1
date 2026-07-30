@@ -10,9 +10,7 @@ $Action = New-ScheduledTaskAction `
     -Execute 'powershell.exe' `
     -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$Runner`"" `
     -WorkingDirectory $PSScriptRoot
-$Triggers = 0..47 | ForEach-Object {
-    New-ScheduledTaskTrigger -Daily -At ([datetime]::Today.AddMinutes(5 + 30 * $_))
-}
+$Trigger = New-ScheduledTaskTrigger -Daily -At '12:00'
 $Settings = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable `
     -AllowStartIfOnBatteries `
@@ -27,9 +25,9 @@ $Principal = New-ScheduledTaskPrincipal `
 Register-ScheduledTask `
     -TaskName $TaskName `
     -Action $Action `
-    -Trigger $Triggers `
+    -Trigger $Trigger `
     -Settings $Settings `
     -Principal $Principal `
-    -Description '每30分钟检查履约库存及基础关系；变化时重建加密数据并发布GitHub Pages' `
+    -Description '每天12:00检查履约库存及基础关系；变化时重建加密数据并发布GitHub Pages' `
     -Force | Out-Null
-Write-Host "已注册$TaskName：每日00:05起每30分钟检查一次" -ForegroundColor Green
+Write-Host "已注册$TaskName：每天12:00检查一次" -ForegroundColor Green
