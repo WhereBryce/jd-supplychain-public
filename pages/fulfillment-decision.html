@@ -8,10 +8,10 @@
 <title>订单履约分析 · JD Supply Chain</title>
 <meta name="description" content="加密访问的JD订单履约与绑赠机制模拟工具，计算发货模式比例和upcharge。" />
 <link rel="icon" href="data:," />
-<link rel="stylesheet" href="../assets/fulfillment-decision.css?v=20260731a" />
-<link rel="stylesheet" href="../assets/fulfillment-logic.css?v=20260731a" />
-<script src="../assets/fulfillment-engine.js?v=20260731a" defer></script>
-<script src="../assets/fulfillment-decision.js?v=20260731a" defer></script>
+<link rel="stylesheet" href="../assets/fulfillment-decision.css?v=20260731b" />
+<link rel="stylesheet" href="../assets/fulfillment-logic.css?v=20260731b" />
+<script src="../assets/fulfillment-engine.js?v=20260731b" defer></script>
+<script src="../assets/fulfillment-decision.js?v=20260731b" defer></script>
 </head>
 <body>
 
@@ -107,7 +107,7 @@
 
         <section class="logic-panel"><span class="logic-index">04</span><h3>结果标签</h3><table class="logic-table"><tbody><tr><th>地理</th><td>本地同城 / 同区跨城 / 跨区</td></tr><tr><th>网络</th><td>同网 / 跨网</td></tr><tr><th>仓级</th><td>1个from为同仓；2个及以上为跨仓</td></tr><tr><th>包裹</th><td>整单 / 拆单</td></tr></tbody></table><p class="logic-note">仓库能覆盖应发货地，不代表它是本地仓；本地始终比较from物理城市与履约to。</p></section>
 
-        <section class="logic-panel"><span class="logic-index">05</span><h3>Upcharge规则</h3><table class="logic-table"><tbody><tr><th>本地额外from、同网</th><td>1.5元</td></tr><tr><th>同区跨城、同网</th><td>3元</td></tr><tr><th>普通C仓跨区</th><td>4.5元</td></tr><tr><th>跨网络</th><td>4.5元</td></tr><tr><th>轻货仓网络内跨区</th><td>0元</td></tr></tbody></table><p class="logic-note">有本地from时1个本地from免费；本地无from时所有外地from均收费。单个from命中多项时只取最高费率。</p></section>
+        <section class="logic-panel"><span class="logic-index">05</span><h3>Upcharge规则</h3><table class="logic-table"><tbody><tr><th>本地额外from、同网</th><td>1.5元</td></tr><tr><th>同区跨城、同网</th><td>2.3元</td></tr><tr><th>普通C仓跨区</th><td>4.5元</td></tr><tr><th>跨网络</th><td>4.5元</td></tr><tr><th>轻货仓网络内跨区</th><td>0元</td></tr></tbody></table><p class="logic-note">有本地from时1个本地from免费；本地无from时所有外地from均收费。单个from命中多项时只取最高费率。</p></section>
 
         <section class="logic-panel wide"><span class="logic-index">06</span><h3>绑赠机制模拟</h3><div class="formula-row"><div><span>城市权重</span><code>w(c) = 主品在城市c近90日收货地商品件数 ÷ 全国件数</code></div><div><span>模式概率</span><code>P(m) = Σ w(c) × I[城市c判定为模式m]</code></div><div><span>平均成本</span><code>E(U) = Σ w(c) × 城市c的upcharge</code></div></div><ol class="logic-steps compact"><li>指定一个地域分布基准主品；同一配送中心跨RDC重复件数只计一次。</li><li>每个应发货城市独立用完整机制SKU与数量求解，不跨城市扣减库存。</li><li>这里的“概率”是按主品商品件数地域分布加权的预计占比，不是随机库存概率，也不是订单数概率。</li></ol></section>
       </div>

@@ -11,7 +11,7 @@ function snapshot(warehouseRows) {
     networks: ["普通C仓", "轻货仓"],
     city_regions: [0, 0, 0, 0, 1, 2],
     city_mapping: [0, 1, 2, 3, 4, 5],
-    rules: [150, 300, 450, 450],
+    rules: [150, 230, 450, 450],
     skus: [["A", "A", "", ""], ["B", "B", "", ""]],
     warehouses: warehouseRows,
     demand: [[0, [[0, 100]]]],
@@ -37,7 +37,7 @@ data = snapshot([
 ]);
 result = engine.decide(data, 0, { A: 1, B: 1 });
 assert.equal(result.mode, "同区跨城发货 / 同网 / 拆单发货");
-assert.equal(result.upchargeCents, 600);
+assert.equal(result.upchargeCents, 460);
 
 data = snapshot([
   warehouse("北京", 0, 0, 0, [[1, 1]]),
@@ -45,14 +45,14 @@ data = snapshot([
 ]);
 result = engine.decide(data, 0, { A: 1, B: 2 });
 assert.equal(result.fromCount, 2);
-assert.equal(result.upchargeCents, 300);
+assert.equal(result.upchargeCents, 230);
 assert.equal(result.allocations.filter((row) => row.isLocal).reduce((sum, row) => sum + row.quantity, 0), 1);
 
 data = snapshot([warehouse("唐山", 2, 0, 0, [[0, 1]])]);
 result = engine.decide(data, 0, { A: 1 });
 assert.equal(result.parcel, "整单发货");
 assert.equal(result.warehouseMode, "同仓");
-assert.equal(result.upchargeCents, 300);
+assert.equal(result.upchargeCents, 230);
 
 data = snapshot([
   warehouse("北京C", 0, 0, 0, [[0, 1]]),
@@ -70,7 +70,7 @@ const v2 = engine.decodeSnapshot({
   format: "fulfillment-snapshot-v2-base",
   shard_count: 64,
   cities: ["北京"], regions: ["北京"], networks: ["普通C仓"],
-  city_regions: [0], city_mapping: [0], rules: [150, 300, 450, 450],
+  city_regions: [0], city_mapping: [0], rules: [150, 230, 450, 450],
   skus: [["A", "A", "", ""]],
   warehouses: [["北京", "北京", "A库", 0, 0, 0, null]],
 });
