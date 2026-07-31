@@ -8,9 +8,10 @@
 <title>订单履约分析 · JD Supply Chain</title>
 <meta name="description" content="加密访问的JD订单履约与绑赠机制模拟工具，计算发货模式比例和upcharge。" />
 <link rel="icon" href="data:," />
-<link rel="stylesheet" href="../assets/fulfillment-decision.css?v=20260730d" />
-<script src="../assets/fulfillment-engine.js?v=20260730d" defer></script>
-<script src="../assets/fulfillment-decision.js?v=20260730d" defer></script>
+<link rel="stylesheet" href="../assets/fulfillment-decision.css?v=20260731a" />
+<link rel="stylesheet" href="../assets/fulfillment-logic.css?v=20260731a" />
+<script src="../assets/fulfillment-engine.js?v=20260731a" defer></script>
+<script src="../assets/fulfillment-decision.js?v=20260731a" defer></script>
 </head>
 <body>
 
@@ -50,13 +51,14 @@
 
   <div class="workspace">
     <nav class="view-tabs" aria-label="工具视图">
-      <button class="active" data-view="orders" type="button">真实订单</button>
-      <button data-view="mechanism" type="button">绑赠机制</button>
+      <button class="active" data-view="mechanism" type="button">绑赠机制</button>
+      <button data-view="orders" type="button">真实订单</button>
       <button data-view="settings" type="button">数据与规则</button>
+      <button data-view="logic" type="button">逻辑基础</button>
     </nav>
     <div class="notice" id="notice" role="alert" hidden><span id="noticeText"></span><button id="noticeClose" type="button" aria-label="关闭">×</button></div>
 
-    <section class="tool-view active" id="ordersView">
+    <section class="tool-view" id="ordersView">
       <header class="view-heading"><div><p>ACTUAL ORDERS</p><h2>真实消费者订单</h2></div><button class="primary-button" id="analyzeOrders" type="button">执行判定</button></header>
       <div class="input-grid">
         <label class="field"><span>批量粘贴订单明细</span><textarea id="orderPaste" rows="7" spellcheck="false" placeholder="订单号&#9;收货城市&#9;JD码&#9;数量&#10;O001&#9;石家庄&#9;100000000001&#9;1"></textarea><small>支持从Excel直接粘贴，也支持英文逗号分隔；同一订单多行会合并。</small></label>
@@ -68,7 +70,7 @@
       </section>
     </section>
 
-    <section class="tool-view" id="mechanismView">
+    <section class="tool-view active" id="mechanismView">
       <header class="view-heading"><div><p>BUNDLE SIMULATION</p><h2>绑赠机制模拟</h2></div><button class="primary-button" id="analyzeMechanism" type="button">开始模拟</button></header>
       <div class="mechanism-grid">
         <section class="editor-panel"><header><h3>单套构成</h3><button class="square-button" id="addMechanismRow" type="button" title="增加SKU">＋</button></header><div class="table-wrap"><table><thead><tr><th>JD码</th><th>单套数量</th><th>角色</th><th></th></tr></thead><tbody id="mechanismBody"></tbody></table></div></section>
@@ -86,6 +88,28 @@
       <div class="settings-grid">
         <section class="editor-panel"><header><div><h3>城市收敛映射</h3><small>消费者城市 → 应发货城市</small></div><input id="cityFilter" type="search" placeholder="筛选城市" /></header><div class="mapping-list" id="cityMappingList"></div></section>
         <section class="editor-panel"><header><div><h3>路由与 Upcharge 规则</h3><small>普通C仓全国代发需人工申请</small></div></header><label class="routing-toggle"><input id="ordinaryCNationalFallback" type="checkbox" /><span><strong>启用普通C仓全国代发兜底</strong><small>关闭时普通C仓只在所属11区域内自动候选；开启后可跨区服务全国，并按跨区规则收取upcharge。</small></span></label><div class="rule-fields"><label>本地额外from，同网<input id="ruleLocal" type="number" min="0" step="0.1" /></label><label>同区跨城，同网<input id="ruleRegion" type="number" min="0" step="0.1" /></label><label>跨区<input id="ruleCrossRegion" type="number" min="0" step="0.1" /></label><label>跨网络<input id="ruleCrossNetwork" type="number" min="0" step="0.1" /></label></div><div class="rule-example"><strong>轻货仓自动兜底</strong><span>原覆盖关系内轻货仓优先；缺货时其他轻货仓自动跨区代发全国。同一轻货仓网络内跨区不增加upcharge，跨网络仍按跨网费率。</span><strong>计费基准</strong><span>有本地from：一个本地from免费；无本地from：所有外地from均收费。单个节点命中多项时只计最高费率。</span></div><button class="quiet-button" id="resetSettings" type="button">恢复团队默认规则</button></section>
+      </div>
+    </section>
+
+    <section class="tool-view logic-view" id="logicView">
+      <header class="view-heading"><div><p>DECISION FOUNDATION</p><h2>逻辑基础</h2></div></header>
+      <div class="logic-summary">
+        <strong>一句话</strong>
+        <p>先把消费者需求收敛到应发货城市，再按仓城覆盖与SKU可订购库存寻找履约from；严格遵循“本地承担最大化 → 路由层级优先 → upcharge最小化 → from数最少化”，最后按主品近90日收货地商品件数加权模拟机制概率。</p>
+      </div>
+
+      <div class="logic-grid">
+        <section class="logic-panel"><span class="logic-index">01</span><h3>对象与库存口径</h3><dl class="logic-definitions"><div><dt>履约 to</dt><dd>消费者城市收敛后的应发货城市。</dd></div><div><dt>履约 from</dt><dd>唯一“配送中心 + 库房名称”，是同仓/跨仓与计费的最小粒度。</dd></div><div><dt>库存</dt><dd>使用所选日期24:00切片的可订购库存；大于0才可满足，负数按0。</dd></div><div><dt>订单关系</dt><dd>多笔订单独立判断，不跨订单连续扣减库存；单笔内部必须满足完整数量。</dd></div></dl></section>
+
+        <section class="logic-panel"><span class="logic-index">02</span><h3>需求收敛与供给覆盖</h3><ol class="logic-steps"><li><b>需求侧：</b>消费者城市本身是宝洁直送城市时保持本地；否则按城市映射收敛到应发货城市。</li><li><b>普通C仓：</b>默认在所属11区域内自动候选；人工开启“全国代发兜底”后才可跨区服务全国。</li><li><b>轻货仓：</b>原关系表覆盖城市优先；对应仓缺货时，其他轻货仓自动跨区代发全国。</li><li><b>城市仓：</b>只覆盖物理所在城市。</li></ol></section>
+
+        <section class="logic-panel wide"><span class="logic-index">03</span><h3>履约求解优先级</h3><div class="priority-flow"><div><b>1</b><span>完整满足单笔订单</span></div><i>→</i><div><b>2</b><span>最大化本地库存承担量</span></div><i>→</i><div><b>3</b><span>优先原覆盖关系，再用轻货仓自动兜底，再用人工普通C仓兜底</span></div><i>→</i><div><b>4</b><span>最小化upcharge</span></div><i>→</i><div><b>5</b><span>最小化履约from数并固定排序</span></div></div><p class="logic-note">本地有部分SKU时必须优先使用本地库存，不能为了少拆单而直接改由外地仓整单发货。同一SKU多件允许由多个from共同满足。</p></section>
+
+        <section class="logic-panel"><span class="logic-index">04</span><h3>结果标签</h3><table class="logic-table"><tbody><tr><th>地理</th><td>本地同城 / 同区跨城 / 跨区</td></tr><tr><th>网络</th><td>同网 / 跨网</td></tr><tr><th>仓级</th><td>1个from为同仓；2个及以上为跨仓</td></tr><tr><th>包裹</th><td>整单 / 拆单</td></tr></tbody></table><p class="logic-note">仓库能覆盖应发货地，不代表它是本地仓；本地始终比较from物理城市与履约to。</p></section>
+
+        <section class="logic-panel"><span class="logic-index">05</span><h3>Upcharge规则</h3><table class="logic-table"><tbody><tr><th>本地额外from、同网</th><td>1.5元</td></tr><tr><th>同区跨城、同网</th><td>3元</td></tr><tr><th>普通C仓跨区</th><td>4.5元</td></tr><tr><th>跨网络</th><td>4.5元</td></tr><tr><th>轻货仓网络内跨区</th><td>0元</td></tr></tbody></table><p class="logic-note">有本地from时1个本地from免费；本地无from时所有外地from均收费。单个from命中多项时只取最高费率。</p></section>
+
+        <section class="logic-panel wide"><span class="logic-index">06</span><h3>绑赠机制模拟</h3><div class="formula-row"><div><span>城市权重</span><code>w(c) = 主品在城市c近90日收货地商品件数 ÷ 全国件数</code></div><div><span>模式概率</span><code>P(m) = Σ w(c) × I[城市c判定为模式m]</code></div><div><span>平均成本</span><code>E(U) = Σ w(c) × 城市c的upcharge</code></div></div><ol class="logic-steps compact"><li>指定一个地域分布基准主品；同一配送中心跨RDC重复件数只计一次。</li><li>每个应发货城市独立用完整机制SKU与数量求解，不跨城市扣减库存。</li><li>这里的“概率”是按主品商品件数地域分布加权的预计占比，不是随机库存概率，也不是订单数概率。</li></ol></section>
       </div>
     </section>
   </div>

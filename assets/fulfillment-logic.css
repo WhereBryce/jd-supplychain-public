@@ -1,0 +1,246 @@
+.view-tabs {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.logic-summary {
+  margin-bottom: 17px;
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  color: #dbe5fa;
+  background: #101a31;
+  border-left: 5px solid var(--green);
+}
+
+.logic-summary strong {
+  color: var(--green);
+  font-size: 12px;
+}
+
+.logic-summary p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.75;
+}
+
+.logic-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px;
+}
+
+.logic-panel {
+  position: relative;
+  padding: 20px;
+  overflow: hidden;
+  background: var(--panel);
+  border: 1px solid var(--line);
+}
+
+.logic-panel.wide {
+  grid-column: 1 / -1;
+}
+
+.logic-index {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  color: #35456f;
+  font: 800 28px/1 Bahnschrift, sans-serif;
+}
+
+.logic-panel h3 {
+  position: relative;
+  margin: 0 0 16px;
+  font-size: 15px;
+}
+
+.logic-definitions {
+  margin: 0;
+  display: grid;
+}
+
+.logic-definitions div {
+  padding: 10px 0;
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.logic-definitions div:first-child {
+  border-top: 0;
+}
+
+.logic-definitions dt {
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.logic-definitions dd {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.logic-steps {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.75;
+}
+
+.logic-steps li + li {
+  margin-top: 8px;
+}
+
+.logic-steps b {
+  color: var(--ink);
+}
+
+.logic-steps.compact {
+  margin-top: 15px;
+}
+
+.priority-flow {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.priority-flow > div {
+  min-width: 0;
+  flex: 1;
+  padding: 13px 10px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 9px;
+  background: #111b33;
+  border: 1px solid var(--line);
+}
+
+.priority-flow > div b {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  color: #08152a;
+  background: var(--green);
+  border-radius: 50%;
+  font: 800 11px/1 Bahnschrift, sans-serif;
+}
+
+.priority-flow > div span {
+  color: #dbe5f8;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.priority-flow > i {
+  align-self: center;
+  color: var(--blue);
+  font-style: normal;
+}
+
+.logic-note {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  color: var(--muted);
+  background: #0d1529;
+  border-left: 3px solid var(--yellow);
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+.logic-table {
+  min-width: 0;
+  border: 1px solid var(--line);
+}
+
+.logic-table th,
+.logic-table td {
+  position: static;
+  padding: 9px 10px;
+  background: transparent;
+  border-bottom: 1px solid var(--line);
+  font-size: 10px;
+}
+
+.logic-table th {
+  width: 42%;
+  color: var(--muted);
+}
+
+.logic-table td {
+  color: #dbe5f8;
+}
+
+.formula-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.formula-row > div {
+  padding: 13px;
+  display: grid;
+  gap: 8px;
+  background: #111b33;
+  border: 1px solid var(--line);
+}
+
+.formula-row span {
+  color: var(--green);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.formula-row code {
+  overflow-wrap: anywhere;
+  color: #dbe5f8;
+  font: 10px/1.6 "Cascadia Mono", Consolas, monospace;
+  white-space: normal;
+}
+
+@media (max-width: 900px) {
+  .logic-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .logic-panel.wide {
+    grid-column: auto;
+  }
+
+  .priority-flow {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .priority-flow > i {
+    display: none;
+  }
+
+  .formula-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .view-tabs button {
+    padding-inline: 4px;
+    font-size: 10px;
+  }
+
+  .logic-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .logic-definitions div {
+    grid-template-columns: 82px 1fr;
+  }
+}
