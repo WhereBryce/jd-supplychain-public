@@ -8,10 +8,10 @@ function snapshot(warehouseRows) {
     format: "fulfillment-snapshot-v1",
     cities: ["北京", "石家庄", "唐山", "呼和浩特", "广州", "上海"],
     regions: ["北京", "广州", "上海"],
-    networks: ["普通C仓", "轻货仓"],
+    networks: ["普通C仓", "轻货仓", "城市仓"],
     city_regions: [0, 0, 0, 0, 1, 2],
     city_mapping: [0, 1, 2, 3, 4, 5],
-    rules: [150, 230, 450, 450],
+    rules: [150, 100, 80, 300, 300, 200],
     skus: [["A", "A", "", ""], ["B", "B", "", ""]],
     warehouses: warehouseRows,
     demand: [[0, [[0, 100]]]],
@@ -30,6 +30,8 @@ let result = engine.decide(data, 1, { A: 1, B: 2 });
 assert.equal(result.mode, "本地同城发货 / 同网 / 跨仓");
 assert.equal(result.warehouseMode, "跨仓");
 assert.equal(result.upchargeCents, 150);
+assert.equal(result.productionFeeCents, 150);
+assert.equal(result.deliveryFeeCents, 0);
 
 data = snapshot([
   warehouse("呼和浩特", 3, 0, 0, [[0, 1]]),
@@ -37,7 +39,8 @@ data = snapshot([
 ]);
 result = engine.decide(data, 0, { A: 1, B: 1 });
 assert.equal(result.mode, "同区跨城发货 / 同网 / 跨仓");
-assert.equal(result.upchargeCents, 460);
+assert.equal(result.upchargeCents, 230);
+assert.equal(result.sameRegionDeliveryFeeCents, 80);
 
 data = snapshot([
   warehouse("北京", 0, 0, 0, [[1, 1]]),
@@ -53,7 +56,7 @@ result = engine.decide(data, 0, { A: 1 });
 assert.equal(result.parcel, "整单发货");
 assert.equal(result.warehouseMode, "同仓");
 assert.equal(result.mode, "同区跨城发货 / 同网 / 同仓");
-assert.equal(result.upchargeCents, 230);
+assert.equal(result.upchargeCents, 80);
 
 data = snapshot([
   warehouse("北京C", 0, 0, 0, [[0, 1]]),
@@ -61,7 +64,7 @@ data = snapshot([
 ]);
 result = engine.decide(data, 0, { A: 1, B: 1 });
 assert.equal(result.network, "跨网");
-assert.equal(result.upchargeCents, 450);
+assert.equal(result.upchargeCents, 300);
 
 data = snapshot([warehouse("北京大仓", 0, 0, 0, [[0, 1]], [0, 1, 2, 3])]);
 assert.equal(engine.decide(data, 1, { A: 1 }).fulfilled, true);
@@ -71,7 +74,7 @@ const v2 = engine.decodeSnapshot({
   format: "fulfillment-snapshot-v2-base",
   shard_count: 64,
   cities: ["北京"], regions: ["北京"], networks: ["普通C仓"],
-  city_regions: [0], city_mapping: [0], rules: [150, 230, 450, 450],
+  city_regions: [0], city_mapping: [0], rules: [150, 100, 80, 300, 300, 200],
   skus: [["A", "A", "", ""]],
   warehouses: [["北京", "北京", "A库", 0, 0, 0, null]],
 });
@@ -93,7 +96,7 @@ assert.equal(result.upchargeCents, 0);
 data = snapshot([warehouse("北京C", 0, 0, 0, [[0, 1]], [0])]);
 result = engine.decide(data, 4, { A: 1 });
 assert.equal(result.fulfilled, true);
-assert.equal(result.upchargeCents, 450);
+assert.equal(result.upchargeCents, 300);
 assert.equal(result.network, "同网");
 assert.equal(engine.decide(data, 4, { A: 1 }, { ordinaryCNationalFallback: false }).fulfilled, false);
 
@@ -104,6 +107,33 @@ data = snapshot([
 result = engine.decide(data, 4, { A: 1, B: 1 });
 assert.equal(result.fulfilled, true);
 assert.equal(result.mode, "跨区发货 / 同网 / 跨仓");
-assert.equal(result.upchargeCents, 900);
+assert.equal(result.upchargeCents, 750);
+
+data = snapshot([
+  warehouse("北京A", 0, 0, 0, [[0, 1]], [0]),
+  warehouse("唐山B", 2, 0, 0, [[1, 1]], [2]),
+]);
+result = engine.decide(data, 4, { A: 1, B: 1 });
+assert.equal(result.productionFeeCents, 150);
+assert.equal(result.crossRegionDeliveryFeeCents, 300);
+assert.equal(result.upchargeCents, 450);
+
+data = snapshot([
+  warehouse("广州轻A", 4, 1, 1, [[0, 1]], [4]),
+  warehouse("北京轻B", 0, 0, 1, [[1, 1]], [0]),
+]);
+result = engine.decide(data, 4, { A: 1, B: 1 });
+assert.equal(result.productionFeeCents, 100);
+assert.equal(result.specialDeliveryFeeCents, 200);
+assert.equal(result.upchargeCents, 300);
+
+data = snapshot([
+  warehouse("北京C", 0, 0, 0, [[0, 1]], [0]),
+  warehouse("北京城市", 0, 0, 2, [[1, 1]], [0]),
+]);
+result = engine.decide(data, 0, { A: 1, B: 1 });
+assert.equal(result.productionFeeCents, 100);
+assert.equal(result.specialDeliveryFeeCents, 200);
+assert.equal(result.upchargeCents, 300);
 
 console.log("fulfillment-engine: business + v2 + fallback scenarios passed");

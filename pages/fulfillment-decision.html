@@ -10,8 +10,8 @@
 <link rel="icon" href="data:," />
 <link rel="stylesheet" href="../assets/fulfillment-decision.css?v=20260731b" />
 <link rel="stylesheet" href="../assets/fulfillment-logic.css?v=20260731b" />
-<script src="../assets/fulfillment-engine.js?v=20260731e" defer></script>
-<script src="../assets/fulfillment-decision.js?v=20260731e" defer></script>
+<script src="../assets/fulfillment-engine.js?v=20260731f" defer></script>
+<script src="../assets/fulfillment-decision.js?v=20260731f" defer></script>
 </head>
 <body>
 
@@ -66,7 +66,7 @@
       </div>
       <section class="results" id="orderResults" hidden>
         <dl class="metric-strip"><div><dt>订单数</dt><dd id="orderCount">0</dd></div><div><dt>平均每单upcharge</dt><dd id="orderAverage">¥0.00</dd></div><div><dt>总upcharge</dt><dd id="orderTotal">¥0.00</dd></div><div><dt>完全满足</dt><dd id="orderFulfilled">0</dd></div></dl>
-        <div class="result-grid"><section><h3>发货模式比例</h3><div class="mode-bars" id="orderModeBars"></div></section><section><h3>订单判定</h3><div class="table-wrap"><table><thead><tr><th>订单</th><th>消费者城市</th><th>应发货地</th><th>地理层级</th><th>网络层级</th><th>仓级</th><th>from数</th><th>upcharge</th></tr></thead><tbody id="orderResultBody"></tbody></table></div></section></div>
+        <div class="result-grid"><section><h3>发货模式比例</h3><div class="mode-bars" id="orderModeBars"></div></section><section><h3>订单判定</h3><div class="table-wrap"><table><thead><tr><th>订单</th><th>消费者城市</th><th>应发货地</th><th>地理层级</th><th>网络层级</th><th>仓级</th><th>是否拆单</th><th>子单数</th><th>额外拆单数</th><th>出库生产费</th><th>配送费Upcharge</th><th>总Upcharge</th></tr></thead><tbody id="orderResultBody"></tbody></table></div></section></div>
       </section>
     </section>
 
@@ -78,7 +78,7 @@
       </div>
       <section class="results" id="mechanismResults" hidden>
         <dl class="metric-strip three"><div><dt>主品90日件数</dt><dd id="mechanismQuantity">0</dd></div><div><dt>平均每单upcharge</dt><dd id="mechanismAverage">¥0.00</dd></div><div><dt>每1000单upcharge</dt><dd id="mechanismThousand">¥0</dd></div></dl>
-        <div class="result-grid"><section><h3>预计发货模式比例</h3><div class="mode-bars" id="mechanismModeBars"></div></section><section><h3>城市模拟结果</h3><div class="table-wrap"><table><thead><tr><th>应发货地</th><th>权重</th><th>地理层级</th><th>网络层级</th><th>仓级</th><th>from数</th><th>upcharge</th></tr></thead><tbody id="mechanismResultBody"></tbody></table></div></section></div>
+        <div class="result-grid"><section><h3>预计发货模式比例</h3><div class="mode-bars" id="mechanismModeBars"></div></section><section><h3>城市模拟结果</h3><div class="table-wrap"><table><thead><tr><th>应发货地</th><th>权重</th><th>地理层级</th><th>网络层级</th><th>仓级</th><th>是否拆单</th><th>子单数</th><th>额外拆单数</th><th>出库生产费</th><th>配送费Upcharge</th><th>总Upcharge</th></tr></thead><tbody id="mechanismResultBody"></tbody></table></div></section></div>
       </section>
     </section>
 
@@ -87,7 +87,7 @@
       <div class="settings-note"><strong>配置影响范围：</strong>A修改参数后，只影响A当前浏览器；不会修改团队默认密文，也不会影响B或其他用户。<br><strong>同仓定义：</strong>订单只使用1个履约from，即同一个“配送中心 + 库房名称”；使用2个及以上履约from为跨仓，同一配送中心下两个不同库房仍算跨仓。<br><strong><span id="fromCountExplanation">履约from</span>：</strong>宝洁直送明细中唯一“配送中心 + 库房名称”的数量；不是配送中心与库房的笛卡尔积。当前包含<span id="ordinaryCount">--</span>个普通C仓、<span id="lightCount">--</span>个轻货仓、<span id="cityWarehouseCount">--</span>个城市仓。</div>
       <div class="settings-grid">
         <section class="editor-panel"><header><div><h3>城市收敛映射</h3><small>消费者城市 → 应发货城市</small></div><input id="cityFilter" type="search" placeholder="筛选城市" /></header><div class="mapping-list" id="cityMappingList"></div></section>
-        <section class="editor-panel"><header><div><h3>路由与 Upcharge 规则</h3><small>普通C仓默认支持跨区域平行代发</small></div></header><label class="routing-toggle"><input id="ordinaryCNationalFallback" type="checkbox" /><span><strong>默认启用普通C仓跨区域平行兜底</strong><small>开启时普通C仓网络内所有区域、城市和履约from可在全国范围互相代发；原覆盖关系优先，跨区域按跨区费率收取upcharge。</small></span></label><div class="rule-fields"><label>本地额外from，同网<input id="ruleLocal" type="number" min="0" step="0.1" /></label><label>同区跨城，同网<input id="ruleRegion" type="number" min="0" step="0.1" /></label><label>跨区<input id="ruleCrossRegion" type="number" min="0" step="0.1" /></label><label>跨网络<input id="ruleCrossNetwork" type="number" min="0" step="0.1" /></label></div><div class="rule-example"><strong>普通C仓平行兜底</strong><span>原覆盖关系优先；不足时普通C仓网络内全国跨区域互代，跨区from按跨区费率计费。</span><strong>轻货仓自动兜底</strong><span>原覆盖关系内轻货仓优先；缺货时其他轻货仓自动跨区代发全国。同一轻货仓网络内跨区不增加upcharge，跨网络仍按跨网费率。</span><strong>计费基准</strong><span>有本地from：一个本地from免费；无本地from：所有外地from均收费。单个节点命中多项时只计最高费率。</span></div><button class="quiet-button" id="resetSettings" type="button">恢复团队默认规则</button></section>
+        <section class="editor-panel"><header><div><h3>路由与 Upcharge 规则</h3><small>总Upcharge = 出库生产费 + 配送费Upcharge</small></div></header><label class="routing-toggle"><input id="ordinaryCNationalFallback" type="checkbox" /><span><strong>默认启用普通C仓跨区域平行兜底</strong><small>开启时普通C仓网络内所有区域、城市和履约from可在全国范围互相代发；原覆盖关系优先。</small></span></label><div class="rule-fields"><label>普通C仓新增from生产费<input id="ruleOrdinaryProduction" type="number" min="0" step="0.1" /></label><label>轻货仓/城市仓新增from生产费<input id="ruleSpecialProduction" type="number" min="0" step="0.1" /></label><label>同区跨城配送费（按订单一次）<input id="ruleSameRegionDelivery" type="number" min="0" step="0.1" /></label><label>跨区配送费（每个不同区域）<input id="ruleCrossRegionDelivery" type="number" min="0" step="0.1" /></label><label>普通路径跨网配送费<input id="ruleCrossNetworkDelivery" type="number" min="0" step="0.1" /></label><label>轻货仓/城市仓配送费（每新增from）<input id="ruleSpecialDelivery" type="number" min="0" step="0.1" /></label></div><div class="rule-example"><strong>基础from</strong><span>本地优先；本地多仓时普通C仓优先；无本地时原覆盖普通C仓优先；其余固定排序。</span><strong>普通路径配送</strong><span>同区跨城0.8元按订单一次；每个不同跨区区域3元；跨网3元与地理配送取高、不叠加。</span><strong>特殊仓</strong><span>轻货仓和城市仓每个新增from收1元生产费+2元配送费，逐from累加；城市仓仅服务本地城市。</span></div><button class="quiet-button" id="resetSettings" type="button">恢复团队默认规则</button></section>
       </div>
     </section>
 
@@ -105,9 +105,9 @@
 
         <section class="logic-panel wide"><span class="logic-index">03</span><h3>履约求解优先级</h3><div class="priority-flow"><div><b>1</b><span>完整满足单笔订单</span></div><i>→</i><div><b>2</b><span>最大化本地库存承担量</span></div><i>→</i><div><b>3</b><span>优先原覆盖关系，再用轻货仓自动兜底，再用普通C仓跨区域平行兜底</span></div><i>→</i><div><b>4</b><span>最小化upcharge</span></div><i>→</i><div><b>5</b><span>最小化履约from数并固定排序</span></div></div><p class="logic-note">本地有部分SKU时必须优先使用本地库存，不能为了少拆单而直接改由外地仓整单发货。同一SKU多件允许由多个from共同满足。</p></section>
 
-        <section class="logic-panel"><span class="logic-index">04</span><h3>发货模式分类</h3><table class="logic-table"><tbody><tr><th>地理层级</th><td>本地同城 / 同区跨城 / 跨区</td></tr><tr><th>网络层级</th><td>同网 / 跨网</td></tr><tr><th>仓级</th><td>1个from为同仓；2个及以上为跨仓</td></tr></tbody></table><p class="logic-note">模式占比按“地理层级 × 网络层级 × 仓级”组合统计。当前同仓等同整单、跨仓等同拆单，因此包裹标签不重复展示。</p></section>
+        <section class="logic-panel"><span class="logic-index">04</span><h3>模式与拆单</h3><table class="logic-table"><tbody><tr><th>地理层级</th><td>本地同城 / 同区跨城 / 跨区</td></tr><tr><th>网络层级</th><td>同网 / 跨网</td></tr><tr><th>仓级</th><td>1个from为同仓；2个及以上为跨仓</td></tr><tr><th>拆单</th><td>子单数=from数；额外拆单数=max(from数-1, 0)</td></tr></tbody></table><p class="logic-note">模式占比按“地理层级 × 网络层级 × 仓级”组合统计；拆单状态与数量在结果明细独立展示。</p></section>
 
-        <section class="logic-panel"><span class="logic-index">05</span><h3>Upcharge规则</h3><table class="logic-table"><tbody><tr><th>本地额外from、同网</th><td>1.5元</td></tr><tr><th>同区跨城、同网</th><td>2.3元</td></tr><tr><th>普通C仓跨区</th><td>4.5元</td></tr><tr><th>跨网络</th><td>4.5元</td></tr><tr><th>轻货仓网络内跨区</th><td>0元</td></tr></tbody></table><p class="logic-note">有本地from时1个本地from免费；本地无from时所有外地from均收费。单个from命中多项时只取最高费率。</p></section>
+        <section class="logic-panel"><span class="logic-index">05</span><h3>Upcharge构成</h3><table class="logic-table"><tbody><tr><th>普通C仓新增from</th><td>生产费1.5元/from</td></tr><tr><th>轻货仓/城市仓新增from</th><td>生产费1元 + 配送费2元/from</td></tr><tr><th>同区跨城配送</th><td>存在即收0.8元，同区多个from合并一次</td></tr><tr><th>跨区配送</th><td>每个不同跨区区域3元，同区域多个from合并</td></tr><tr><th>普通路径跨网</th><td>3元，与普通地理配送取高、不叠加</td></tr></tbody></table><p class="logic-note">总Upcharge = 出库生产费 + 特殊仓配送费 + max(普通地理配送费, 普通跨网配送费)。</p></section>
 
         <section class="logic-panel wide"><span class="logic-index">06</span><h3>绑赠机制模拟</h3><div class="formula-row"><div><span>城市权重</span><code>w(c) = 主品在城市c近90日收货地商品件数 ÷ 全国件数</code></div><div><span>模式概率</span><code>P(m) = Σ w(c) × I[城市c判定为模式m]</code></div><div><span>平均成本</span><code>E(U) = Σ w(c) × 城市c的upcharge</code></div></div><ol class="logic-steps compact"><li>指定一个地域分布基准主品；同一配送中心跨RDC重复件数只计一次。</li><li>每个应发货城市独立用完整机制SKU与数量求解，不跨城市扣减库存。</li><li>这里的“概率”是按主品商品件数地域分布加权的预计占比，不是随机库存概率，也不是订单数概率。</li></ol></section>
       </div>

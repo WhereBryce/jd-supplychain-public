@@ -4,7 +4,7 @@ const STATUS_URL = "../data/fulfillment-status.json";
 const SNAPSHOT_BASE_URL = "../data/fulfillment-snapshots";
 const DECRYPT_WORKER_URL = "../assets/fulfillment-decrypt-worker.js?v=20260730c";
 const STORAGE_KEY = "jd.fulfillment.localConfig.v1";
-const RULES_VERSION = 2;
+const RULES_VERSION = 3;
 const ROUTING_VERSION = 2;
 const byId = (id) => document.getElementById(id);
 const elements = Object.fromEntries([
@@ -15,8 +15,10 @@ const elements = Object.fromEntries([
   "orderCount", "orderAverage", "orderTotal", "orderFulfilled", "orderModeBars", "orderResultBody",
   "mechanismBody", "addMechanismRow", "primarySku", "skuSuggestions", "analyzeMechanism",
   "mechanismResults", "mechanismQuantity", "mechanismAverage", "mechanismThousand",
-  "mechanismModeBars", "mechanismResultBody", "cityFilter", "cityMappingList", "ruleLocal",
-  "ruleRegion", "ruleCrossRegion", "ruleCrossNetwork", "saveSettings", "resetSettings",
+  "mechanismModeBars", "mechanismResultBody", "cityFilter", "cityMappingList",
+  "ruleOrdinaryProduction", "ruleSpecialProduction", "ruleSameRegionDelivery",
+  "ruleCrossRegionDelivery", "ruleCrossNetworkDelivery", "ruleSpecialDelivery",
+  "saveSettings", "resetSettings",
   "ordinaryCNationalFallback",
   "fromCountExplanation", "ordinaryCount", "lightCount", "cityWarehouseCount",
 ].map((id) => [id, byId(id)]));
@@ -199,18 +201,18 @@ function applyStoredConfig() {
   state.rules = { ...state.snapshot.defaultRules };
   state.routing = { ...state.snapshot.defaultRouting };
   if (saved?.cityMapping && saved.cityMapping.length === state.cityMapping.length) state.cityMapping = saved.cityMapping.map(Number);
-  if (saved?.rules) {
-    const savedRules = { ...saved.rules };
-    if (!saved.rulesVersion && savedRules.sameRegion === 300) savedRules.sameRegion = 230;
-    state.rules = { ...state.rules, ...savedRules };
+  if (saved?.rules && saved.rulesVersion >= RULES_VERSION) {
+    state.rules = { ...state.rules, ...saved.rules };
   }
   if (saved?.routing && saved.routingVersion >= ROUTING_VERSION) {
     state.routing = { ...state.routing, ...saved.routing };
   }
-  elements.ruleLocal.value = state.rules.localExtra / 100;
-  elements.ruleRegion.value = state.rules.sameRegion / 100;
-  elements.ruleCrossRegion.value = state.rules.crossRegion / 100;
-  elements.ruleCrossNetwork.value = state.rules.crossNetwork / 100;
+  elements.ruleOrdinaryProduction.value = state.rules.ordinaryProduction / 100;
+  elements.ruleSpecialProduction.value = state.rules.specialProduction / 100;
+  elements.ruleSameRegionDelivery.value = state.rules.sameRegionDelivery / 100;
+  elements.ruleCrossRegionDelivery.value = state.rules.crossRegionDelivery / 100;
+  elements.ruleCrossNetworkDelivery.value = state.rules.crossNetworkDelivery / 100;
+  elements.ruleSpecialDelivery.value = state.rules.specialDelivery / 100;
   elements.ordinaryCNationalFallback.checked = Boolean(
     state.routing.ordinaryCNationalFallback,
   );
@@ -346,6 +348,14 @@ function renderModeBars(target, distribution) {
   }));
 }
 
+function deliveryValue(item) {
+  const geographic = item.sameRegionDeliveryFeeCents + item.crossRegionDeliveryFeeCents;
+  return {
+    text: money.format(item.deliveryFeeCents / 100),
+    title: `普通地理 ${money.format(geographic / 100)}；普通跨网 ${money.format(item.crossNetworkDeliveryFeeCents / 100)}（取高）；特殊仓 ${money.format(item.specialDeliveryFeeCents / 100)}`,
+  };
+}
+
 async function analyzeOrders() {
   hideNotice();
   setBusy(elements.analyzeOrders, true, "正在加载SKU数据", "执行判定");
@@ -371,7 +381,7 @@ async function analyzeOrders() {
     const total = details.reduce((sum, item) => sum + item.upchargeCents, 0);
     elements.orderCount.textContent = details.length; elements.orderAverage.textContent = money.format(total / 100 / details.length); elements.orderTotal.textContent = money.format(total / 100); elements.orderFulfilled.textContent = details.filter((item) => item.fulfilled).length;
     renderModeBars(elements.orderModeBars, [...modes].map(([mode, count]) => ({ mode, ratio: count / details.length })));
-    elements.orderResultBody.replaceChildren(...details.map((item) => tableRow([item.orderId, item.consumerCity, item.destinationCity, item.geography.replace(/发货$/, ""), item.network, item.warehouseMode, item.fromCount, money.format(item.upchargeCents / 100)])));
+    elements.orderResultBody.replaceChildren(...details.map((item) => tableRow([item.orderId, item.consumerCity, item.destinationCity, item.geography.replace(/发货$/, ""), item.network, item.warehouseMode, item.additionalFromCount > 0 ? "是" : "否", item.fromCount, item.additionalFromCount, money.format(item.productionFeeCents / 100), deliveryValue(item), money.format(item.upchargeCents / 100)])));
     elements.orderResults.hidden = false;
   } catch (error) { showNotice(error.message); }
   finally { setBusy(elements.analyzeOrders, false, "正在加载SKU数据", "执行判定"); }
@@ -404,13 +414,13 @@ async function analyzeMechanism() {
     cityResults.forEach((item) => { modes.set(item.result.mode, (modes.get(item.result.mode) || 0) + item.weight); averageCents += item.result.upchargeCents * item.weight; });
     elements.mechanismQuantity.textContent = integer.format(weights.reduce((sum, item) => sum + item.quantity, 0)); elements.mechanismAverage.textContent = money.format(averageCents / 100); elements.mechanismThousand.textContent = money.format(averageCents * 10);
     renderModeBars(elements.mechanismModeBars, [...modes].map(([mode, ratio]) => ({ mode, ratio })));
-    elements.mechanismResultBody.replaceChildren(...cityResults.map((item) => tableRow([state.snapshot.cities[item.cityIndex], `${(item.weight * 100).toFixed(1)}%`, item.result.geography.replace(/发货$/, ""), item.result.network, item.result.warehouseMode, item.result.fromCount, money.format(item.result.upchargeCents / 100)])));
+    elements.mechanismResultBody.replaceChildren(...cityResults.map((item) => tableRow([state.snapshot.cities[item.cityIndex], `${(item.weight * 100).toFixed(1)}%`, item.result.geography.replace(/发货$/, ""), item.result.network, item.result.warehouseMode, item.result.additionalFromCount > 0 ? "是" : "否", item.result.fromCount, item.result.additionalFromCount, money.format(item.result.productionFeeCents / 100), deliveryValue(item.result), money.format(item.result.upchargeCents / 100)])));
     elements.mechanismResults.hidden = false;
   } catch (error) { showNotice(error.message); }
   finally { setBusy(elements.analyzeMechanism, false, "正在加载SKU数据", "开始模拟"); }
 }
 
-function tableRow(values) { const row = document.createElement("tr"); values.forEach((value) => { const cell = document.createElement("td"); cell.textContent = value; cell.title = value; row.append(cell); }); return row; }
+function tableRow(values) { const row = document.createElement("tr"); values.forEach((value) => { const cell = document.createElement("td"); const item = value && typeof value === "object" ? value : { text: value, title: value }; cell.textContent = item.text; cell.title = item.title; row.append(cell); }); return row; }
 function renderSkuSuggestions() { elements.skuSuggestions.replaceChildren(...state.snapshot.skus.map((item) => { const option = document.createElement("option"); option.value = item.sku; option.label = item.name; return option; })); }
 
 function renderCityMappings() {
@@ -424,9 +434,9 @@ function renderCityMappings() {
 }
 
 function saveSettings() {
-  const values = [elements.ruleLocal.value, elements.ruleRegion.value, elements.ruleCrossRegion.value, elements.ruleCrossNetwork.value].map(Number);
+  const values = [elements.ruleOrdinaryProduction.value, elements.ruleSpecialProduction.value, elements.ruleSameRegionDelivery.value, elements.ruleCrossRegionDelivery.value, elements.ruleCrossNetworkDelivery.value, elements.ruleSpecialDelivery.value].map(Number);
   if (values.some((value) => !Number.isFinite(value) || value < 0)) { showNotice("费率必须是大于等于0的数字"); return; }
-  state.rules = { localExtra: Math.round(values[0] * 100), sameRegion: Math.round(values[1] * 100), crossRegion: Math.round(values[2] * 100), crossNetwork: Math.round(values[3] * 100) };
+  state.rules = { ordinaryProduction: Math.round(values[0] * 100), specialProduction: Math.round(values[1] * 100), sameRegionDelivery: Math.round(values[2] * 100), crossRegionDelivery: Math.round(values[3] * 100), crossNetworkDelivery: Math.round(values[4] * 100), specialDelivery: Math.round(values[5] * 100) };
   state.routing = {
     ordinaryCNationalFallback: elements.ordinaryCNationalFallback.checked,
   };

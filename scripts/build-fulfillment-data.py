@@ -253,10 +253,12 @@ def compact_bundle(
         "city_regions": [region_indexes[bundle.city_to_region[city]] for city in cities],
         "city_mapping": [city_indexes[bundle.city_mapping[city]] for city in cities],
         "rules": [
-            rules.local_extra_same_network,
-            rules.same_region_other_city_same_network,
-            rules.cross_region,
-            rules.cross_network,
+            rules.ordinary_extra_production,
+            rules.special_extra_production,
+            rules.same_region_delivery,
+            rules.cross_region_delivery,
+            rules.cross_network_delivery,
+            rules.special_delivery,
         ],
         "routing": [
             bool(config["routing"]["ordinary_c_national_fallback"]),
