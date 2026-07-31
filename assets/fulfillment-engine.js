@@ -300,7 +300,7 @@
     const network = new Set(plan.selected.map((warehouse) => warehouse.networkIndex)).size === 1 ? "同网" : "跨网";
     const parcel = plan.selected.length === 1 ? "整单发货" : "拆单发货";
     const warehouseMode = plan.selected.length === 1 ? "同仓" : "跨仓";
-    return { fulfilled: true, geography, network, parcel, warehouseMode, mode: `${geography} / ${network} / ${warehouseMode} / ${parcel}`, fromCount: plan.selected.length, upchargeCents: plan.cost, allocations, shortage: {} };
+    return { fulfilled: true, geography, network, parcel, warehouseMode, mode: `${geography} / ${network} / ${warehouseMode}`, fromCount: plan.selected.length, upchargeCents: plan.cost, allocations, shortage: {} };
   }
 
   function mechanismWeights(snapshot, primarySku, cityMapping) {

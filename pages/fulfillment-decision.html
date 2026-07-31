@@ -10,8 +10,8 @@
 <link rel="icon" href="data:," />
 <link rel="stylesheet" href="../assets/fulfillment-decision.css?v=20260731b" />
 <link rel="stylesheet" href="../assets/fulfillment-logic.css?v=20260731b" />
-<script src="../assets/fulfillment-engine.js?v=20260731c" defer></script>
-<script src="../assets/fulfillment-decision.js?v=20260731b" defer></script>
+<script src="../assets/fulfillment-engine.js?v=20260731d" defer></script>
+<script src="../assets/fulfillment-decision.js?v=20260731d" defer></script>
 </head>
 <body>
 
@@ -66,7 +66,7 @@
       </div>
       <section class="results" id="orderResults" hidden>
         <dl class="metric-strip"><div><dt>订单数</dt><dd id="orderCount">0</dd></div><div><dt>平均每单upcharge</dt><dd id="orderAverage">¥0.00</dd></div><div><dt>总upcharge</dt><dd id="orderTotal">¥0.00</dd></div><div><dt>完全满足</dt><dd id="orderFulfilled">0</dd></div></dl>
-        <div class="result-grid"><section><h3>发货模式比例</h3><div class="mode-bars" id="orderModeBars"></div></section><section><h3>订单判定</h3><div class="table-wrap"><table><thead><tr><th>订单</th><th>消费者城市</th><th>应发货地</th><th>模式</th><th>仓级</th><th>from数</th><th>upcharge</th></tr></thead><tbody id="orderResultBody"></tbody></table></div></section></div>
+        <div class="result-grid"><section><h3>发货模式比例</h3><div class="mode-bars" id="orderModeBars"></div></section><section><h3>订单判定</h3><div class="table-wrap"><table><thead><tr><th>订单</th><th>消费者城市</th><th>应发货地</th><th>地理层级</th><th>网络层级</th><th>仓级</th><th>from数</th><th>upcharge</th></tr></thead><tbody id="orderResultBody"></tbody></table></div></section></div>
       </section>
     </section>
 
@@ -78,7 +78,7 @@
       </div>
       <section class="results" id="mechanismResults" hidden>
         <dl class="metric-strip three"><div><dt>主品90日件数</dt><dd id="mechanismQuantity">0</dd></div><div><dt>平均每单upcharge</dt><dd id="mechanismAverage">¥0.00</dd></div><div><dt>每1000单upcharge</dt><dd id="mechanismThousand">¥0</dd></div></dl>
-        <div class="result-grid"><section><h3>预计发货模式比例</h3><div class="mode-bars" id="mechanismModeBars"></div></section><section><h3>城市模拟结果</h3><div class="table-wrap"><table><thead><tr><th>应发货地</th><th>权重</th><th>模式</th><th>仓级</th><th>from数</th><th>upcharge</th></tr></thead><tbody id="mechanismResultBody"></tbody></table></div></section></div>
+        <div class="result-grid"><section><h3>预计发货模式比例</h3><div class="mode-bars" id="mechanismModeBars"></div></section><section><h3>城市模拟结果</h3><div class="table-wrap"><table><thead><tr><th>应发货地</th><th>权重</th><th>地理层级</th><th>网络层级</th><th>仓级</th><th>from数</th><th>upcharge</th></tr></thead><tbody id="mechanismResultBody"></tbody></table></div></section></div>
       </section>
     </section>
 
@@ -105,7 +105,7 @@
 
         <section class="logic-panel wide"><span class="logic-index">03</span><h3>履约求解优先级</h3><div class="priority-flow"><div><b>1</b><span>完整满足单笔订单</span></div><i>→</i><div><b>2</b><span>最大化本地库存承担量</span></div><i>→</i><div><b>3</b><span>优先原覆盖关系，再用轻货仓自动兜底，再用人工普通C仓兜底</span></div><i>→</i><div><b>4</b><span>最小化upcharge</span></div><i>→</i><div><b>5</b><span>最小化履约from数并固定排序</span></div></div><p class="logic-note">本地有部分SKU时必须优先使用本地库存，不能为了少拆单而直接改由外地仓整单发货。同一SKU多件允许由多个from共同满足。</p></section>
 
-        <section class="logic-panel"><span class="logic-index">04</span><h3>结果标签</h3><table class="logic-table"><tbody><tr><th>地理</th><td>本地同城 / 同区跨城 / 跨区</td></tr><tr><th>网络</th><td>同网 / 跨网</td></tr><tr><th>仓级</th><td>1个from为同仓；2个及以上为跨仓</td></tr><tr><th>包裹</th><td>整单 / 拆单</td></tr></tbody></table><p class="logic-note">仓库能覆盖应发货地，不代表它是本地仓；本地始终比较from物理城市与履约to。</p></section>
+        <section class="logic-panel"><span class="logic-index">04</span><h3>发货模式分类</h3><table class="logic-table"><tbody><tr><th>地理层级</th><td>本地同城 / 同区跨城 / 跨区</td></tr><tr><th>网络层级</th><td>同网 / 跨网</td></tr><tr><th>仓级</th><td>1个from为同仓；2个及以上为跨仓</td></tr></tbody></table><p class="logic-note">模式占比按“地理层级 × 网络层级 × 仓级”组合统计。当前同仓等同整单、跨仓等同拆单，因此包裹标签不重复展示。</p></section>
 
         <section class="logic-panel"><span class="logic-index">05</span><h3>Upcharge规则</h3><table class="logic-table"><tbody><tr><th>本地额外from、同网</th><td>1.5元</td></tr><tr><th>同区跨城、同网</th><td>2.3元</td></tr><tr><th>普通C仓跨区</th><td>4.5元</td></tr><tr><th>跨网络</th><td>4.5元</td></tr><tr><th>轻货仓网络内跨区</th><td>0元</td></tr></tbody></table><p class="logic-note">有本地from时1个本地from免费；本地无from时所有外地from均收费。单个from命中多项时只取最高费率。</p></section>
 

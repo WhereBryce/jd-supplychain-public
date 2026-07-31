@@ -337,7 +337,7 @@ async function ensureSkuData(rawSkus) {
 function renderModeBars(target, distribution) {
   target.replaceChildren(...distribution.map((item) => {
     const row = document.createElement("div"); row.className = "mode-row";
-    const label = document.createElement("span"); label.textContent = item.mode;
+    const label = document.createElement("span"); label.textContent = item.mode.replaceAll("发货", "").replaceAll(" / ", " · ");
     const value = document.createElement("strong"); value.textContent = `${(item.ratio * 100).toFixed(1)}%`;
     const rail = document.createElement("i"); const fill = document.createElement("b"); fill.style.width = `${item.ratio * 100}%`; rail.append(fill); row.append(label, value, rail); return row;
   }));
@@ -368,7 +368,7 @@ async function analyzeOrders() {
     const total = details.reduce((sum, item) => sum + item.upchargeCents, 0);
     elements.orderCount.textContent = details.length; elements.orderAverage.textContent = money.format(total / 100 / details.length); elements.orderTotal.textContent = money.format(total / 100); elements.orderFulfilled.textContent = details.filter((item) => item.fulfilled).length;
     renderModeBars(elements.orderModeBars, [...modes].map(([mode, count]) => ({ mode, ratio: count / details.length })));
-    elements.orderResultBody.replaceChildren(...details.map((item) => tableRow([item.orderId, item.consumerCity, item.destinationCity, item.mode, item.warehouseMode, item.fromCount, money.format(item.upchargeCents / 100)])));
+    elements.orderResultBody.replaceChildren(...details.map((item) => tableRow([item.orderId, item.consumerCity, item.destinationCity, item.geography.replace(/发货$/, ""), item.network, item.warehouseMode, item.fromCount, money.format(item.upchargeCents / 100)])));
     elements.orderResults.hidden = false;
   } catch (error) { showNotice(error.message); }
   finally { setBusy(elements.analyzeOrders, false, "正在加载SKU数据", "执行判定"); }
@@ -401,7 +401,7 @@ async function analyzeMechanism() {
     cityResults.forEach((item) => { modes.set(item.result.mode, (modes.get(item.result.mode) || 0) + item.weight); averageCents += item.result.upchargeCents * item.weight; });
     elements.mechanismQuantity.textContent = integer.format(weights.reduce((sum, item) => sum + item.quantity, 0)); elements.mechanismAverage.textContent = money.format(averageCents / 100); elements.mechanismThousand.textContent = money.format(averageCents * 10);
     renderModeBars(elements.mechanismModeBars, [...modes].map(([mode, ratio]) => ({ mode, ratio })));
-    elements.mechanismResultBody.replaceChildren(...cityResults.map((item) => tableRow([state.snapshot.cities[item.cityIndex], `${(item.weight * 100).toFixed(1)}%`, item.result.mode, item.result.warehouseMode, item.result.fromCount, money.format(item.result.upchargeCents / 100)])));
+    elements.mechanismResultBody.replaceChildren(...cityResults.map((item) => tableRow([state.snapshot.cities[item.cityIndex], `${(item.weight * 100).toFixed(1)}%`, item.result.geography.replace(/发货$/, ""), item.result.network, item.result.warehouseMode, item.result.fromCount, money.format(item.result.upchargeCents / 100)])));
     elements.mechanismResults.hidden = false;
   } catch (error) { showNotice(error.message); }
   finally { setBusy(elements.analyzeMechanism, false, "正在加载SKU数据", "开始模拟"); }
