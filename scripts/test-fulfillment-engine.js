@@ -27,7 +27,7 @@ let data = snapshot([
   warehouse("石家庄B", 1, 0, 0, [[1, 2]]),
 ]);
 let result = engine.decide(data, 1, { A: 1, B: 2 });
-assert.equal(result.mode, "本地同城发货 / 同网 / 拆单发货");
+assert.equal(result.mode, "本地同城发货 / 同网 / 跨仓 / 拆单发货");
 assert.equal(result.warehouseMode, "跨仓");
 assert.equal(result.upchargeCents, 150);
 
@@ -36,7 +36,7 @@ data = snapshot([
   warehouse("唐山", 2, 0, 0, [[1, 1]]),
 ]);
 result = engine.decide(data, 0, { A: 1, B: 1 });
-assert.equal(result.mode, "同区跨城发货 / 同网 / 拆单发货");
+assert.equal(result.mode, "同区跨城发货 / 同网 / 跨仓 / 拆单发货");
 assert.equal(result.upchargeCents, 460);
 
 data = snapshot([
@@ -52,6 +52,7 @@ data = snapshot([warehouse("唐山", 2, 0, 0, [[0, 1]])]);
 result = engine.decide(data, 0, { A: 1 });
 assert.equal(result.parcel, "整单发货");
 assert.equal(result.warehouseMode, "同仓");
+assert.equal(result.mode, "同区跨城发货 / 同网 / 同仓 / 整单发货");
 assert.equal(result.upchargeCents, 230);
 
 data = snapshot([
