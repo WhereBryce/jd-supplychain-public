@@ -73,7 +73,7 @@
         crossNetwork: payload.rules[3],
       },
       defaultRouting: {
-        ordinaryCNationalFallback: Boolean(payload.routing?.[0]),
+        ordinaryCNationalFallback: payload.routing?.[0] !== false,
       },
       skus,
       skuIndex,

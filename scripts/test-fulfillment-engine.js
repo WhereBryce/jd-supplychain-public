@@ -65,7 +65,7 @@ assert.equal(result.upchargeCents, 450);
 
 data = snapshot([warehouse("北京大仓", 0, 0, 0, [[0, 1]], [0, 1, 2, 3])]);
 assert.equal(engine.decide(data, 1, { A: 1 }).fulfilled, true);
-assert.equal(engine.decide(data, 4, { A: 1 }).fulfilled, false);
+assert.equal(engine.decide(data, 4, { A: 1 }, { ordinaryCNationalFallback: false }).fulfilled, false);
 
 const v2 = engine.decodeSnapshot({
   format: "fulfillment-snapshot-v2-base",
@@ -91,9 +91,19 @@ assert.equal(result.fulfilled, true);
 assert.equal(result.upchargeCents, 0);
 
 data = snapshot([warehouse("北京C", 0, 0, 0, [[0, 1]], [0])]);
-assert.equal(engine.decide(data, 4, { A: 1 }).fulfilled, false);
-result = engine.decide(data, 4, { A: 1 }, { ordinaryCNationalFallback: true });
+result = engine.decide(data, 4, { A: 1 });
 assert.equal(result.fulfilled, true);
 assert.equal(result.upchargeCents, 450);
+assert.equal(result.network, "同网");
+assert.equal(engine.decide(data, 4, { A: 1 }, { ordinaryCNationalFallback: false }).fulfilled, false);
+
+data = snapshot([
+  warehouse("北京C", 0, 0, 0, [[0, 1]], [0]),
+  warehouse("上海C", 5, 2, 0, [[1, 1]], [5]),
+]);
+result = engine.decide(data, 4, { A: 1, B: 1 });
+assert.equal(result.fulfilled, true);
+assert.equal(result.mode, "跨区发货 / 同网 / 跨仓");
+assert.equal(result.upchargeCents, 900);
 
 console.log("fulfillment-engine: business + v2 + fallback scenarios passed");

@@ -5,6 +5,7 @@ const SNAPSHOT_BASE_URL = "../data/fulfillment-snapshots";
 const DECRYPT_WORKER_URL = "../assets/fulfillment-decrypt-worker.js?v=20260730c";
 const STORAGE_KEY = "jd.fulfillment.localConfig.v1";
 const RULES_VERSION = 2;
+const ROUTING_VERSION = 2;
 const byId = (id) => document.getElementById(id);
 const elements = Object.fromEntries([
   "unlockView", "appView", "unlockForm", "password", "togglePassword", "unlockButton",
@@ -203,7 +204,9 @@ function applyStoredConfig() {
     if (!saved.rulesVersion && savedRules.sameRegion === 300) savedRules.sameRegion = 230;
     state.rules = { ...state.rules, ...savedRules };
   }
-  if (saved?.routing) state.routing = { ...state.routing, ...saved.routing };
+  if (saved?.routing && saved.routingVersion >= ROUTING_VERSION) {
+    state.routing = { ...state.routing, ...saved.routing };
+  }
   elements.ruleLocal.value = state.rules.localExtra / 100;
   elements.ruleRegion.value = state.rules.sameRegion / 100;
   elements.ruleCrossRegion.value = state.rules.crossRegion / 100;
@@ -429,6 +432,7 @@ function saveSettings() {
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     rulesVersion: RULES_VERSION,
+    routingVersion: ROUTING_VERSION,
     cityMapping: state.cityMapping,
     rules: state.rules,
     routing: state.routing,
