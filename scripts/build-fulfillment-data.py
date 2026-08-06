@@ -198,6 +198,7 @@ def compact_bundle(
                 metadata.get("商品名称", ""),
                 metadata.get("品牌", ""),
                 metadata.get("宝洁品类", ""),
+                metadata.get("一级类目", ""),
             ]
         )
 

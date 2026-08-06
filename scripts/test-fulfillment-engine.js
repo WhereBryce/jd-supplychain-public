@@ -3,7 +3,7 @@
 const assert = require("node:assert/strict");
 const engine = require("../assets/fulfillment-engine.js");
 
-function snapshot(warehouseRows) {
+function snapshot(warehouseRows, skuRows = null) {
   return engine.decodeSnapshot({
     format: "fulfillment-snapshot-v1",
     cities: ["北京", "石家庄", "唐山", "呼和浩特", "广州", "上海"],
@@ -12,7 +12,7 @@ function snapshot(warehouseRows) {
     city_regions: [0, 0, 0, 0, 1, 2],
     city_mapping: [0, 1, 2, 3, 4, 5],
     rules: [150, 100, 80, 300, 300, 200],
-    skus: [["A", "A", "", ""], ["B", "B", "", ""]],
+    skus: skuRows || [["A", "A", "", "", "品类A"], ["B", "B", "", "", "品类B"]],
     warehouses: warehouseRows,
     demand: [[0, [[0, 100]]]],
   });
@@ -49,6 +49,45 @@ data = snapshot([
 result = engine.decide(data, 0, { A: 1, B: 2 });
 assert.equal(result.fromCount, 2);
 assert.equal(result.upchargeCents, 230);
+assert.equal(result.allocations.filter((row) => row.isLocal).reduce((sum, row) => sum + row.quantity, 0), 1);
+
+data = snapshot([
+  warehouse("北京", 0, 0, 0, [[0, 1]]),
+  warehouse("唐山", 2, 0, 0, [[0, 1], [1, 2]]),
+], [["A", "A", "", "", "同一类目"], ["B", "B", "", "", "同一类目"]]);
+result = engine.decide(data, 0, { A: 1, B: 2 });
+assert.equal(result.fromCount, 1);
+assert.equal(result.parcel, "整单发货");
+assert.deepEqual([...new Set(result.allocations.map((row) => row.fulfillmentFrom))], ["唐山"]);
+assert.equal(result.allocations.filter((row) => row.isLocal).length, 0);
+
+data = snapshot([
+  warehouse("原覆盖普通仓", 2, 0, 0, [[0, 1], [1, 1]], [0]),
+  warehouse("兜底轻货仓", 2, 0, 1, [[0, 1], [1, 1]], [2]),
+], [["A", "A", "", "", "同一类目"], ["B", "B", "", "", "同一类目"]]);
+result = engine.decide(data, 0, { A: 1, B: 1 });
+assert.deepEqual([...new Set(result.allocations.map((row) => row.fulfillmentFrom))], ["原覆盖普通仓"]);
+
+data = snapshot([
+  warehouse("同区普通仓", 2, 0, 0, [[0, 1], [1, 1]], [0]),
+  warehouse("同区轻货仓", 2, 0, 1, [[0, 1], [1, 1]], [0]),
+], [["A", "A", "", "", "同一类目"], ["B", "B", "", "", "同一类目"]]);
+result = engine.decide(data, 0, { A: 1, B: 1 });
+assert.deepEqual([...new Set(result.allocations.map((row) => row.fulfillmentFrom))], ["同区轻货仓"]);
+
+data = snapshot([
+  warehouse("乙仓", 2, 0, 0, [[0, 1], [1, 1]], [0]),
+  warehouse("甲仓", 2, 0, 0, [[0, 1], [1, 1]], [0]),
+], [["A", "A", "", "", "同一类目"], ["B", "B", "", "", "同一类目"]]);
+result = engine.decide(data, 0, { A: 1, B: 1 });
+assert.deepEqual([...new Set(result.allocations.map((row) => row.fulfillmentFrom))], ["乙仓"]);
+
+data = snapshot([
+  warehouse("北京", 0, 0, 0, [[0, 1]]),
+  warehouse("上海", 5, 2, 0, [[0, 1], [1, 2]]),
+], [["A", "A", "", "", "同一类目"], ["B", "B", "", "", "同一类目"]]);
+result = engine.decide(data, 0, { A: 1, B: 2 });
+assert.equal(result.fromCount, 2);
 assert.equal(result.allocations.filter((row) => row.isLocal).reduce((sum, row) => sum + row.quantity, 0), 1);
 
 data = snapshot([warehouse("唐山", 2, 0, 0, [[0, 1]])]);

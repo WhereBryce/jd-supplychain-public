@@ -43,6 +43,7 @@
       name: row[1] || "",
       brand: row[2] || "",
       category: row[3] || "",
+      firstCategory: row[4] || "",
       searchText: `${row[0]} ${row[1] || ""} ${row[2] || ""}`.toLocaleLowerCase("zh-CN"),
     }));
     const skuIndex = new Map(skus.map((item) => [item.sku, item.index]));
@@ -306,6 +307,38 @@
 
     const local = candidates.filter((warehouse) => warehouse.cityIndex === destinationCityIndex);
     const nonlocal = candidates.filter((warehouse) => warehouse.cityIndex !== destinationCityIndex);
+    const firstCategories = new Set(
+      [...indexedDemand.keys()]
+        .map((skuIndex) => String(snapshot.skus[skuIndex].firstCategory || "").trim())
+        .filter(Boolean),
+    );
+    const categoryComplete = [...indexedDemand.keys()].every(
+      (skuIndex) => String(snapshot.skus[skuIndex].firstCategory || "").trim(),
+    );
+    const isSingleCategory = categoryComplete && firstCategories.size === 1;
+    let preferredWholePlan = null;
+    if (isSingleCategory) {
+      const wholeOrderCandidates = candidates.filter((warehouse) => (
+        warehouse.regionIndex === destinationRegionIndex
+        && [...indexedDemand].every(
+          ([skuIndex, quantity]) => stockQuantity(warehouse, skuIndex) >= quantity,
+        )
+      ));
+      const wholeOrderPlans = wholeOrderCandidates.map((base) => {
+        const breakdown = chargeBreakdown(
+          snapshot, base, [], destinationCityIndex, destinationRegionIndex, rules,
+        );
+        return {
+          base,
+          additional: [],
+          selected: [base],
+          breakdown,
+          key: [candidateRanks.get(base.id), breakdown.totalCents, base.id],
+        };
+      });
+      wholeOrderPlans.sort((left, right) => compareTuples(left.key, right.key));
+      preferredWholePlan = wholeOrderPlans[0] || null;
+    }
     const localTargets = new Map([...indexedDemand].map(([skuIndex, quantity]) => [
       skuIndex,
       Math.min(quantity, local.reduce((sum, warehouse) => sum + stockQuantity(warehouse, skuIndex), 0)),
@@ -314,7 +347,7 @@
     const localHasStock = [...localTargets.values()].some((quantity) => quantity > 0);
     const plans = [];
 
-    if (localHasStock) {
+    if (!preferredWholePlan && localHasStock) {
       const bases = local.filter((warehouse) => [...indexedDemand.keys()].some((skuIndex) => stockQuantity(warehouse, skuIndex) > 0));
       for (const base of bases) {
         const tasks = [
@@ -346,7 +379,7 @@
           ],
         });
       }
-    } else {
+    } else if (!preferredWholePlan) {
       const bases = nonlocal.filter((warehouse) => [...indexedDemand.keys()].some(
         (skuIndex) => stockQuantity(warehouse, skuIndex) > 0,
       ));
@@ -378,14 +411,24 @@
         });
       }
     }
-    if (!plans.length) throw new Error("库存合计可满足，但未找到有效分仓方案");
+    if (!preferredWholePlan && !plans.length) {
+      throw new Error("库存合计可满足，但未找到有效分仓方案");
+    }
     plans.sort((a, b) => compareTuples(a.key, b.key));
-    const plan = plans[0];
-    const localSelected = plan.selected.filter((warehouse) => warehouse.cityIndex === destinationCityIndex);
-    const externalSelected = plan.selected.filter((warehouse) => warehouse.cityIndex !== destinationCityIndex);
-    const [localRows, localShortage] = allocate(localTargets, localSelected);
-    const [externalRows, externalShortage] = allocate(externalNeeds, externalSelected);
-    if (localShortage.size || externalShortage.size) throw new Error("分仓分配失败");
+    const plan = preferredWholePlan || plans[0];
+    let allocationRows;
+    if (preferredWholePlan) {
+      const [wholeRows, wholeShortage] = allocate(indexedDemand, plan.selected);
+      if (wholeShortage.size) throw new Error("同区整单分配失败");
+      allocationRows = wholeRows;
+    } else {
+      const localSelected = plan.selected.filter((warehouse) => warehouse.cityIndex === destinationCityIndex);
+      const externalSelected = plan.selected.filter((warehouse) => warehouse.cityIndex !== destinationCityIndex);
+      const [localRows, localShortage] = allocate(localTargets, localSelected);
+      const [externalRows, externalShortage] = allocate(externalNeeds, externalSelected);
+      if (localShortage.size || externalShortage.size) throw new Error("分仓分配失败");
+      allocationRows = [...localRows, ...externalRows];
+    }
     const nodeFees = new Map(plan.selected.map((warehouse) => {
       if (warehouse.id === plan.base.id) return [warehouse.id, [0, 0]];
       if (isSpecial(snapshot, warehouse)) {
@@ -393,7 +436,7 @@
       }
       return [warehouse.id, [rules.ordinaryProduction, 0]];
     }));
-    const allocations = [...localRows, ...externalRows].map(([warehouse, skuIndex, quantity]) => ({
+    const allocations = allocationRows.map(([warehouse, skuIndex, quantity]) => ({
       fulfillmentFrom: warehouse.id,
       deliveryCenter: warehouse.deliveryCenter,
       warehouseName: warehouse.warehouseName,
