@@ -22,6 +22,32 @@ function warehouse(id, cityIndex, regionIndex, networkIndex, stock, covered = nu
   return [id, id, `${id}库`, cityIndex, regionIndex, networkIndex, covered, stock];
 }
 
+assert.deepEqual(
+  engine.mechanismRoutingOptions([
+    { sku: "A", role: "主品" },
+    { sku: "B", role: "主品" },
+  ], "A"),
+  { preferSameRegionWholeOrder: false },
+);
+assert.deepEqual(
+  engine.mechanismRoutingOptions([
+    { sku: "A", role: "主品" },
+    { sku: "B", role: "赠品" },
+  ], "A"),
+  { preferSameRegionWholeOrder: true },
+);
+assert.throws(
+  () => engine.mechanismRoutingOptions([{ sku: "A", role: "赠品" }], "A"),
+  /至少需要一个主品/,
+);
+assert.throws(
+  () => engine.mechanismRoutingOptions([
+    { sku: "A", role: "赠品" },
+    { sku: "B", role: "主品" },
+  ], "A"),
+  /必须在机制表中标记为主品/,
+);
+
 let data = snapshot([
   warehouse("石家庄A", 1, 0, 0, [[0, 1]]),
   warehouse("石家庄B", 1, 0, 0, [[1, 2]]),
@@ -50,6 +76,11 @@ result = engine.decide(data, 0, { A: 1, B: 2 });
 assert.equal(result.fromCount, 2);
 assert.equal(result.upchargeCents, 230);
 assert.equal(result.allocations.filter((row) => row.isLocal).reduce((sum, row) => sum + row.quantity, 0), 1);
+
+result = engine.decide(data, 0, { A: 1, B: 2 }, { preferSameRegionWholeOrder: true });
+assert.equal(result.fromCount, 1);
+assert.equal(result.parcel, "整单发货");
+assert.deepEqual([...new Set(result.allocations.map((row) => row.fulfillmentFrom))], ["唐山"]);
 
 data = snapshot([
   warehouse("北京", 0, 0, 0, [[0, 1]]),

@@ -10,8 +10,8 @@
 <link rel="icon" href="data:," />
 <link rel="stylesheet" href="../assets/fulfillment-decision.css?v=20260731b" />
 <link rel="stylesheet" href="../assets/fulfillment-logic.css?v=20260731b" />
-<script src="../assets/fulfillment-engine.js?v=20260806a" defer></script>
-<script src="../assets/fulfillment-decision.js?v=20260806a" defer></script>
+<script src="../assets/fulfillment-engine.js?v=20260807a" defer></script>
+<script src="../assets/fulfillment-decision.js?v=20260807a" defer></script>
 </head>
 <body>
 
@@ -74,7 +74,7 @@
       <header class="view-heading"><div><p>BUNDLE SIMULATION</p><h2>绑赠机制模拟</h2></div><button class="primary-button" id="analyzeMechanism" type="button">开始模拟</button></header>
       <div class="mechanism-grid">
         <section class="editor-panel"><header><h3>单套构成</h3><button class="square-button" id="addMechanismRow" type="button" title="增加SKU">＋</button></header><div class="table-wrap"><table><thead><tr><th>JD码</th><th>单套数量</th><th>角色</th><th></th></tr></thead><tbody id="mechanismBody"></tbody></table></div></section>
-        <aside class="basis-panel"><label for="primarySku">地域分布基准主品</label><input id="primarySku" list="skuSuggestions" placeholder="输入主品JD码" /><datalist id="skuSuggestions"></datalist><label for="mechanismSnapshot">参考库存切片</label><select id="mechanismSnapshot"></select><p>城市权重取主品近90日收货地商品件数；同一配送中心跨RDC重复值只计一次。</p></aside>
+        <aside class="basis-panel"><label for="primarySku">地域分布基准主品</label><input id="primarySku" list="skuSuggestions" placeholder="输入主品JD码" /><datalist id="skuSuggestions"></datalist><label for="mechanismSnapshot">参考库存切片</label><select id="mechanismSnapshot"></select><p>城市权重取主品近90日收货地商品件数；同一配送中心跨RDC重复值只计一次。机制同时包含主品和赠品时，无论一级类目是否相同，均优先同区单仓整单；全部为主品时仍按一级类目规则判断。</p></aside>
       </div>
       <section class="results" id="mechanismResults" hidden>
         <dl class="metric-strip three"><div><dt>主品90日件数</dt><dd id="mechanismQuantity">0</dd></div><div><dt>平均每单upcharge</dt><dd id="mechanismAverage">¥0.00</dd></div><div><dt>每1000单upcharge</dt><dd id="mechanismThousand">¥0</dd></div></dl>
@@ -87,7 +87,7 @@
       <div class="settings-note"><strong>配置影响范围：</strong>A修改参数后，只影响A当前浏览器；不会修改团队默认密文，也不会影响B或其他用户。<br><strong>同仓定义：</strong>订单只使用1个履约from，即同一个“配送中心 + 库房名称”；使用2个及以上履约from为跨仓，同一配送中心下两个不同库房仍算跨仓。<br><strong><span id="fromCountExplanation">履约from</span>：</strong>宝洁直送明细中唯一“配送中心 + 库房名称”的数量；不是配送中心与库房的笛卡尔积。当前包含<span id="ordinaryCount">--</span>个普通C仓、<span id="lightCount">--</span>个轻货仓、<span id="cityWarehouseCount">--</span>个城市仓。</div>
       <div class="settings-grid">
         <section class="editor-panel"><header><div><h3>城市收敛映射</h3><small>消费者城市 → 应发货城市</small></div><input id="cityFilter" type="search" placeholder="筛选城市" /></header><div class="mapping-list" id="cityMappingList"></div></section>
-        <section class="editor-panel"><header><div><h3>路由与 Upcharge 规则</h3><small>总Upcharge = 出库费Upcharge + 配送费Upcharge</small></div></header><label class="routing-toggle"><input id="ordinaryCNationalFallback" type="checkbox" /><span><strong>默认启用普通C仓跨区域平行兜底</strong><small>开启时普通C仓网络内所有区域、城市和履约from可在全国范围互相代发；原覆盖关系优先。</small></span></label><div class="rule-fields"><label>普通C仓新增from出库费Upcharge<input id="ruleOrdinaryProduction" type="number" min="0" step="0.1" /></label><label>轻货仓/城市仓新增from出库费Upcharge<input id="ruleSpecialProduction" type="number" min="0" step="0.1" /></label><label>同区跨城配送费（按订单一次）<input id="ruleSameRegionDelivery" type="number" min="0" step="0.1" /></label><label>跨区配送费（每个不同区域）<input id="ruleCrossRegionDelivery" type="number" min="0" step="0.1" /></label><label>普通路径跨网配送费<input id="ruleCrossNetworkDelivery" type="number" min="0" step="0.1" /></label><label>轻货仓/城市仓配送费（每新增from）<input id="ruleSpecialDelivery" type="number" min="0" step="0.1" /></label></div><div class="rule-example"><strong>履约优先级</strong><span>同一级类目订单先找同区单仓整单；无解时回到应发货地库存优先拆单。跨一级类目订单直接优先使用应发货地库存，允许拆单。</span><strong>同区整单多仓</strong><span>原覆盖关系优先，其次总upcharge最低，最后按固定from顺序决胜。</span><strong>普通路径配送</strong><span>同区跨城0.8元按订单一次；每个不同跨区区域3元；跨网3元与地理配送取高、不叠加。</span><strong>特殊仓</strong><span>轻货仓和城市仓每个新增from收1元出库费Upcharge+2元配送费，逐from累加；城市仓仅服务本地城市。</span></div><button class="quiet-button" id="resetSettings" type="button">恢复团队默认规则</button></section>
+        <section class="editor-panel"><header><div><h3>路由与 Upcharge 规则</h3><small>总Upcharge = 出库费Upcharge + 配送费Upcharge</small></div></header><label class="routing-toggle"><input id="ordinaryCNationalFallback" type="checkbox" /><span><strong>默认启用普通C仓跨区域平行兜底</strong><small>开启时普通C仓网络内所有区域、城市和履约from可在全国范围互相代发；原覆盖关系优先。</small></span></label><div class="rule-fields"><label>普通C仓新增from出库费Upcharge<input id="ruleOrdinaryProduction" type="number" min="0" step="0.1" /></label><label>轻货仓/城市仓新增from出库费Upcharge<input id="ruleSpecialProduction" type="number" min="0" step="0.1" /></label><label>同区跨城配送费（按订单一次）<input id="ruleSameRegionDelivery" type="number" min="0" step="0.1" /></label><label>跨区配送费（每个不同区域）<input id="ruleCrossRegionDelivery" type="number" min="0" step="0.1" /></label><label>普通路径跨网配送费<input id="ruleCrossNetworkDelivery" type="number" min="0" step="0.1" /></label><label>轻货仓/城市仓配送费（每新增from）<input id="ruleSpecialDelivery" type="number" min="0" step="0.1" /></label></div><div class="rule-example"><strong>绑赠优先级</strong><span>机制同时含主品和赠品时，无论一级类目是否相同，先找同区单仓整单；全主品不视为绑赠。</span><strong>普通订单优先级</strong><span>同一级类目先找同区单仓整单；无解时回到应发货地库存优先拆单。跨一级类目直接优先使用应发货地库存，允许拆单。</span><strong>同区整单多仓</strong><span>原覆盖关系优先，其次总upcharge最低，最后按固定from顺序决胜。</span><strong>普通路径配送</strong><span>同区跨城0.8元按订单一次；每个不同跨区区域3元；跨网3元与地理配送取高、不叠加。</span><strong>特殊仓</strong><span>轻货仓和城市仓每个新增from收1元出库费Upcharge+2元配送费，逐from累加；城市仓仅服务本地城市。</span></div><button class="quiet-button" id="resetSettings" type="button">恢复团队默认规则</button></section>
       </div>
     </section>
 
@@ -95,7 +95,7 @@
       <header class="view-heading"><div><p>DECISION FOUNDATION</p><h2>逻辑基础</h2></div></header>
       <div class="logic-summary">
         <strong>一句话</strong>
-        <p>先按订单全部SKU（含赠品）的一级类目判断订单类型：同品类优先同区单仓整单，跨品类优先使用应发货地库存并允许拆单；再按覆盖、upcharge与固定from顺序完成确定性求解。</p>
+        <p>先按机制角色识别真实绑赠：同时含主品和赠品时，无视一级类目差异优先同区单仓整单；否则再按一级类目判断同区整单或本地库存优先拆单。</p>
       </div>
 
       <div class="logic-grid">
@@ -103,7 +103,7 @@
 
         <section class="logic-panel"><span class="logic-index">02</span><h3>需求收敛与供给覆盖</h3><ol class="logic-steps"><li><b>需求侧：</b>消费者城市本身是宝洁直送城市时保持本地；否则按城市映射收敛到应发货城市。</li><li><b>普通C仓：</b>默认启用跨区域平行兜底；原覆盖关系优先，不足时网络内所有区域、城市和from可在全国互相代发。</li><li><b>轻货仓：</b>原关系表覆盖城市优先；对应仓缺货时，其他轻货仓自动跨区代发全国。</li><li><b>城市仓：</b>只覆盖物理所在城市。</li></ol></section>
 
-        <section class="logic-panel wide"><span class="logic-index">03</span><h3>履约求解优先级</h3><div class="priority-flow"><div><b>1</b><span>完整满足单笔订单</span></div><i>→</i><div><b>2</b><span>同品类先找同区单仓整单</span></div><i>→</i><div><b>3</b><span>无同区整单或跨品类时，优先应发货地库存并允许拆单</span></div><i>→</i><div><b>4</b><span>原覆盖优先，再最小化upcharge</span></div><i>→</i><div><b>5</b><span>按固定from顺序稳定决胜</span></div></div><p class="logic-note">订单类型按全部SKU（含赠品）的一级类目去重判断；一级类目缺失时保守按跨品类处理。同区整单多仓按“原覆盖 → 总upcharge → 固定from顺序”选择。</p></section>
+        <section class="logic-panel wide"><span class="logic-index">03</span><h3>履约求解优先级</h3><div class="priority-flow"><div><b>1</b><span>完整满足单笔订单</span></div><i>→</i><div><b>2</b><span>主品+赠品优先同区单仓整单</span></div><i>→</i><div><b>3</b><span>非绑赠同品类也优先同区整单；跨品类优先本地库存</span></div><i>→</i><div><b>4</b><span>整单无解回到本地优先拆单</span></div><i>→</i><div><b>5</b><span>原覆盖、upcharge、固定from序决胜</span></div></div><p class="logic-note">只有机制同时出现至少一个主品和一个赠品才认定为绑赠；两个跨类目主品仍优先使用应发货地库存并允许拆单。全赠品输入无效，地域分布基准SKU必须标记为主品。</p></section>
 
         <section class="logic-panel"><span class="logic-index">04</span><h3>模式与拆单</h3><table class="logic-table"><tbody><tr><th>地理层级</th><td>本地同城 / 同区跨城 / 跨区</td></tr><tr><th>网络层级</th><td>同网 / 跨网</td></tr><tr><th>仓级</th><td>1个from为同仓；2个及以上为跨仓</td></tr><tr><th>拆单</th><td>子单数=from数；额外拆单数=max(from数-1, 0)</td></tr></tbody></table><p class="logic-note">模式占比按“地理层级 × 网络层级 × 仓级”组合统计；拆单状态与数量在结果明细独立展示。</p></section>
 

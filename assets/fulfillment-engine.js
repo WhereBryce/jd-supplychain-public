@@ -29,6 +29,21 @@
     return cleaned;
   }
 
+  function mechanismRoutingOptions(items, primarySku) {
+    const normalizedPrimary = String(primarySku || "").trim().replace(/\.0$/, "");
+    const normalized = (items || []).map((item) => ({
+      sku: String(item.sku || "").trim().replace(/\.0$/, ""),
+      role: String(item.role || "").trim(),
+    }));
+    const hasMain = normalized.some((item) => item.role === "主品");
+    const hasGift = normalized.some((item) => item.role === "赠品");
+    if (!hasMain) throw new Error("机制至少需要一个主品");
+    if (!normalized.some((item) => item.sku === normalizedPrimary && item.role === "主品")) {
+      throw new Error("地域分布基准主品必须在机制表中标记为主品");
+    }
+    return { preferSameRegionWholeOrder: hasMain && hasGift };
+  }
+
   function decodeSnapshot(payload) {
     const supported = new Set([
       "fulfillment-snapshot-v1",
@@ -316,8 +331,9 @@
       (skuIndex) => String(snapshot.skus[skuIndex].firstCategory || "").trim(),
     );
     const isSingleCategory = categoryComplete && firstCategories.size === 1;
+    const preferSameRegionWholeOrder = options.preferSameRegionWholeOrder === true;
     let preferredWholePlan = null;
-    if (isSingleCategory) {
+    if (preferSameRegionWholeOrder || isSingleCategory) {
       const wholeOrderCandidates = candidates.filter((warehouse) => (
         warehouse.regionIndex === destinationRegionIndex
         && [...indexedDemand].every(
@@ -491,7 +507,13 @@
     return [...byDestination].sort((a, b) => a[0] - b[0]).map(([cityIndex, quantity]) => ({ cityIndex, quantity, weight: quantity / total }));
   }
 
-  const api = { decodeSnapshot, mergeSkuShard, decide, mechanismWeights };
+  const api = {
+    decodeSnapshot,
+    mergeSkuShard,
+    decide,
+    mechanismWeights,
+    mechanismRoutingOptions,
+  };
   root.FulfillmentEngine = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 })(typeof window !== "undefined" ? window : globalThis);

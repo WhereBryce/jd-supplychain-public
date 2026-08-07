@@ -398,9 +398,14 @@ async function analyzeMechanism() {
   hideNotice();
   setBusy(elements.analyzeMechanism, true, "正在加载SKU数据", "开始模拟");
   try {
-    const items = [...elements.mechanismBody.rows].map((row) => ({ sku: row.querySelector("[data-field=sku]").value.trim(), quantity: Number(row.querySelector("[data-field=quantity]").value) }));
+    const items = [...elements.mechanismBody.rows].map((row) => ({
+      sku: row.querySelector("[data-field=sku]").value.trim(),
+      quantity: Number(row.querySelector("[data-field=quantity]").value),
+      role: row.querySelector("[data-field=role]").value,
+    }));
     const demand = {}; items.forEach((item) => { if (!item.sku || !Number.isInteger(item.quantity) || item.quantity <= 0) throw new Error("机制SKU不能为空，单套数量必须大于0"); demand[item.sku] = (demand[item.sku] || 0) + item.quantity; });
     const primarySku = elements.primarySku.value.trim(); if (!(primarySku in demand)) throw new Error("地域分布基准主品必须包含在机制中");
+    const mechanismRouting = FulfillmentEngine.mechanismRoutingOptions(items, primarySku);
     await ensureSkuData([...Object.keys(demand), primarySku]);
     const weights = FulfillmentEngine.mechanismWeights(state.snapshot, primarySku, state.cityMapping);
     const cityResults = weights.map((item) => ({
@@ -408,6 +413,7 @@ async function analyzeMechanism() {
       result: FulfillmentEngine.decide(state.snapshot, item.cityIndex, demand, {
         rules: state.rules,
         ordinaryCNationalFallback: state.routing.ordinaryCNationalFallback,
+        ...mechanismRouting,
       }),
     }));
     const modes = new Map(); let averageCents = 0;
