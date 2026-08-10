@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>JD Supply Chain 知识库如何运转</title>
+  <style>
+    :root {
+      --ink: #16251f;
+      --muted: #5f6f68;
+      --paper: #f7f5ee;
+      --surface: rgba(255, 255, 255, 0.8);
+      --line: rgba(22, 37, 31, 0.12);
+      --green: #176b52;
+      --green-soft: #dff0e7;
+      --orange: #d86e35;
+      --orange-soft: #fbe8db;
+      --blue: #3c6f83;
+      --blue-soft: #e1eef2;
+      --shadow: 0 22px 60px rgba(34, 55, 46, 0.1);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 5%, rgba(255, 201, 153, 0.38), transparent 28rem),
+        radial-gradient(circle at 88% 26%, rgba(151, 210, 191, 0.32), transparent 30rem),
+        var(--paper);
+      font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+      line-height: 1.65;
+    }
+
+    a { color: inherit; }
+
+    .wrap {
+      width: min(1160px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .hero {
+      min-height: 68vh;
+      display: grid;
+      align-items: center;
+      padding: 72px 0 56px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 13px;
+      border: 1px solid rgba(23, 107, 82, 0.22);
+      border-radius: 999px;
+      color: var(--green);
+      background: rgba(255, 255, 255, 0.62);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--orange);
+      box-shadow: 0 0 0 5px var(--orange-soft);
+    }
+
+    h1 {
+      max-width: 900px;
+      margin: 24px 0 20px;
+      font-family: Georgia, "Microsoft YaHei", serif;
+      font-size: clamp(46px, 7vw, 86px);
+      line-height: 1.05;
+      letter-spacing: -0.045em;
+    }
+
+    h1 span { color: var(--green); }
+
+    .lead {
+      max-width: 760px;
+      margin: 0;
+      color: var(--muted);
+      font-size: clamp(18px, 2vw, 23px);
+    }
+
+    .hero-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 28px;
+      margin-top: 38px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .hero-meta strong { color: var(--ink); }
+
+    section { padding: 44px 0 68px; }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: 0.55fr 1fr;
+      gap: 48px;
+      align-items: end;
+      margin-bottom: 30px;
+    }
+
+    .section-head .num {
+      color: var(--orange);
+      font-family: Georgia, serif;
+      font-size: 17px;
+      font-style: italic;
+    }
+
+    h2 {
+      margin: 6px 0 0;
+      font-family: Georgia, "Microsoft YaHei", serif;
+      font-size: clamp(30px, 4vw, 48px);
+      line-height: 1.15;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .system-card {
+      padding: clamp(24px, 4vw, 48px);
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      border-radius: 26px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .flow-item {
+      position: relative;
+      min-height: 178px;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.78);
+      transition: transform 180ms ease, border-color 180ms ease;
+    }
+
+    .flow-item:hover {
+      transform: translateY(-5px);
+      border-color: rgba(23, 107, 82, 0.38);
+    }
+
+    .flow-item:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      z-index: 2;
+      top: 50%;
+      right: -24px;
+      color: var(--orange);
+      font-size: 24px;
+      font-weight: 700;
+      transform: translateY(-50%);
+    }
+
+    .flow-index {
+      color: var(--green);
+      font-family: Georgia, serif;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .flow-item h3 {
+      margin: 18px 0 8px;
+      font-size: 19px;
+    }
+
+    .flow-item p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .loop-note {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-top: 22px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      background: var(--green-soft);
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .loop-note b { font-size: 22px; }
+
+    .plain-note {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-left: 3px solid var(--orange);
+      border-radius: 0 10px 10px 0;
+      color: #75401f;
+      background: var(--orange-soft);
+      font-size: 13px;
+    }
+
+    .plain-note strong { color: #542c16; }
+
+    .term {
+      border-bottom: 1px dashed currentColor;
+      cursor: help;
+    }
+
+    .layers {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .layer {
+      min-height: 235px;
+      padding: 26px;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.65);
+    }
+
+    .layer:nth-child(2) { background: rgba(223, 240, 231, 0.68); }
+    .layer:nth-child(3) { background: rgba(225, 238, 242, 0.72); }
+    .layer:nth-child(5) { background: rgba(251, 232, 219, 0.72); }
+
+    .layer-tag {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--green);
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .layer h3 { margin: 20px 0 8px; font-size: 21px; }
+    .layer p { margin: 0; color: var(--muted); font-size: 14px; }
+
+    .roles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+    }
+
+    .contribution-path {
+      position: relative;
+      display: grid;
+      gap: 0;
+      padding: 8px 0;
+    }
+
+    .contribution-step {
+      display: grid;
+      grid-template-columns: 74px 1fr 0.8fr;
+      gap: 22px;
+      align-items: center;
+      padding: 22px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .contribution-step:last-child { border-bottom: 0; }
+
+    .contribution-icon {
+      display: grid;
+      width: 58px;
+      height: 58px;
+      place-items: center;
+      border-radius: 18px;
+      color: white;
+      background: var(--green);
+      font-size: 24px;
+      font-weight: 800;
+      box-shadow: 0 10px 25px rgba(23, 107, 82, 0.18);
+    }
+
+    .contribution-step:nth-child(even) .contribution-icon {
+      background: var(--orange);
+      box-shadow: 0 10px 25px rgba(216, 110, 53, 0.18);
+    }
+
+    .contribution-step h3 { margin: 0 0 5px; font-size: 20px; }
+    .contribution-step p,
+    .contribution-example { margin: 0; color: var(--muted); font-size: 14px; }
+
+    .contribution-example {
+      padding: 12px 15px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .contribution-example strong { color: var(--ink); }
+
+    .guardrails {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .guardrail {
+      padding: 18px;
+      border-radius: 14px;
+      background: var(--green-soft);
+      color: var(--green);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .role {
+      padding: 34px;
+      border-radius: 24px;
+      color: white;
+    }
+
+    .role-human { background: var(--green); }
+    .role-ai { background: var(--blue); }
+    .role h3 { margin: 0 0 18px; font-size: 26px; }
+    .role ul { margin: 0; padding-left: 20px; }
+    .role li + li { margin-top: 9px; }
+
+    .ontology-cycle {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .ontology-step {
+      position: relative;
+      padding: 22px 18px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: rgba(255, 255, 255, 0.76);
+    }
+
+    .ontology-step:not(:last-child)::after {
+      content: "›";
+      position: absolute;
+      top: 50%;
+      right: -11px;
+      z-index: 2;
+      display: grid;
+      width: 20px;
+      height: 20px;
+      place-items: center;
+      border-radius: 50%;
+      color: white;
+      background: var(--orange);
+      transform: translateY(-50%);
+    }
+
+    .ontology-step b {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--green);
+      font-family: Consolas, monospace;
+      font-size: 12px;
+    }
+
+    .ontology-step h3 { margin: 0 0 7px; font-size: 17px; }
+    .ontology-step p { margin: 0; color: var(--muted); font-size: 13px; }
+
+    .ontology-example {
+      display: grid;
+      grid-template-columns: 0.7fr 1fr;
+      gap: 22px;
+      margin-top: 22px;
+      padding: 24px;
+      border-radius: 18px;
+      color: white;
+      background: #193c32;
+    }
+
+    .ontology-example h3 { margin: 0 0 7px; font-size: 20px; }
+    .ontology-example p { margin: 0; color: rgba(255, 255, 255, 0.72); font-size: 14px; }
+
+    .code-box {
+      margin: 0;
+      padding: 16px;
+      overflow-x: auto;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      color: #d5f1e7;
+      background: rgba(0, 0, 0, 0.18);
+      font: 12px/1.65 Consolas, monospace;
+      white-space: pre;
+    }
+
+    .app-bridge {
+      display: grid;
+      grid-template-columns: 1fr 74px 1fr 74px 1fr;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .bridge-node {
+      padding: 26px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.75);
+    }
+
+    .bridge-node:nth-child(3) {
+      color: white;
+      border-color: var(--green);
+      background: var(--green);
+    }
+
+    .bridge-node h3 { margin: 10px 0 8px; font-size: 21px; }
+    .bridge-node p { margin: 0; color: var(--muted); font-size: 14px; }
+    .bridge-node:nth-child(3) p { color: rgba(255, 255, 255, 0.75); }
+
+    .bridge-label {
+      color: var(--orange);
+      font: 700 11px/1.4 Consolas, monospace;
+      text-align: center;
+      align-self: center;
+    }
+
+    .bridge-label::after {
+      content: "→";
+      display: block;
+      margin-top: 6px;
+      font: 700 27px Georgia, serif;
+    }
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .app-card {
+      padding: 18px;
+      border-radius: 14px;
+      background: var(--blue-soft);
+    }
+
+    .app-card b { display: block; color: var(--blue); font-size: 15px; }
+    .app-card span { display: block; margin-top: 5px; color: var(--muted); font-size: 12px; }
+
+    .flywheel {
+      margin-top: 20px;
+      padding: 17px 20px;
+      border: 1px dashed rgba(216, 110, 53, 0.55);
+      border-radius: 14px;
+      color: #81401f;
+      background: var(--orange-soft);
+      font-size: 14px;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .commands {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .command {
+      appearance: none;
+      padding: 17px 15px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.76);
+      font: inherit;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+      transition: 160ms ease;
+    }
+
+    .command:hover,
+    .command.active {
+      color: white;
+      border-color: var(--green);
+      background: var(--green);
+      transform: translateY(-2px);
+    }
+
+    .command-detail {
+      min-height: 92px;
+      margin-top: 14px;
+      padding: 20px 22px;
+      border-left: 4px solid var(--orange);
+      border-radius: 0 14px 14px 0;
+      background: var(--orange-soft);
+      color: #68341b;
+    }
+
+    .principle {
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .glossary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .glossary-item {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .glossary-item b {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--green);
+    }
+
+    .glossary-item span { color: var(--muted); font-size: 13px; }
+
+    footer {
+      padding: 40px 0 55px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    footer strong { color: var(--ink); }
+
+    @media (max-width: 900px) {
+      .section-head { grid-template-columns: 1fr; gap: 14px; }
+      .flow { grid-template-columns: 1fr; }
+      .flow-item { min-height: auto; }
+      .flow-item:not(:last-child)::after {
+        content: "↓";
+        top: auto;
+        right: 50%;
+        bottom: -28px;
+        transform: translateX(50%);
+      }
+      .layers { grid-template-columns: 1fr 1fr; }
+      .commands { grid-template-columns: 1fr 1fr; }
+      .ontology-cycle { grid-template-columns: 1fr; }
+      .ontology-step:not(:last-child)::after {
+        content: "↓";
+        top: auto;
+        right: 50%;
+        bottom: -16px;
+        transform: translateX(50%);
+      }
+      .app-bridge { grid-template-columns: 1fr; }
+      .bridge-label::after { content: "↓"; }
+      .app-grid { grid-template-columns: 1fr 1fr; }
+      .glossary { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 620px) {
+      .wrap { width: min(100% - 24px, 1160px); }
+      .hero { min-height: auto; padding-top: 46px; }
+      h1 { font-size: 44px; }
+      .layers, .roles, .commands { grid-template-columns: 1fr; }
+      .role { padding: 26px; }
+      .contribution-step { grid-template-columns: 58px 1fr; }
+      .contribution-example { grid-column: 2; }
+      .guardrails, .ontology-example, .app-grid, .glossary { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <div class="eyebrow">JD SUPPLY CHAIN · KNOWLEDGE SYSTEM</div>
+      <h1>知识不是被存放，<br><span>而是在循环中生长。</span></h1>
+      <p class="lead">
+        大家把手里的文件、经验和问题放进来，AI 帮忙整理，团队负责确认。
+        最后，这些零散内容会变成找得到、看得懂、还能直接支持日常工具和自动化应用的团队知识。
+      </p>
+      <div class="hero-meta">
+        <span><strong>载体</strong> Obsidian + Markdown</span>
+        <span><strong>协作</strong> SharePoint 团队共享</span>
+        <span><strong>方法</strong> 收集 → 结构化 → 合成 → 回流</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <span class="num">01 / The Loop</span>
+            <h2>一条知识如何完成旅程</h2>
+          </div>
+          <p>不用一开始就整理得很完美。先把东西放进来，再一步步说明“这是什么、从哪里来、跟什么有关、能拿来做什么”。</p>
+        </div>
+
+        <div class="system-card">
+          <div class="flow">
+            <article class="flow-item">
+              <span class="flow-index">STEP 01</span>
+              <h3>捕获碎片</h3>
+              <p>文字、链接、图片、Word、PPT、PDF、Excel 或半成品想法，直接投入 Inbox。</p>
+              <div class="plain-note"><strong>简单说：</strong>先收进来，别让知识只留在聊天记录和个人电脑里。</div>
+            </article>
+            <article class="flow-item">
+              <span class="flow-index">STEP 02</span>
+              <h3>原子化</h3>
+              <p>把材料拆成一个概念或一个事实一篇的自足笔记，并保留来源。</p>
+              <div class="plain-note"><strong>简单说：</strong>一张纸只讲清一件事，以后更容易找到和重复使用。</div>
+            </article>
+            <article class="flow-item">
+              <span class="flow-index">STEP 03</span>
+              <h3>连接成网</h3>
+              <p>补充 frontmatter、标签、双链，并挂入对应领域的 MOC 导航。</p>
+              <div class="plain-note"><strong>简单说：</strong>给它贴标签、放进目录，并注明它和哪些知识有关。</div>
+            </article>
+            <article class="flow-item">
+              <span class="flow-index">STEP 04</span>
+              <h3>跨域合成</h3>
+              <p>沿知识网络寻找矛盾、空白、类比和假设，形成候选洞察。</p>
+              <div class="plain-note"><strong>简单说：</strong>把不同笔记放在一起看，找出以前没注意到的规律。</div>
+            </article>
+            <article class="flow-item">
+              <span class="flow-index">STEP 05</span>
+              <h3>验证回流</h3>
+              <p>由人补充信息、校准置信度；结论再裂变为知识，回到领域体系。</p>
+              <div class="plain-note"><strong>简单说：</strong>请懂业务的人确认；确认后的结论再放回知识库。</div>
+            </article>
+          </div>
+          <div class="loop-note"><b>↻</b> 开放问题会重新进入 Inbox，让知识库形成持续复利，而不是一次性归档。</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <span class="num">02 / Architecture</span>
+            <h2>六层结构，各司其职</h2>
+          </div>
+          <p>可以把它理解成一个图书馆：收件台接收材料，书架保存知识，目录帮助找书，关系网串起内容，统一词典保证大家说的是同一件事。</p>
+        </div>
+
+        <div class="layers">
+          <article class="layer">
+            <span class="layer-tag">_Inbox/</span>
+            <h3>入口层</h3>
+            <p>无门槛接收材料。一条碎片一个文件，降低 SharePoint 多人协作冲突。</p>
+            <div class="plain-note"><strong>像：</strong>图书馆的收件台。</div>
+          </article>
+          <article class="layer">
+            <span class="layer-tag">atom · source</span>
+            <h3>知识层</h3>
+            <p>原子笔记承载可复用事实，来源笔记承载一份材料的提炼，并明确出处。</p>
+            <div class="plain-note"><strong>像：</strong>整理完成、可以借阅的书。</div>
+          </article>
+          <article class="layer">
+            <span class="layer-tag">moc</span>
+            <h3>导航层</h3>
+            <p>总地图与领域地图提供阅读路径，并登记高复用的枢纽笔记。</p>
+            <div class="plain-note"><strong>MOC 是什么：</strong>就是某个主题的目录页。</div>
+          </article>
+          <article class="layer">
+            <span class="layer-tag">[[双链]] · #标签</span>
+            <h3>网络层</h3>
+            <p>关联连接相邻知识；杠杆点、口径陷阱、类比等思维透镜连接跨域结构。</p>
+            <div class="plain-note"><strong>双链是什么：</strong>A 提到 B 时，B 也能知道 A 提过自己。</div>
+          </article>
+          <article class="layer">
+            <span class="layer-tag">insight · synthesis</span>
+            <h3>洞察层</h3>
+            <p>把推理结果与有据事实分开，记录主张、依据、置信度和待验证问题。</p>
+            <div class="plain-note"><strong>为什么分开：</strong>避免把“我们的判断”误当成“已经确认的事实”。</div>
+          </article>
+          <article class="layer">
+            <span class="layer-tag">class · ontology.yaml</span>
+            <h3>本体层</h3>
+            <p>标准化订单、SKU、库存、仓等实体及关系，为机器查询和应用提供统一口径。</p>
+            <div class="plain-note"><strong>本体是什么：</strong>一份全团队和所有 App 共用的业务词典。</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <span class="num">03 / Collaboration</span>
+            <h2>团队成员如何贡献知识</h2>
+          </div>
+          <p>贡献知识不等于写论文。团队成员只需要把知道的东西交出来，并在需要时回答问题；整理工作交给 AI 和轮值管家。</p>
+        </div>
+
+        <div class="system-card">
+          <div class="contribution-path">
+            <article class="contribution-step">
+              <div class="contribution-icon">1</div>
+              <div>
+                <h3>提交：先贡献，不要求先整理</h3>
+                <p>把文件或想法放进“收集箱” <code>_Inbox/</code>。一条内容建一个新文件，避免大家同时改同一份文档。</p>
+              </div>
+              <div class="contribution-example"><strong>例如：</strong>库存日报、会议结论、仓网截图、一个尚未验证的业务判断。</div>
+            </article>
+            <article class="contribution-step">
+              <div class="contribution-icon">2</div>
+              <div>
+                <h3>保留：记录是谁贡献、从哪里来</h3>
+                <p>整理时记下“谁提供的”与“原材料在哪里”，这样有疑问时能找到知情人，也能回看原文。</p>
+              </div>
+              <div class="contribution-example"><strong>结果：</strong>团队共享知识，但不丢失知识背后的责任人与上下文。</div>
+            </article>
+            <article class="contribution-step">
+              <div class="contribution-icon">3</div>
+              <div>
+                <h3>整理：AI 拆解，管家审核</h3>
+                <p>AI 把长材料拆成一件事一篇，或者补进已有笔记；同时加上摘要、分类、来源和相关知识。</p>
+              </div>
+              <div class="contribution-example"><strong>怎么分：</strong>确认过的事实进“知识卡片”，整份材料的摘要进“来源笔记”，新想法进“洞察笔记”。</div>
+            </article>
+            <article class="contribution-step">
+              <div class="contribution-icon">4</div>
+              <div>
+                <h3>连接：挂到团队共同地图</h3>
+                <p>把笔记放进相应主题目录，并标出它与哪些内容有关，让别人能顺着关系继续阅读。</p>
+              </div>
+              <div class="contribution-example"><strong>效果：</strong>个人经验从“某人知道”变成“团队可发现、可组合”。</div>
+            </article>
+            <article class="contribution-step">
+              <div class="contribution-icon">5</div>
+              <div>
+                <h3>反馈：使用者继续纠正和补全</h3>
+                <p>以后发现新数据、App 报错或业务规则变化，就回来修正旧内容，或者补一张新的知识卡片。</p>
+              </div>
+              <div class="contribution-example"><strong>闭环：</strong>贡献不是一次性交稿，而是共同维护一个持续生长的事实网络。</div>
+            </article>
+          </div>
+          <div class="guardrails">
+            <div class="guardrail">✓ 新文件协作，减少 SharePoint 冲突</div>
+            <div class="guardrail">✓ 来源与贡献者保留，可追溯</div>
+            <div class="guardrail">✓ 每周 steward 轮值清理 Inbox</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <span class="num">04 / Human + AI</span>
+            <h2>人做判断，AI 做放大</h2>
+          </div>
+          <p>AI 不是事实来源，也不替代业务确认。它负责降低整理成本、发现连接和暴露问题；人负责输入经验与最终判断。</p>
+        </div>
+
+        <div class="roles">
+          <article class="role role-human">
+            <h3>团队成员</h3>
+            <ul>
+              <li>贡献资料、业务经验和实际数据</li>
+              <li>确认重要洞察是否值得沉淀</li>
+              <li>回答开放问题并校准置信度</li>
+              <li>由轮值管家定期清理 Inbox</li>
+            </ul>
+          </article>
+          <article class="role role-ai">
+            <h3>AI 助手</h3>
+            <ul>
+              <li>提炼、拆分并按统一模板结构化</li>
+              <li>补充双链、标签和 MOC 入口</li>
+              <li>跨域扫描矛盾、空白与同构关系</li>
+              <li>保留来源，不确定处不擅自编造</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <span class="num">05 / Ontology Evolution</span>
+            <h2>本体如何随业务迭代</h2>
+          </div>
+          <p>这份“统一业务词典”不会一次写完。只有当新资料或新 App 真的需要时，团队才补充词条、字段和关系，并通知所有使用它的 App。</p>
+        </div>
+
+        <div class="system-card">
+          <div class="ontology-cycle">
+            <article class="ontology-step">
+              <b>01 · SIGNAL</b>
+              <h3>发现语义缺口</h3>
+              <p>新资料、团队问答或 App 开发发现缺少实体、字段或关系。</p>
+              <div class="plain-note"><strong>例如：</strong>补货 App 需要“预测日销”，但词典里还没有。</div>
+            </article>
+            <article class="ontology-step">
+              <b>02 · DEFINE</b>
+              <h3>对齐业务口径</h3>
+              <p>确认名称、定义、属性边界、所属子域，以及与现有实体的关系。</p>
+              <div class="plain-note"><strong>先问清：</strong>怎么算、单位是什么、谁负责、与库存是什么关系。</div>
+            </article>
+            <article class="ontology-step">
+              <b>03 · UPDATE</b>
+              <h3>同步两种表示</h3>
+              <p>更新 Classes 类笔记与 ontology.yaml；新关系须先进入谓词白名单。</p>
+              <div class="plain-note"><strong>两份都改：</strong>一份给人看，一份给程序读。</div>
+            </article>
+            <article class="ontology-step">
+              <b>04 · VERSION</b>
+              <h3>提升版本</h3>
+              <p>修改 version 与 updated，使依赖应用能够感知本体已经变化。</p>
+              <div class="plain-note"><strong>作用：</strong>像软件升级号，提醒 App“公共规则变了”。</div>
+            </article>
+            <article class="ontology-step">
+              <b>05 · ADOPT</b>
+              <h3>应用更新契约</h3>
+              <p>应用同步新本体，更新 data-contract，并通过字段与版本校验。</p>
+              <div class="plain-note"><strong>不通过就停：</strong>宁可明确报错，也不按错误口径继续运行。</div>
+            </article>
+          </div>
+
+          <div class="ontology-example">
+            <div>
+              <h3>实例：补货应用提出新需求</h3>
+              <p>当智能补货需要“预测日销”和“最终补货件数”，先把 Forecast 与 Replenishment 建成本体实体，再让应用消费。不能只在某个脚本里私自创造口径。</p>
+            </div>
+            <pre class="code-box">forecast
+  depends_on → inventory
+
+replenishment
+  depends_on → forecast
+  depends_on → inventory / quota / asn
+  transforms_to → order</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <span class="num">06 / Apps Foundation</span>
+            <h2>知识库如何支撑 JD Supply Chain Apps</h2>
+          </div>
+          <p>知识库负责回答“业务上这是什么、怎么算”；App 负责“每天自动把事情做出来”。中间用一份书面约定连接，防止每个 App 各算各的。</p>
+        </div>
+
+        <div class="system-card">
+          <div class="app-bridge">
+            <article class="bridge-node">
+              <span class="layer-tag">SharePoint Vault</span>
+              <h3>知识与口径</h3>
+              <p>Markdown 保存业务知识；Classes 解释实体；ontology.yaml 提供机器可读的统一定义。</p>
+              <div class="plain-note"><strong>讲人话：</strong>这里决定“库存”“仓”“周转天数”到底是什么意思。</div>
+            </article>
+            <div class="bridge-label">同步本体<br>sync-ontology</div>
+            <article class="bridge-node">
+              <span class="layer-tag">data-contract.yaml</span>
+              <h3>契约与校验</h3>
+              <p>每个 App 声明消费的实体、字段、本体版本、关键计算定义与产出。</p>
+              <div class="plain-note"><strong>讲人话：</strong>App 开工前先列清楚“我要哪些数据、按什么规则算”。</div>
+            </article>
+            <div class="bridge-label">通过后运行<br>fail fast</div>
+            <article class="bridge-node">
+              <span class="layer-tag">Independent Git Repo</span>
+              <h3>应用与自动化</h3>
+              <p>代码独立版本管理，执行下载、预测、补货、告警、报告和分发等任务。</p>
+              <div class="plain-note"><strong>讲人话：</strong>规则确认后，程序每天稳定重复执行。</div>
+            </article>
+          </div>
+
+          <div class="app-grid">
+            <div class="app-card"><b>低库存告警</b><span>Inventory + RDC + SKU</span></div>
+            <div class="app-card"><b>吉列智能补货</b><span>Inventory + Quota + SKU + RDC</span></div>
+            <div class="app-card"><b>Olay 纸箱补货</b><span>Inventory + RDC + SKU</span></div>
+            <div class="app-card"><b>现货率报告</b><span>KPI + SKU</span></div>
+            <div class="app-card"><b>到货明细</b><span>Shipment + SKU + RDC</span></div>
+            <div class="app-card"><b>RDC 报告下载</b><span>Inventory + RDC</span></div>
+            <div class="app-card"><b>SAMBC 报告</b><span>KPI + SKU</span></div>
+            <div class="app-card"><b>AI Order 基础</b><span>SKU + Code + Customer + Quota</span></div>
+          </div>
+
+          <div class="flywheel">
+            App 发现问题 → 团队判断原因 → 有价值的结论写回知识库 → 公共词典升级 → 所有相关 App 跟着使用更清楚的规则
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <span class="num">07 / Plain Glossary</span>
+            <h2>页面里的词，到底什么意思</h2>
+          </div>
+          <p>如果只记住这一组翻译，就足够理解整个知识库。</p>
+        </div>
+        <div class="glossary">
+          <div class="glossary-item"><b>Inbox / 收集箱</b><span>大家暂时把原材料放进来的地方。</span></div>
+          <div class="glossary-item"><b>Atom / 原子笔记</b><span>只讲清楚一件事的知识卡片。</span></div>
+          <div class="glossary-item"><b>MOC / 内容地图</b><span>一个主题的目录页和推荐阅读路线。</span></div>
+          <div class="glossary-item"><b>双链</b><span>两篇笔记互相知道对方，方便顺藤摸瓜。</span></div>
+          <div class="glossary-item"><b>Insight / 洞察</b><span>根据事实推出来、但仍可能需要验证的新判断。</span></div>
+          <div class="glossary-item"><b>Ontology / 本体</b><span>人和 App 共用的标准业务词典。</span></div>
+          <div class="glossary-item"><b>Data Contract / 数据契约</b><span>App 使用哪些数据、按什么口径算的书面约定。</span></div>
+          <div class="glossary-item"><b>SSOT / 单一事实源</b><span>同一个定义只认一个官方出处，避免各说各话。</span></div>
+          <div class="glossary-item"><b>Steward / 轮值管家</b><span>每周负责整理收集箱、确保知识进入正确位置的人。</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <span class="num">08 / Commands</span>
+            <h2>一句话驱动工作流</h2>
+          </div>
+          <p>点击下面的触发词，查看它在知识库中启动的动作。</p>
+        </div>
+
+        <div class="commands" id="commands">
+          <button class="command active" data-detail="把指定材料拆成自足、可复用的原子笔记，并补充摘要、来源和基础元数据。">原子化 X</button>
+          <button class="command" data-detail="扫描当前主题的相邻知识，补充双链与思维透镜标签，减少孤立笔记。">找关联</button>
+          <button class="command" data-detail="沿指定领域的 MOC 通读知识，寻找矛盾、空白、类比和可验证假设。">合成 &lt;域&gt;</button>
+          <button class="command" data-detail="把对话中已经谈清楚的知识或观点，按 atom 或 insight 结构写入知识库。">沉淀 / 记一下</button>
+          <button class="command" data-detail="逐条处理收集箱：归类、原子化、建关联、挂 MOC，并保留贡献人与原始出处。">整理收集箱</button>
+          <button class="command" data-detail="为图片生成说明或 OCR companion 笔记，让不可检索的视觉信息进入知识网络。">处理图片 X</button>
+          <button class="command" data-detail="回顾洞察层，形成周期性总结，并汇总需要团队补充的数据与判断。">巡检洞察</button>
+          <button class="command" data-detail="总结本次对话中值得写入知识库的内容，列出候选清单，等待用户确认。">收尾</button>
+        </div>
+        <div class="command-detail" id="command-detail" aria-live="polite">
+          把指定材料拆成自足、可复用的原子笔记，并补充摘要、来源和基础元数据。
+        </div>
+        <p class="principle">写盘原则：新洞察由 AI 主动提议，但经用户确认后再正式沉淀。</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <strong>一句话总结：</strong>
+      这不是静态文件仓库，而是一个“持续收集 → 结构化 → 连接 → 推理 → 验证 → 回流”的知识生产系统。
+    </div>
+  </footer>
+
+  <script>
+    const commandButtons = document.querySelectorAll(".command");
+    const detail = document.getElementById("command-detail");
+
+    commandButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        commandButtons.forEach((item) => item.classList.remove("active"));
+        button.classList.add("active");
+        detail.textContent = button.dataset.detail;
+      });
+    });
+  </script>
+</body>
+</html>
