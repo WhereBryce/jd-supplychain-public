@@ -473,6 +473,275 @@
       text-align: center;
     }
 
+    .purpose-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .purpose-card {
+      position: relative;
+      min-height: 280px;
+      padding: 34px;
+      overflow: hidden;
+      border-radius: 24px;
+      color: white;
+    }
+
+    .purpose-card:first-child { background: var(--green); }
+    .purpose-card:last-child { background: var(--blue); }
+
+    .purpose-card::after {
+      content: "";
+      position: absolute;
+      right: -55px;
+      bottom: -80px;
+      width: 220px;
+      height: 220px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 50%;
+      box-shadow: 0 0 0 34px rgba(255, 255, 255, 0.05), 0 0 0 68px rgba(255, 255, 255, 0.035);
+    }
+
+    .purpose-card .purpose-index {
+      font: 700 12px/1 Consolas, monospace;
+      letter-spacing: 0.12em;
+      opacity: 0.72;
+    }
+
+    .purpose-card h3 {
+      max-width: 390px;
+      margin: 42px 0 12px;
+      font-family: Georgia, "Microsoft YaHei", serif;
+      font-size: clamp(27px, 3vw, 38px);
+      line-height: 1.2;
+    }
+
+    .purpose-card p {
+      position: relative;
+      z-index: 1;
+      max-width: 430px;
+      margin: 0;
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 15px;
+    }
+
+    .purpose-result {
+      margin-top: 18px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.75);
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .journey {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .journey-step {
+      position: relative;
+      min-height: 235px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.76);
+    }
+
+    .journey-step:nth-child(2),
+    .journey-step:nth-child(5) { background: var(--green-soft); }
+
+    .journey-step:nth-child(3),
+    .journey-step:nth-child(6) { background: var(--blue-soft); }
+
+    .journey-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .journey-number {
+      color: var(--orange);
+      font: italic 700 18px Georgia, serif;
+    }
+
+    .journey-layer {
+      padding: 5px 9px;
+      border-radius: 8px;
+      color: var(--green);
+      background: rgba(255, 255, 255, 0.75);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .journey-step h3 { margin: 27px 0 8px; font-size: 21px; }
+    .journey-step > p { margin: 0; color: var(--muted); font-size: 14px; }
+
+    .journey-output {
+      margin-top: 24px;
+      padding: 18px 20px;
+      border-radius: 15px;
+      color: white;
+      background: #193c32;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .why-ontology {
+      display: grid;
+      grid-template-columns: 0.8fr 1.2fr;
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+
+    .ontology-definition {
+      padding: 30px;
+      border-radius: 22px;
+      color: white;
+      background: var(--green);
+    }
+
+    .ontology-definition .big-quote {
+      display: block;
+      margin: 20px 0;
+      font-family: Georgia, "Microsoft YaHei", serif;
+      font-size: 29px;
+      line-height: 1.3;
+    }
+
+    .ontology-definition p { margin: 0; color: rgba(255, 255, 255, 0.76); }
+
+    .ontology-reasons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .reason {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .reason b { display: block; margin-bottom: 7px; color: var(--green); }
+    .reason span { color: var(--muted); font-size: 13px; }
+
+    .extract-flow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 22px 0;
+    }
+
+    .extract-step {
+      position: relative;
+      padding: 20px;
+      border-radius: 16px;
+      background: var(--orange-soft);
+    }
+
+    .extract-step:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      top: 50%;
+      right: -17px;
+      z-index: 2;
+      color: var(--orange);
+      font-size: 23px;
+      font-weight: 800;
+      transform: translateY(-50%);
+    }
+
+    .extract-step b { display: block; color: #7c3c1b; }
+    .extract-step span { display: block; margin-top: 7px; color: #815338; font-size: 13px; }
+
+    .app-groups {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .app-group {
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 19px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .app-group h3 { margin: 0 0 5px; font-size: 19px; }
+    .app-group > p { margin: 0 0 15px; color: var(--muted); font-size: 13px; }
+    .app-group ul { margin: 0; padding-left: 19px; color: var(--ink); font-size: 14px; }
+    .app-group li + li { margin-top: 7px; }
+
+    .case-study {
+      margin-top: 24px;
+      padding: clamp(25px, 4vw, 42px);
+      border-radius: 25px;
+      color: white;
+      background: #16372e;
+      box-shadow: var(--shadow);
+    }
+
+    .case-kicker {
+      color: #9fdac6;
+      font: 700 12px/1 Consolas, monospace;
+      letter-spacing: 0.1em;
+    }
+
+    .case-study h3 {
+      margin: 14px 0 10px;
+      font-family: Georgia, "Microsoft YaHei", serif;
+      font-size: clamp(28px, 4vw, 42px);
+    }
+
+    .case-intro { max-width: 850px; margin: 0; color: rgba(255, 255, 255, 0.72); }
+
+    .case-pipeline {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 25px;
+    }
+
+    .case-stage {
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .case-stage b { display: block; margin-bottom: 9px; color: #bde7d8; }
+    .case-stage span { color: rgba(255, 255, 255, 0.7); font-size: 13px; }
+
+    .case-result {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 22px;
+      align-items: center;
+      margin-top: 18px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .case-result p { margin: 0; color: rgba(255, 255, 255, 0.78); font-size: 14px; }
+
+    .case-link {
+      display: inline-block;
+      padding: 12px 17px;
+      border-radius: 10px;
+      color: #16372e;
+      background: #d8f0e7;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .case-link:hover { background: white; }
+
     .commands {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -572,17 +841,22 @@
       .bridge-label::after { content: "↓"; }
       .app-grid { grid-template-columns: 1fr 1fr; }
       .glossary { grid-template-columns: 1fr 1fr; }
+      .journey, .app-groups { grid-template-columns: 1fr 1fr; }
+      .why-ontology { grid-template-columns: 1fr; }
+      .extract-flow, .case-pipeline { grid-template-columns: 1fr 1fr; }
+      .extract-step:not(:last-child)::after { display: none; }
     }
 
     @media (max-width: 620px) {
       .wrap { width: min(100% - 24px, 1160px); }
       .hero { min-height: auto; padding-top: 46px; }
       h1 { font-size: 44px; }
-      .layers, .roles, .commands { grid-template-columns: 1fr; }
+      .layers, .roles, .commands, .purpose-grid, .journey, .app-groups { grid-template-columns: 1fr; }
       .role { padding: 26px; }
       .contribution-step { grid-template-columns: 58px 1fr; }
       .contribution-example { grid-column: 2; }
-      .guardrails, .ontology-example, .app-grid, .glossary { grid-template-columns: 1fr; }
+      .guardrails, .ontology-example, .app-grid, .glossary, .ontology-reasons, .extract-flow, .case-pipeline { grid-template-columns: 1fr; }
+      .case-result { grid-template-columns: 1fr; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -613,46 +887,79 @@
       <div class="wrap">
         <div class="section-head">
           <div>
-            <span class="num">01 / The Loop</span>
+            <span class="num">01 / Why We Build It</span>
+            <h2>为什么要建立这个知识库</h2>
+          </div>
+          <p>目标不是把文件搬到另一个文件夹，而是让团队经验能够留下来、被下一位同事继续使用，并成为业务工具的共同底座。</p>
+        </div>
+
+        <div class="purpose-grid">
+          <article class="purpose-card">
+            <span class="purpose-index">PURPOSE 01</span>
+            <h3>把个人经验，变成团队知识资产</h3>
+            <p>过去，规则散落在交接文档、会议记录、聊天和个人经验里。知识库把它们整理成有来源、有关系、能持续更新的团队资产，减少重复摸索和人员变化带来的知识流失。</p>
+          </article>
+          <article class="purpose-card">
+            <span class="purpose-index">PURPOSE 02</span>
+            <h3>把业务知识，变成 App 可以使用的规则</h3>
+            <p>当库存、仓、订单、履约、费用等概念被说清楚，App 就不必每次从零理解业务。统一口径可以直接支撑告警、查询、预测、补货和履约分析等工具。</p>
+          </article>
+        </div>
+        <div class="purpose-result">最终形成一条主线：团队贡献知识 → 知识沉淀为共同口径 → 共同口径支撑业务 App → App 的新发现再回到知识库。</div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <span class="num">02 / Knowledge Journey</span>
             <h2>一条知识如何完成旅程</h2>
           </div>
-          <p>不用一开始就整理得很完美。先把东西放进来，再一步步说明“这是什么、从哪里来、跟什么有关、能拿来做什么”。</p>
+          <p>六层结构不是六套彼此分开的东西，而是一条材料逐渐变得“可找、可懂、可组合、可被程序使用”的成长路径。</p>
         </div>
 
         <div class="system-card">
-          <div class="flow">
-            <article class="flow-item">
-              <span class="flow-index">STEP 01</span>
-              <h3>捕获碎片</h3>
-              <p>文字、链接、图片、Word、PPT、PDF、Excel 或半成品想法，直接投入 Inbox。</p>
-              <div class="plain-note"><strong>简单说：</strong>先收进来，别让知识只留在聊天记录和个人电脑里。</div>
+          <div class="journey">
+            <article class="journey-step">
+              <div class="journey-top"><span class="journey-number">01</span><span class="journey-layer">入口层 · Inbox</span></div>
+              <h3>先收进来</h3>
+              <p>Word、PPT、Excel、截图、链接、会议结论或一句经验，都可以先放进收集箱。</p>
+              <div class="plain-note"><strong>解决：</strong>知识不再只留在个人电脑和聊天记录里。</div>
             </article>
-            <article class="flow-item">
-              <span class="flow-index">STEP 02</span>
-              <h3>原子化</h3>
-              <p>把材料拆成一个概念或一个事实一篇的自足笔记，并保留来源。</p>
-              <div class="plain-note"><strong>简单说：</strong>一张纸只讲清一件事，以后更容易找到和重复使用。</div>
+            <article class="journey-step">
+              <div class="journey-top"><span class="journey-number">02</span><span class="journey-layer">知识层 · Atom / Source</span></div>
+              <h3>把一件事讲清楚</h3>
+              <p>AI 把长材料拆成“一张知识卡片讲一件事”，同时保留原始来源和贡献者。</p>
+              <div class="plain-note"><strong>解决：</strong>以后能单独找到、引用和更新某条知识。</div>
             </article>
-            <article class="flow-item">
-              <span class="flow-index">STEP 03</span>
-              <h3>连接成网</h3>
-              <p>补充 frontmatter、标签、双链，并挂入对应领域的 MOC 导航。</p>
-              <div class="plain-note"><strong>简单说：</strong>给它贴标签、放进目录，并注明它和哪些知识有关。</div>
+            <article class="journey-step">
+              <div class="journey-top"><span class="journey-number">03</span><span class="journey-layer">导航层 · MOC</span></div>
+              <h3>放进正确的目录</h3>
+              <p>订单、库存、运输、仓网等主题各有自己的内容地图，告诉新人从哪里开始看。</p>
+              <div class="plain-note"><strong>MOC：</strong>就是某个主题的目录页和阅读路线。</div>
             </article>
-            <article class="flow-item">
-              <span class="flow-index">STEP 04</span>
-              <h3>跨域合成</h3>
-              <p>沿知识网络寻找矛盾、空白、类比和假设，形成候选洞察。</p>
-              <div class="plain-note"><strong>简单说：</strong>把不同笔记放在一起看，找出以前没注意到的规律。</div>
+            <article class="journey-step">
+              <div class="journey-top"><span class="journey-number">04</span><span class="journey-layer">网络层 · 双链 / 标签</span></div>
+              <h3>和其他知识连起来</h3>
+              <p>一条库存知识可以连到仓网、履约和费用。人可以顺着关系阅读，AI 也能跨主题寻找关联。</p>
+              <div class="plain-note"><strong>解决：</strong>文件不再是一座座孤岛。</div>
             </article>
-            <article class="flow-item">
-              <span class="flow-index">STEP 05</span>
-              <h3>验证回流</h3>
-              <p>由人补充信息、校准置信度；结论再裂变为知识，回到领域体系。</p>
-              <div class="plain-note"><strong>简单说：</strong>请懂业务的人确认；确认后的结论再放回知识库。</div>
+            <article class="journey-step">
+              <div class="journey-top"><span class="journey-number">05</span><span class="journey-layer">洞察层 · Insight</span></div>
+              <h3>从知识中发现规律</h3>
+              <p>把多条事实放在一起，找出矛盾、空白和可验证的新判断，并明确标注置信度。</p>
+              <div class="plain-note"><strong>注意：</strong>推理结果和已确认事实分开保存。</div>
+            </article>
+            <article class="journey-step">
+              <div class="journey-top"><span class="journey-number">06</span><span class="journey-layer">本体层 · Ontology</span></div>
+              <h3>提炼成统一业务语言</h3>
+              <p>从大量知识中提取稳定的对象、字段和关系，例如订单、SKU、库存、仓和履约。</p>
+              <div class="plain-note"><strong>结果：</strong>团队和 App 开始使用同一套业务词典。</div>
             </article>
           </div>
-          <div class="loop-note"><b>↻</b> 开放问题会重新进入 Inbox，让知识库形成持续复利，而不是一次性归档。</div>
+          <div class="journey-output">原材料 → 可复用知识 → 知识网络 → 新洞察 → 统一业务口径 → 可落地的业务 App</div>
+          <div class="loop-note"><b>↻</b> App 运行中发现的新问题和新规则，会重新进入这条旅程，持续推动知识库更新。</div>
         </div>
       </div>
     </section>
@@ -661,61 +968,10 @@
       <div class="wrap">
         <div class="section-head">
           <div>
-            <span class="num">02 / Architecture</span>
-            <h2>六层结构，各司其职</h2>
-          </div>
-          <p>可以把它理解成一个图书馆：收件台接收材料，书架保存知识，目录帮助找书，关系网串起内容，统一词典保证大家说的是同一件事。</p>
-        </div>
-
-        <div class="layers">
-          <article class="layer">
-            <span class="layer-tag">_Inbox/</span>
-            <h3>入口层</h3>
-            <p>无门槛接收材料。一条碎片一个文件，降低 SharePoint 多人协作冲突。</p>
-            <div class="plain-note"><strong>像：</strong>图书馆的收件台。</div>
-          </article>
-          <article class="layer">
-            <span class="layer-tag">atom · source</span>
-            <h3>知识层</h3>
-            <p>原子笔记承载可复用事实，来源笔记承载一份材料的提炼，并明确出处。</p>
-            <div class="plain-note"><strong>像：</strong>整理完成、可以借阅的书。</div>
-          </article>
-          <article class="layer">
-            <span class="layer-tag">moc</span>
-            <h3>导航层</h3>
-            <p>总地图与领域地图提供阅读路径，并登记高复用的枢纽笔记。</p>
-            <div class="plain-note"><strong>MOC 是什么：</strong>就是某个主题的目录页。</div>
-          </article>
-          <article class="layer">
-            <span class="layer-tag">[[双链]] · #标签</span>
-            <h3>网络层</h3>
-            <p>关联连接相邻知识；杠杆点、口径陷阱、类比等思维透镜连接跨域结构。</p>
-            <div class="plain-note"><strong>双链是什么：</strong>A 提到 B 时，B 也能知道 A 提过自己。</div>
-          </article>
-          <article class="layer">
-            <span class="layer-tag">insight · synthesis</span>
-            <h3>洞察层</h3>
-            <p>把推理结果与有据事实分开，记录主张、依据、置信度和待验证问题。</p>
-            <div class="plain-note"><strong>为什么分开：</strong>避免把“我们的判断”误当成“已经确认的事实”。</div>
-          </article>
-          <article class="layer">
-            <span class="layer-tag">class · ontology.yaml</span>
-            <h3>本体层</h3>
-            <p>标准化订单、SKU、库存、仓等实体及关系，为机器查询和应用提供统一口径。</p>
-            <div class="plain-note"><strong>本体是什么：</strong>一份全团队和所有 App 共用的业务词典。</div>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <div class="wrap">
-        <div class="section-head">
-          <div>
-            <span class="num">03 / Collaboration</span>
+            <span class="num">03 / Team Contribution</span>
             <h2>团队成员如何贡献知识</h2>
           </div>
-          <p>贡献知识不等于写论文。团队成员只需要把知道的东西交出来，并在需要时回答问题；整理工作交给 AI 和轮值管家。</p>
+          <p>贡献知识不等于写一篇完整文章。团队成员最重要的动作，是把材料和经验交出来，并在需要时帮忙确认；整理工作由 AI 和轮值管家完成。</p>
         </div>
 
         <div class="system-card">
@@ -723,48 +979,40 @@
             <article class="contribution-step">
               <div class="contribution-icon">1</div>
               <div>
-                <h3>提交：先贡献，不要求先整理</h3>
-                <p>把文件或想法放进“收集箱” <code>_Inbox/</code>。一条内容建一个新文件，避免大家同时改同一份文档。</p>
+                <h3>把材料放进收集箱</h3>
+                <p>一份文件、一张截图、一段聊天结论或一句经验，都可以直接放入 <code>_Inbox/</code>。</p>
               </div>
-              <div class="contribution-example"><strong>例如：</strong>库存日报、会议结论、仓网截图、一个尚未验证的业务判断。</div>
+              <div class="contribution-example"><strong>不用做：</strong>不用先判断价值，也不用先想该放哪个文件夹。</div>
             </article>
             <article class="contribution-step">
               <div class="contribution-icon">2</div>
               <div>
-                <h3>保留：记录是谁贡献、从哪里来</h3>
-                <p>整理时记下“谁提供的”与“原材料在哪里”，这样有疑问时能找到知情人，也能回看原文。</p>
+                <h3>留下最基本的线索</h3>
+                <p>最好说明是谁提供的、资料来自哪里、它大概在解决什么问题。</p>
               </div>
-              <div class="contribution-example"><strong>结果：</strong>团队共享知识，但不丢失知识背后的责任人与上下文。</div>
+              <div class="contribution-example"><strong>为什么：</strong>以后有疑问时能回看原文，也能找到真正懂这件事的人。</div>
             </article>
             <article class="contribution-step">
               <div class="contribution-icon">3</div>
               <div>
-                <h3>整理：AI 拆解，管家审核</h3>
-                <p>AI 把长材料拆成一件事一篇，或者补进已有笔记；同时加上摘要、分类、来源和相关知识。</p>
+                <h3>AI 整理，管家审核</h3>
+                <p>AI 负责拆解、摘要、分类、补关联；轮值管家确认内容没有被误解，并把它放进正确位置。</p>
               </div>
-              <div class="contribution-example"><strong>怎么分：</strong>确认过的事实进“知识卡片”，整份材料的摘要进“来源笔记”，新想法进“洞察笔记”。</div>
+              <div class="contribution-example"><strong>人机分工：</strong>人保证业务正确，AI 降低整理成本。</div>
             </article>
             <article class="contribution-step">
               <div class="contribution-icon">4</div>
               <div>
-                <h3>连接：挂到团队共同地图</h3>
-                <p>把笔记放进相应主题目录，并标出它与哪些内容有关，让别人能顺着关系继续阅读。</p>
+                <h3>团队在使用中继续修正</h3>
+                <p>当业务规则、数据字段或实际做法发生变化，任何成员都可以补充新证据并修正旧知识。</p>
               </div>
-              <div class="contribution-example"><strong>效果：</strong>个人经验从“某人知道”变成“团队可发现、可组合”。</div>
-            </article>
-            <article class="contribution-step">
-              <div class="contribution-icon">5</div>
-              <div>
-                <h3>反馈：使用者继续纠正和补全</h3>
-                <p>以后发现新数据、App 报错或业务规则变化，就回来修正旧内容，或者补一张新的知识卡片。</p>
-              </div>
-              <div class="contribution-example"><strong>闭环：</strong>贡献不是一次性交稿，而是共同维护一个持续生长的事实网络。</div>
+              <div class="contribution-example"><strong>原则：</strong>知识库不是发布后不再变化的手册，而是共同维护的工作底稿。</div>
             </article>
           </div>
           <div class="guardrails">
-            <div class="guardrail">✓ 新文件协作，减少 SharePoint 冲突</div>
-            <div class="guardrail">✓ 来源与贡献者保留，可追溯</div>
-            <div class="guardrail">✓ 每周 steward 轮值清理 Inbox</div>
+            <div class="guardrail">✓ 一条材料一个新文件，减少多人编辑冲突</div>
+            <div class="guardrail">✓ 保留贡献者与来源，结论可以追溯</div>
+            <div class="guardrail">✓ 不确定的内容标出来，不由 AI 猜答案</div>
           </div>
         </div>
       </div>
@@ -774,144 +1022,64 @@
       <div class="wrap">
         <div class="section-head">
           <div>
-            <span class="num">04 / Human + AI</span>
-            <h2>人做判断，AI 做放大</h2>
+            <span class="num">04 / Ontology to Apps</span>
+            <h2>为什么本体是知识库与 App 之间的桥</h2>
           </div>
-          <p>AI 不是事实来源，也不替代业务确认。它负责降低整理成本、发现连接和暴露问题；人负责输入经验与最终判断。</p>
+          <p>本体听起来很技术，其实就是一份“团队和程序都认的标准业务词典”。它把自然语言里的经验，变成 App 可以稳定读取和校验的对象、字段与关系。</p>
         </div>
 
-        <div class="roles">
-          <article class="role role-human">
-            <h3>团队成员</h3>
-            <ul>
-              <li>贡献资料、业务经验和实际数据</li>
-              <li>确认重要洞察是否值得沉淀</li>
-              <li>回答开放问题并校准置信度</li>
-              <li>由轮值管家定期清理 Inbox</li>
-            </ul>
+        <div class="why-ontology">
+          <article class="ontology-definition">
+            <span class="layer-tag">ONTOLOGY / 本体</span>
+            <strong class="big-quote">把“大家大概知道”变成“所有人和所有 App 都按同一个定义执行”。</strong>
+            <p>例如：什么叫履约 from？是配送中心，还是配送中心加库房名称？这个差异会直接改变同仓、拆单和费用计算。</p>
           </article>
-          <article class="role role-ai">
-            <h3>AI 助手</h3>
-            <ul>
-              <li>提炼、拆分并按统一模板结构化</li>
-              <li>补充双链、标签和 MOC 入口</li>
-              <li>跨域扫描矛盾、空白与同构关系</li>
-              <li>保留来源，不确定处不擅自编造</li>
-            </ul>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <div class="wrap">
-        <div class="section-head">
-          <div>
-            <span class="num">05 / Ontology Evolution</span>
-            <h2>本体如何随业务迭代</h2>
+          <div class="ontology-reasons">
+            <div class="reason"><b>避免各说各话</b><span>库存、仓、现货率、履约等词只有一个官方定义。</span></div>
+            <div class="reason"><b>让知识可以复用</b><span>新 App 可以直接沿用已有实体与字段，不必重新访谈一遍。</span></div>
+            <div class="reason"><b>让错误尽早暴露</b><span>App 要的字段不在本体里，或版本不一致时，明确报错而不是悄悄算错。</span></div>
+            <div class="reason"><b>让变化有影响范围</b><span>公共口径变更后，可以知道哪些 App 需要同步更新。</span></div>
           </div>
-          <p>这份“统一业务词典”不会一次写完。只有当新资料或新 App 真的需要时，团队才补充词条、字段和关系，并通知所有使用它的 App。</p>
         </div>
 
         <div class="system-card">
-          <div class="ontology-cycle">
-            <article class="ontology-step">
-              <b>01 · SIGNAL</b>
-              <h3>发现语义缺口</h3>
-              <p>新资料、团队问答或 App 开发发现缺少实体、字段或关系。</p>
-              <div class="plain-note"><strong>例如：</strong>补货 App 需要“预测日销”，但词典里还没有。</div>
-            </article>
-            <article class="ontology-step">
-              <b>02 · DEFINE</b>
-              <h3>对齐业务口径</h3>
-              <p>确认名称、定义、属性边界、所属子域，以及与现有实体的关系。</p>
-              <div class="plain-note"><strong>先问清：</strong>怎么算、单位是什么、谁负责、与库存是什么关系。</div>
-            </article>
-            <article class="ontology-step">
-              <b>03 · UPDATE</b>
-              <h3>同步两种表示</h3>
-              <p>更新 Classes 类笔记与 ontology.yaml；新关系须先进入谓词白名单。</p>
-              <div class="plain-note"><strong>两份都改：</strong>一份给人看，一份给程序读。</div>
-            </article>
-            <article class="ontology-step">
-              <b>04 · VERSION</b>
-              <h3>提升版本</h3>
-              <p>修改 version 与 updated，使依赖应用能够感知本体已经变化。</p>
-              <div class="plain-note"><strong>作用：</strong>像软件升级号，提醒 App“公共规则变了”。</div>
-            </article>
-            <article class="ontology-step">
-              <b>05 · ADOPT</b>
-              <h3>应用更新契约</h3>
-              <p>应用同步新本体，更新 data-contract，并通过字段与版本校验。</p>
-              <div class="plain-note"><strong>不通过就停：</strong>宁可明确报错，也不按错误口径继续运行。</div>
-            </article>
+          <h3>本体不是凭空设计的，而是从知识库里“抽”出来的</h3>
+          <div class="extract-flow">
+            <div class="extract-step"><b>读知识</b><span>通读订单、库存、仓网、费用和流程笔记。</span></div>
+            <div class="extract-step"><b>找稳定名词</b><span>识别反复出现的对象，例如 SKU、RDC、库存、订单。</span></div>
+            <div class="extract-step"><b>对齐定义与关系</b><span>确认字段、边界，以及“订单消耗库存”等关系。</span></div>
+            <div class="extract-step"><b>写成两种版本</b><span>类笔记给人看，ontology.yaml 给程序读。</span></div>
           </div>
 
-          <div class="ontology-example">
-            <div>
-              <h3>实例：补货应用提出新需求</h3>
-              <p>当智能补货需要“预测日销”和“最终补货件数”，先把 Forecast 与 Replenishment 建成本体实体，再让应用消费。不能只在某个脚本里私自创造口径。</p>
-            </div>
-            <pre class="code-box">forecast
-  depends_on → inventory
-
-replenishment
-  depends_on → forecast
-  depends_on → inventory / quota / asn
-  transforms_to → order</pre>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <div class="wrap">
-        <div class="section-head">
-          <div>
-            <span class="num">06 / Apps Foundation</span>
-            <h2>知识库如何支撑 JD Supply Chain Apps</h2>
-          </div>
-          <p>知识库负责回答“业务上这是什么、怎么算”；App 负责“每天自动把事情做出来”。中间用一份书面约定连接，防止每个 App 各算各的。</p>
-        </div>
-
-        <div class="system-card">
           <div class="app-bridge">
             <article class="bridge-node">
-              <span class="layer-tag">SharePoint Vault</span>
-              <h3>知识与口径</h3>
-              <p>Markdown 保存业务知识；Classes 解释实体；ontology.yaml 提供机器可读的统一定义。</p>
-              <div class="plain-note"><strong>讲人话：</strong>这里决定“库存”“仓”“周转天数”到底是什么意思。</div>
+              <span class="layer-tag">知识库</span>
+              <h3>业务事实与经验</h3>
+              <p>回答“业务为什么这样做、规则从哪里来、有哪些例外”。</p>
             </article>
-            <div class="bridge-label">同步本体<br>sync-ontology</div>
+            <div class="bridge-label">提炼</div>
             <article class="bridge-node">
-              <span class="layer-tag">data-contract.yaml</span>
-              <h3>契约与校验</h3>
-              <p>每个 App 声明消费的实体、字段、本体版本、关键计算定义与产出。</p>
-              <div class="plain-note"><strong>讲人话：</strong>App 开工前先列清楚“我要哪些数据、按什么规则算”。</div>
+              <span class="layer-tag">本体 + 数据契约</span>
+              <h3>App 的共同语言</h3>
+              <p>本体定义公共词典；每个 App 再声明自己具体使用哪些实体、字段和口径。</p>
             </article>
-            <div class="bridge-label">通过后运行<br>fail fast</div>
+            <div class="bridge-label">校验后运行</div>
             <article class="bridge-node">
-              <span class="layer-tag">Independent Git Repo</span>
-              <h3>应用与自动化</h3>
-              <p>代码独立版本管理，执行下载、预测、补货、告警、报告和分发等任务。</p>
-              <div class="plain-note"><strong>讲人话：</strong>规则确认后，程序每天稳定重复执行。</div>
+              <span class="layer-tag">业务 App</span>
+              <h3>执行与自动化</h3>
+              <p>把统一规则变成查询、告警、预测、补货、分析和报告。</p>
             </article>
           </div>
 
-          <div class="app-grid">
-            <div class="app-card"><b>低库存告警</b><span>Inventory + RDC + SKU</span></div>
-            <div class="app-card"><b>吉列智能补货</b><span>Inventory + Quota + SKU + RDC</span></div>
-            <div class="app-card"><b>Olay 纸箱补货</b><span>Inventory + RDC + SKU</span></div>
-            <div class="app-card"><b>现货率报告</b><span>KPI + SKU</span></div>
-            <div class="app-card"><b>到货明细</b><span>Shipment + SKU + RDC</span></div>
-            <div class="app-card"><b>RDC 报告下载</b><span>Inventory + RDC</span></div>
-            <div class="app-card"><b>SAMBC 报告</b><span>KPI + SKU</span></div>
-            <div class="app-card"><b>AI Order 基础</b><span>SKU + Code + Customer + Quota</span></div>
+          <h3 style="margin-top:30px">本体怎么更新</h3>
+          <div class="ontology-cycle">
+            <article class="ontology-step"><b>01 · 发现缺口</b><h3>新知识或 App 提出需要</h3><p>例如 App 需要一个还没有定义的字段。</p></article>
+            <article class="ontology-step"><b>02 · 业务确认</b><h3>先把口径讲清楚</h3><p>确认名称、算法、单位、边界和关系。</p></article>
+            <article class="ontology-step"><b>03 · 同步修改</b><h3>人读版与机器版一起改</h3><p>类笔记和 ontology.yaml 必须保持一致。</p></article>
+            <article class="ontology-step"><b>04 · 提升版本</b><h3>明确公共规则变了</h3><p>版本号让依赖 App 感知变化。</p></article>
+            <article class="ontology-step"><b>05 · App 跟进</b><h3>更新数据契约并验证</h3><p>通过后再按新规则运行。</p></article>
           </div>
-
-          <div class="flywheel">
-            App 发现问题 → 团队判断原因 → 有价值的结论写回知识库 → 公共词典升级 → 所有相关 App 跟着使用更清楚的规则
-          </div>
+          <div class="flywheel">知识推动本体完善 → 本体让 App 更可靠 → App 暴露真实业务问题 → 新问题再次推动知识与本体更新</div>
         </div>
       </div>
     </section>
@@ -920,49 +1088,75 @@ replenishment
       <div class="wrap">
         <div class="section-head">
           <div>
-            <span class="num">07 / Plain Glossary</span>
-            <h2>页面里的词，到底什么意思</h2>
+            <span class="num">05 / Apps & Case Study</span>
+            <h2>知识库已经支撑了哪些业务 App</h2>
           </div>
-          <p>如果只记住这一组翻译，就足够理解整个知识库。</p>
-        </div>
-        <div class="glossary">
-          <div class="glossary-item"><b>Inbox / 收集箱</b><span>大家暂时把原材料放进来的地方。</span></div>
-          <div class="glossary-item"><b>Atom / 原子笔记</b><span>只讲清楚一件事的知识卡片。</span></div>
-          <div class="glossary-item"><b>MOC / 内容地图</b><span>一个主题的目录页和推荐阅读路线。</span></div>
-          <div class="glossary-item"><b>双链</b><span>两篇笔记互相知道对方，方便顺藤摸瓜。</span></div>
-          <div class="glossary-item"><b>Insight / 洞察</b><span>根据事实推出来、但仍可能需要验证的新判断。</span></div>
-          <div class="glossary-item"><b>Ontology / 本体</b><span>人和 App 共用的标准业务词典。</span></div>
-          <div class="glossary-item"><b>Data Contract / 数据契约</b><span>App 使用哪些数据、按什么口径算的书面约定。</span></div>
-          <div class="glossary-item"><b>SSOT / 单一事实源</b><span>同一个定义只认一个官方出处，避免各说各话。</span></div>
-          <div class="glossary-item"><b>Steward / 轮值管家</b><span>每周负责整理收集箱、确保知识进入正确位置的人。</span></div>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <div class="wrap">
-        <div class="section-head">
-          <div>
-            <span class="num">08 / Commands</span>
-            <h2>一句话驱动工作流</h2>
-          </div>
-          <p>点击下面的触发词，查看它在知识库中启动的动作。</p>
+          <p>这些 App 不是彼此孤立的小脚本。它们共同复用知识库里的库存、SKU、仓、订单、配额、运输和 KPI 等业务口径。</p>
         </div>
 
-        <div class="commands" id="commands">
-          <button class="command active" data-detail="把指定材料拆成自足、可复用的原子笔记，并补充摘要、来源和基础元数据。">原子化 X</button>
-          <button class="command" data-detail="扫描当前主题的相邻知识，补充双链与思维透镜标签，减少孤立笔记。">找关联</button>
-          <button class="command" data-detail="沿指定领域的 MOC 通读知识，寻找矛盾、空白、类比和可验证假设。">合成 &lt;域&gt;</button>
-          <button class="command" data-detail="把对话中已经谈清楚的知识或观点，按 atom 或 insight 结构写入知识库。">沉淀 / 记一下</button>
-          <button class="command" data-detail="逐条处理收集箱：归类、原子化、建关联、挂 MOC，并保留贡献人与原始出处。">整理收集箱</button>
-          <button class="command" data-detail="为图片生成说明或 OCR companion 笔记，让不可检索的视觉信息进入知识网络。">处理图片 X</button>
-          <button class="command" data-detail="回顾洞察层，形成周期性总结，并汇总需要团队补充的数据与判断。">巡检洞察</button>
-          <button class="command" data-detail="总结本次对话中值得写入知识库的内容，列出候选清单，等待用户确认。">收尾</button>
+        <div class="app-groups">
+          <article class="app-group">
+            <h3>数据获取与查询</h3>
+            <p>把分散数据稳定地拿到手，并按统一字段提供查询。</p>
+            <ul>
+              <li>RDC 库存报告下载与库存查询</li>
+              <li>SK-II Allocation 数据拉取</li>
+              <li>今日到货明细</li>
+              <li>仓、品类与城市关系维护</li>
+            </ul>
+          </article>
+          <article class="app-group">
+            <h3>监控与报告</h3>
+            <p>按照团队定义的阈值和指标，自动发现问题并分发。</p>
+            <ul>
+              <li>低库存与轻货仓库存告警</li>
+              <li>现货率报告</li>
+              <li>SAMBC 报告转发</li>
+              <li>取消拒收率与 OTD 分析</li>
+            </ul>
+          </article>
+          <article class="app-group">
+            <h3>决策与模拟</h3>
+            <p>把复杂业务规则变成可重复、可解释的计算。</p>
+            <ul>
+              <li>吉列智能补货</li>
+              <li>Olay 纸箱补货</li>
+              <li>SKU 城市下沉选品</li>
+              <li>赠品 BBCC 费用仿真</li>
+              <li>订单履约分析工具</li>
+            </ul>
+          </article>
         </div>
-        <div class="command-detail" id="command-detail" aria-live="polite">
-          把指定材料拆成自足、可复用的原子笔记，并补充摘要、来源和基础元数据。
-        </div>
-        <p class="principle">写盘原则：新洞察由 AI 主动提议，但经用户确认后再正式沉淀。</p>
+
+        <article class="case-study">
+          <span class="case-kicker">CASE STUDY · 履约分析工具</span>
+          <h3>一套知识，如何真正长成一个业务工具</h3>
+          <p class="case-intro">过去，“某个订单会从哪里发、会不会拆单、会产生多少额外费用”依赖经验判断。知识库先把规则讲清楚，再把它们提炼为本体和数据契约，最终形成可重复、可审计的履约分析工具。</p>
+
+          <div class="case-pipeline">
+            <div class="case-stage">
+              <b>① 知识来源</b>
+              <span>仓网覆盖、宝洁直送网络、库存字段、订单与绑赠规则、拆单和 Upcharge 计费知识。</span>
+            </div>
+            <div class="case-stage">
+              <b>② 统一对象</b>
+              <span>订单、SKU、RDC、库存、KPI 等实体，以及“履约 to / 履约 from”等明确口径。</span>
+            </div>
+            <div class="case-stage">
+              <b>③ 数据契约</b>
+              <span>明确读取订单号、收货城市、JD 码、可订购库存、仓型、区域和近 90 日地域数据。</span>
+            </div>
+            <div class="case-stage">
+              <b>④ 确定性引擎</b>
+              <span>按已确认优先级计算，不使用生成式 AI 猜库存或费用；同样输入会得到同样结果。</span>
+            </div>
+          </div>
+
+          <div class="case-result">
+            <p><strong>它能回答：</strong>真实订单或绑赠机制会从哪些仓发？是本地、同区还是跨区？同仓还是跨仓？整单还是拆单？预计 Upcharge 和各履约模式占比是多少？</p>
+            <a class="case-link" href="fulfillment-decision.html">打开履约分析工具 →</a>
+          </div>
+        </article>
       </div>
     </section>
   </main>
@@ -970,21 +1164,8 @@ replenishment
   <footer>
     <div class="wrap">
       <strong>一句话总结：</strong>
-      这不是静态文件仓库，而是一个“持续收集 → 结构化 → 连接 → 推理 → 验证 → 回流”的知识生产系统。
+      这个知识库让团队经验成为可持续积累的资产，也让这些资产能够通过本体和数据契约，继续长成真正解决业务问题的 JD Supply Chain Apps。
     </div>
   </footer>
-
-  <script>
-    const commandButtons = document.querySelectorAll(".command");
-    const detail = document.getElementById("command-detail");
-
-    commandButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        commandButtons.forEach((item) => item.classList.remove("active"));
-        button.classList.add("active");
-        detail.textContent = button.dataset.detail;
-      });
-    });
-  </script>
 </body>
 </html>
