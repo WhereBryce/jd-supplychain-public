@@ -163,7 +163,7 @@ node .\scripts\test-fulfillment-engine.js
 
 ## 🔐 更新 Free Goods BBCC 仿真模型
 
-BBCC页面是纯静态浏览器应用。真实SKU、FY2526历史货量、城市需求分布、13个B仓和商业报价均经AES-256-GCM加密；用户输入和仿真结果只存在于当前浏览器。页面复用履约工具的DPAPI密码文件：
+BBCC页面是纯静态浏览器应用。真实SKU、FY2526历史货量、城市需求分布、13个B仓和商业报价均经AES-256-GCM加密；用户输入和仿真结果只存在于当前浏览器。页面使用独立的DPAPI密码文件`%LOCALAPPDATA%\JD-SupplyChain\bbcc-pages-password.xml`：
 
 ```powershell
 cd C:\Users\yao.q.1\repos\jd-supplychain-public

@@ -1,10 +1,10 @@
 [CmdletBinding()]
-param([string]$CredentialPath = (Join-Path $env:LOCALAPPDATA 'JD-SupplyChain\fulfillment-pages-password.xml'))
+param([string]$CredentialPath = (Join-Path $env:LOCALAPPDATA 'JD-SupplyChain\bbcc-pages-password.xml'))
 $ErrorActionPreference = 'Stop'
 $Root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $Python = 'C:\Users\yao.q.1\repos\jd-supplychain-apps\.venv\Scripts\python.exe'
 if (-not (Test-Path -LiteralPath $Python)) { throw "找不到BBCC私有应用Python环境：$Python" }
-if (-not (Test-Path -LiteralPath $CredentialPath)) { throw "未找到履约页加密密码文件：$CredentialPath" }
+if (-not (Test-Path -LiteralPath $CredentialPath)) { throw "未找到BBCC页加密密码文件：$CredentialPath" }
 $securePassword = Import-Clixml -LiteralPath $CredentialPath
 if ($securePassword -isnot [Security.SecureString]) { throw "密码文件格式无效：$CredentialPath" }
 $pointer = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($securePassword)
