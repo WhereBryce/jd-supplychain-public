@@ -3,7 +3,7 @@ const STATUS_URL = "../data/bbcc-status.json";
 const MODEL_URL = "../data/bbcc-model.enc.json";
 const STORE = "jd.bbcc.scenario.v1";
 const $ = (id) => document.getElementById(id);
-const el = Object.fromEntries(["unlock","app","unlockForm","password","unlockStatus","unlockButton","unlockDate","unlockCities","unlockWarehouses","lock","meta","notice","frequency","giftValue","insuranceRate","rates","warehouseBody","routeBody","routeCount","citySearch","run","download","results","kpis","fees","mappings","details","capacity","exceptions","sourceInfo"].map((id) => [id, $(id)]));
+const el = Object.fromEntries(["unlock","app","unlockForm","password","unlockStatus","unlockButton","unlockDate","unlockCities","unlockWarehouses","lock","meta","notice","frequency","giftValue","insuranceRate","rates","warehouseBody","routeBody","routeCount","citySearch","run","download","results","kpis","fees","mappings","details","capacity","exceptions","sourceInfo","networkDiagram"].map((id) => [id, $(id)]));
 const fmt = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 2 });
 const money = (value) => `¥${fmt.format(Number(value) || 0)}`;
 const text = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
@@ -67,6 +67,56 @@ function fillSettings(settings) {
   for (const row of el.routeBody.querySelectorAll("tr")) { const saved = savedRoutes.get(row.dataset.city); if (saved?.b_warehouse) row.querySelector("[data-warehouse]").value = saved.b_warehouse; updateRoute(row); }
   el.routeCount.textContent = `${state.model.cities.length} 个C仓`;
 }
+function compact(value) {
+  const amount = Number(value) || 0;
+  return Math.abs(amount) >= 10000 ? `${fmt.format(amount / 10000)}万` : fmt.format(amount);
+}
+function renderDefaultNetwork() {
+  const result = BbccEngine.simulate(state.model, BbccEngine.defaultSettings(state.model));
+  const summary = result.summaries[0];
+  const fees = new Map(result.fee_breakdown.map((row) => [row.stage, row]));
+  const routeCounts = new Map();
+  for (const row of result.route_mapping.filter((item) => item.route_type === "BBCC")) {
+    routeCounts.set(row.b_warehouse, (routeCounts.get(row.b_warehouse) || 0) + 1);
+  }
+  const quantities = new Map();
+  for (const row of result.capacity_checks) {
+    quantities.set(row.b_warehouse, (quantities.get(row.b_warehouse) || 0) + row.quantity);
+  }
+  const activeWarehouses = state.model.warehouses
+    .filter((warehouse) => routeCounts.has(warehouse.name))
+    .map((warehouse) => `<article><strong>${text(warehouse.routeKey)}</strong><span>${routeCounts.get(warehouse.name)}个C仓</span><b>${compact(quantities.get(warehouse.name))}支</b></article>`)
+    .join("");
+  const outboundStandard = ["B仓整箱出库", "B仓散支首件", "B仓散支续件"].reduce((total, stage) => total + (fees.get(stage)?.standard_fee || 0), 0);
+  const outboundPayable = ["B仓整箱出库", "B仓散支首件", "B仓散支续件"].reduce((total, stage) => total + (fees.get(stage)?.payable_fee || 0), 0);
+  el.networkDiagram.innerHTML = `
+    <div class="network-start"><span>货源</span><strong>宝洁 PG</strong><small>全部HC FGOI赠品</small></div>
+    <div class="network-split"><i></i><span>两条补货路径</span><i></i></div>
+    <div class="network-branches">
+      <article class="network-branch direct">
+        <p>PG直接补货</p><h4>11个RDC</h4>
+        <strong>${compact(summary.direct_quantity)}支</strong>
+        <span>北京/上海/广州等11R</span><span>时效2–4天</span>
+        <b>不计BBCC成本</b>
+      </article>
+      <article class="network-branch bbcc">
+        <p>纳入BBCC链路</p>
+        <div class="flow-stage"><span>PG → B</span><strong>3个默认B仓</strong><small>2趟/月/仓 · 1,000元/趟 · 2天</small><b>${money(fees.get("宝洁→B仓运输")?.payable_fee)}</b></div>
+        <div class="flow-arrow">↓</div>
+        <div class="b-network">${activeWarehouses}</div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-stage"><span>B → C</span><strong>覆盖${result.route_mapping.filter((row) => row.route_type === "BBCC").length}个C仓</strong><small>每日调拨 · 加权端到端${fmt.format(summary.bc_end_to_end_weighted_lead_days)}天</small><b>${money(fees.get("B仓→C仓运输")?.payable_fee)}</b></div>
+        <div class="cost-chips"><span>出库 ${money(outboundStandard)} → ${money(outboundPayable)}</span><span>保费 ${money(fees.get("保费")?.payable_fee)}</span></div>
+      </article>
+      <article class="network-branch fallback">
+        <p>无可用B-C线路</p><h4>回退11R代发</h4>
+        <strong>${compact(summary.fallback_quantity)}支</strong>
+        <span>${result.route_mapping.filter((row) => row.route_type === "11R回退/代发").length}个C仓</span>
+        <b>不计BBCC成本</b>
+      </article>
+    </div>
+    <div class="network-total"><span>BBCC标准成本 <strong>${money(summary.standard_total)}</strong></span><span>折后成本 <strong>${money(summary.payable_total)}</strong></span><span>全国加权时效 <strong>${fmt.format(summary.nationwide_weighted_end_to_end_lead_days)}天</strong></span></div>`;
+}
 function render(result) {
   const summary = result.summaries[0]; const cards = [
     ["标准 / 折后总成本", `${money(summary.standard_total)} / ${money(summary.payable_total)}`, "仅计算BBCC增量成本；右侧按各环节折扣比例计算。"],
@@ -100,7 +150,7 @@ el.unlockForm.addEventListener("submit", async (event) => {
   try {
     status("正在下载加密模型…", true); const response = await fetch(MODEL_URL, { cache: "no-cache" }); if (!response.ok) throw new Error("加密BBCC模型尚未发布");
     state.worker ||= new Decryptor(); const payload = await state.worker.decrypt(await response.text(), password, (stage) => status({ derive: "正在验证密码（PBKDF2 600,000轮）…", decrypt: "正在解密模型…", decompress: "正在解压模型…", parse: "正在解析模型…" }[stage], true));
-    state.model = BbccEngine.decodeModel(payload.data); state.password = password; fillSettings(savedSettings()); el.sourceInfo.textContent = `加密模型生成于 ${payload.metadata?.generated_at || state.status?.generated_at || "未知"}；FY2526月度发货、需求分布、13个B仓、B-C报价及调拨日历均在浏览器内解密计算。`;
+    state.model = BbccEngine.decodeModel(payload.data); state.password = password; renderDefaultNetwork(); fillSettings(savedSettings()); el.sourceInfo.textContent = `加密模型生成于 ${payload.metadata?.generated_at || state.status?.generated_at || "未知"}；FY2526月度发货、需求分布、13个B仓、B-C报价及调拨日历均在浏览器内解密计算。`;
     el.unlock.hidden = true; el.app.hidden = false; notice(""); window.scrollTo(0, 0);
   } catch (error) { status(error.name === "OperationError" ? "密码不正确，或加密数据已损坏。" : error.message || "解锁失败。"); }
   finally { el.unlockButton.disabled = false; }
