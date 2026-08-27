@@ -1,0 +1,20 @@
+"use strict";
+const assert = require("node:assert/strict");
+const E = require("../assets/bbcc-engine.js");
+assert.equal(E.chargeableWeight(10, 1), 200);
+assert.equal(E.transportFee(900, 6, { low: 1.8, high: 1.2 }).fee, 1440);
+const mixed = E.outboundFeeBreakdown([{ sku: "A", quantity: 3, casePack: 24, first: 2.8, continuation: .5, whole: .8 }, { sku: "B", quantity: 2, casePack: 12, first: 3.2, continuation: .6, whole: 1.5 }]);
+assert.ok(Math.abs(mixed.total - 5.3) < 1e-9); assert.equal(mixed.looseFirstFee, 3.2);
+function model() { return E.decodeModel({ format: "bbcc-model-v1", months: ["2025-07"], cities: ["直送", "测试"], gifts: [["A", "Gift", 10, 3, .5, 1]], shares: [[0, 0, .5], [0, 1, .5]], shipments: [[0, 0, 100, 60, 100]], warehouses: [["B1", "廊坊", 2], ["B2", "苏州", 3]], rates: [["廊坊", 1, 2, .5, 3], ["苏州", 1, 1.5, 1.5, 2]], direct_cities: [0], city_to_11r: [[0, "南京"], [1, "南京"]], calendar: { daily: [20], weekly_1: [4], weekly_2: [5], weekly_3: [6], weekly_4: [7], weekly_5: [8] } }); }
+let result = E.simulate(model(), { frequency: "daily", warehouses: [{ name: "B1", enabled: true }, { name: "B2", enabled: true }] });
+assert.equal(result.route_mapping.find((x) => x.c_city === "测试").b_warehouse, "B2");
+result = E.simulate(model(), { frequency: "weekly_1", warehouses: [{ name: "B1", enabled: true }, { name: "B2", enabled: true }] });
+assert.equal(result.route_mapping.find((x) => x.c_city === "测试").b_warehouse, "B1");
+assert.equal(result.summaries[0].direct_quantity, 50); assert.equal(result.summaries[0].bbcc_quantity, 50);
+assert.equal(result.summaries[0].nationwide_weighted_end_to_end_lead_days, 3.5);
+result = E.simulate(model(), { routes: [{ c_city: "测试", mode: "bc", assignment: "manual", b_warehouse: "B1" }], warehouses: [{ name: "B1", enabled: false }] });
+assert.equal(result.route_mapping.find((x) => x.c_city === "测试").route_type, "11R回退/代发");
+result = E.simulate(model(), { gift_value_per_unit: 10, insurance_rate: .1, payable_rates: { pg_to_b_transport: 1, bc_transport: 1, whole_case_outbound: 1, loose_first_outbound: 1, loose_continuation_outbound: 1, insurance: .5 }, warehouses: [{ name: "B2", enabled: true }] });
+assert.equal(result.summaries[0].insurance, 50); assert.equal(result.fee_breakdown.find((x) => x.stage === "保费").payable_fee, 25);
+assert.doesNotThrow(() => E.assertFinite(result)); assert.throws(() => E.assertFinite({ x: NaN }));
+console.log("BBCC engine tests passed");

@@ -15,6 +15,7 @@ JD 供应链团队知识库的**对外发布站**（GitHub Pages 托管）。所
 | 轻货仓入门 | 新人·轻货仓 | 六仓网络、低成本逻辑、SKU 准入、消费者路由、库存边界、MOQ，以及与城市仓的核心区别 | <https://wherebryce.github.io/jd-supplychain-public/pages/light-warehouse-primer.html> |
 | JD 库存报告字段词典 | 参考·库存字段 | 商智库存报告全字段逐条识别（现货/可用/可订购公式、滞销库龄、出库销量口径、PV现货率），带即时筛选 | <https://wherebryce.github.io/jd-supplychain-public/pages/jd-inventory-report-fields.html> |
 | RDC 库存查询 | 工具·加密访问 | 密码直入，中文商品名实时联想 5 个候选，支持空格分词、京东码搜索与全部 RDC 筛选 | <https://wherebryce.github.io/jd-supplychain-public/pages/rdc-inventory-query.html> |
+| Free Goods BBCC 灵活费用仿真 | 工具·加密仿真 | 配置B仓、B-C频次、C仓路径、PG→B单趟成本及各环节折扣比例，计算BBCC增量成本和全国加权时效 | <https://wherebryce.github.io/jd-supplychain-public/pages/free-goods-bbcc-cost-simulation.html> |
 | 订单履约分析 | 工具·履约决策 | 使用加密库存与仓网关系分析真实订单或绑赠机制，输出发货模式比例、逐单及平均 upcharge | <https://wherebryce.github.io/jd-supplychain-public/pages/fulfillment-decision.html> |
 
 ## 📁 目录结构
@@ -29,10 +30,14 @@ jd-supplychain-public/          # Pages 从 /(root) 发布
     light-warehouse-primer.html     # 轻货仓入门
     jd-inventory-report-fields.html # JD 库存报告字段词典
     rdc-inventory-query.html        # RDC 库存加密查询
+    free-goods-bbcc-cost-simulation.html # 加密BBCC灵活费用仿真
     fulfillment-decision.html       # 加密订单履约分析
   assets/
     rdc-inventory-query.css         # 查询页样式
     rdc-inventory-query.js          # 浏览器解密与查询逻辑
+    bbcc-engine.js                  # 浏览器确定性BBCC求解器
+    bbcc-simulator.{css,js}         # BBCC页面与交互
+    bbcc-decrypt-worker.js          # 后台解密线程
     fulfillment-engine.js           # 浏览器确定性履约求解器
     fulfillment-decision.{css,js}   # 履约分析页面与交互
   data/
@@ -40,6 +45,8 @@ jd-supplychain-public/          # Pages 从 /(root) 发布
     rdc-inventory-shards/           # 64 个按 SKU 哈希拆分的加密查询分片
     rdc-product-catalog.enc.json    # 极小加密搜索清单（密码验证）
     rdc-product-search/             # 256 个中文/编码字符搜索分片
+    bbcc-model.enc.json             # AES-GCM加密BBCC模型
+    bbcc-status.json                # 非敏感模型期间与记录数
     fulfillment-status.json         # 非敏感切片日期清单
     fulfillment-snapshots/          # 最近3个加密履约切片
   scripts/
@@ -48,6 +55,8 @@ jd-supplychain-public/          # Pages 从 /(root) 发布
     publish-rdc-inventory.ps1       # 检测更新、生成密文并推送
     run-rdc-publication.ps1         # 计划任务日志入口
     setup-rdc-publication.ps1       # DPAPI 密码及计划任务初始化
+    build-bbcc-data.{py,ps1}        # 构建加密BBCC浏览器模型
+    test-bbcc-engine.js             # 浏览器求解器回归测试
     build-fulfillment-data.py       # 生成紧凑加密履约切片
     build-fulfillment-data.ps1      # 复用DPAPI密码的一键构建入口
     publish-fulfillment.ps1         # 受限提交并推送履约工具
@@ -151,6 +160,18 @@ node .\scripts\test-fulfillment-engine.js
 ```
 
 `publish-fulfillment.ps1`只允许暂存履约页面、前端资源、构建脚本和加密履约数据；发现其他未提交修改时停止。
+
+## 🔐 更新 Free Goods BBCC 仿真模型
+
+BBCC页面是纯静态浏览器应用。真实SKU、FY2526历史货量、城市需求分布、13个B仓和商业报价均经AES-256-GCM加密；用户输入和仿真结果只存在于当前浏览器。页面复用履约工具的DPAPI密码文件：
+
+```powershell
+cd C:\Users\yao.q.1\repos\jd-supplychain-public
+.\scripts\build-bbcc-data.ps1
+node .\scripts\test-bbcc-engine.js
+```
+
+构建脚本从私有`jd_free_goods_bbcc_cost_simulation`应用读取数据，生成`data/bbcc-model.enc.json`及不含业务明细的`data/bbcc-status.json`。不得提交解密后的模型、原始Excel或访问密码。
 
 ## ➕ 怎么新增页面
 
