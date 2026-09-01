@@ -3,194 +3,566 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>仓网与库存布局入门 · JD Supply Chain</title>
-<meta name="description" content="理解区域枢纽、需求节点、特殊仓型、履约与调拨，以及集中库存和下沉库存之间的权衡。" />
-<link rel="stylesheet" href="../assets/learning-page.css" />
+<title>JD 仓网入门 · 新人必读 · JD Supply Chain</title>
+<meta name="description" content="面向新人的京东仓网知识汇总：11 大 RDC、按事业部宝洁直送城市互动地图、RDC vs 配送中心、库存流转四机制、62 城 vs 11 城布货决策、轻货仓/城市仓枢纽。" />
+<style>
+  :root{
+    --bg:#0b1020; --card:#151d3b; --line:#26305a; --ink:#eaf0ff; --muted:#9fb0d8;
+    --brand:#4f7cff; --brand2:#6ee7b7; --accent:#ffd166; --danger:#ff6b6b; --radius:16px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,"Microsoft YaHei",sans-serif;
+    color:var(--ink);background:linear-gradient(180deg,#0b1020,#0d1330 40%,#0b1020);line-height:1.75;}
+  a{color:var(--brand);text-decoration:none}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 20px}
+  nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);
+    background:rgba(11,16,32,.72);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;gap:16px;height:56px}
+  nav .logo{font-weight:800;letter-spacing:.3px;font-size:15px}
+  nav .logo span{color:var(--brand)}
+  nav .links{margin-left:auto;display:flex;gap:15px;flex-wrap:wrap}
+  nav .links a{color:var(--muted);font-size:13.5px}
+  nav .links a:hover{color:var(--ink)}
+  header.hero{padding:60px 0 34px}
+  .badge{display:inline-block;font-size:12.5px;color:var(--brand2);border:1px solid var(--line);
+    background:var(--card);padding:5px 12px;border-radius:999px;margin-bottom:18px}
+  h1{font-size:clamp(28px,4.8vw,44px);line-height:1.2;margin:0 0 18px;font-weight:800}
+  h1 em{font-style:normal;background:linear-gradient(90deg,var(--brand),var(--brand2));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .abstract{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--brand2);
+    border-radius:0 14px 14px 0;padding:18px 22px;color:#e6ecff;font-size:16px}
+  section{padding:38px 0;border-top:1px solid var(--line)}
+  h2{font-size:23px;margin:0 0 8px;font-weight:800}
+  h2 .n{color:var(--brand);margin-right:10px;font-variant-numeric:tabular-nums}
+  h3{font-size:17px;margin:22px 0 8px}
+  .lead{color:var(--muted);margin:0 0 20px;max-width:820px}
+  p{margin:12px 0}
+  ul,ol{padding-left:22px}
+  li{margin:6px 0}
+  strong{color:#fff}
+  code,.mono{font-family:"Cascadia Code",Consolas,monospace;font-size:13px;
+    background:#0a0f22;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:#cfe0ff}
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14.5px}
+  th,td{border:1px solid var(--line);padding:10px 13px;text-align:left;vertical-align:top}
+  th{background:#0e1430;color:var(--muted);font-weight:600}
+  tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(2,1fr)}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .card h3{margin:0 0 8px;font-size:16px}
+  .card p{margin:0;color:var(--muted);font-size:14px}
+  .callout{border-left:3px solid var(--brand);background:#161d38;border-radius:0 12px 12px 0;
+    padding:14px 18px;color:#e6ecff;margin:16px 0}
+  .callout.tip{border-left-color:var(--accent)}
+  .callout.warn{border-left-color:var(--danger)}
+  .callout .t{display:block;font-weight:700;margin-bottom:6px;color:#fff}
+  .diagram{background:#0e1430;border:1px solid var(--line);border-radius:14px;padding:18px;margin:18px 0;overflow:auto}
+  .mermaid{display:flex;justify-content:center}
+  .pill{display:inline-block;background:#0a0f22;border:1px solid var(--line);border-radius:8px;
+    padding:3px 10px;margin:4px 6px 0 0;font-size:13px;color:#cfe0ff}
+  .network-map{margin:18px 0 24px;background:#0e1430;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .map-toolbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:16px 18px;border-bottom:1px solid var(--line)}
+  .map-toolbar strong{display:block;font-size:16px}
+  .map-summary{display:block;margin-top:2px;color:var(--muted);font-size:13px}
+  .map-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+  .segmented{display:inline-flex;padding:3px;background:#090e20;border:1px solid var(--line);border-radius:8px}
+  .segmented button,.map-icon-btn,.rdc-filter button{font:inherit;color:var(--muted);border:0;cursor:pointer}
+  .segmented button{padding:6px 10px;background:transparent;border-radius:6px;font-size:13px}
+  .segmented button:hover,.segmented button[aria-pressed="true"]{color:#fff;background:#26305a}
+  .map-icon-btn{display:inline-grid;place-items:center;width:32px;height:32px;background:#151d3b;border:1px solid var(--line);border-radius:7px;font-size:18px;line-height:1}
+  .map-icon-btn:hover{color:#fff;border-color:#50639b}
+  .coverage-toggle{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:13px;cursor:pointer;white-space:nowrap}
+  .coverage-toggle input{width:16px;height:16px;accent-color:var(--brand)}
+  .rdc-filter{display:flex;gap:7px;align-items:center;overflow-x:auto;padding:12px 18px;border-bottom:1px solid var(--line);scrollbar-width:none}
+  .rdc-filter::-webkit-scrollbar{display:none}
+  .rdc-filter button{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;padding:6px 9px;background:#111834;border:1px solid var(--line);border-radius:7px;font-size:12.5px}
+  .rdc-filter button:hover,.rdc-filter button[aria-pressed="true"]{color:#fff;border-color:var(--rdc-color,#6b7bb5);box-shadow:inset 0 0 0 1px var(--rdc-color,#6b7bb5)}
+  .rdc-filter .swatch{width:8px;height:8px;border-radius:50%;background:var(--rdc-color,#6b7bb5)}
+  .map-stage{position:relative;width:100%;aspect-ratio:850/760;background:#f7f9fb;transition:aspect-ratio .2s ease}
+  .map-stage[data-mode="compare"]{aspect-ratio:1750/760}
+  .map-stage object{display:block;width:100%;height:100%;border:0}
+  .map-loading{position:absolute;inset:0;display:grid;place-items:center;color:#52606d;background:#f7f9fb;font-size:14px;pointer-events:none}
+  .map-stage.is-ready .map-loading{display:none}
+  .map-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 18px;border-top:1px solid var(--line);font-size:13px}
+  .map-key{display:flex;gap:14px;align-items:center;color:var(--muted);flex-wrap:wrap}
+  .map-key span{display:inline-flex;align-items:center;gap:6px}
+  .key-dot{width:9px;height:9px;border-radius:50%;background:var(--brand)}
+  .key-dot.faint{opacity:.3}
+  .key-star{color:var(--accent);font-size:16px;line-height:1}
+  .map-detail{color:#fff;text-align:right;min-height:23px}
+  .map-note{margin:0;padding:0 18px 15px;color:var(--muted);font-size:12.5px}
+  @media(max-width:760px){
+    .map-toolbar{display:block}.map-actions{justify-content:flex-start;margin-top:12px}
+    .map-stage[data-mode="compare"]{aspect-ratio:1.35}.map-footer{display:block}.map-detail{text-align:left;margin-top:8px}
+  }
+  footer{padding:34px 0 60px;color:var(--muted);text-align:center;border-top:1px solid var(--line)}
+</style>
 </head>
 <body>
 
-<nav class="topbar">
+<nav>
   <div class="wrap">
-    <div class="brand">JD <span>Supply Chain</span> · 仓网入门</div>
-    <div class="nav-links">
-      <a href="#goals">设计目标</a>
-      <a href="#roles">节点角色</a>
-      <a href="#flows">库存流动</a>
-      <a href="#tradeoff">集中与下沉</a>
-      <a href="#decision">布货决策</a>
-      <a href="../">首页</a>
+    <div class="logo">JD <span>Supply Chain</span> · 仓网入门</div>
+    <div class="links">
+      <a href="#why">为什么学</a>
+      <a href="#skeleton">仓网骨架</a>
+      <a href="#rdc">RDC vs 配送中心</a>
+      <a href="#flow">库存流转</a>
+      <a href="#place">货放哪</a>
+      <a href="#hubs">枢纽仓</a>
+      <a href="#pit">易踩的坑</a>
+      <a href="../">🏠 首页</a>
     </div>
   </div>
 </nav>
 
 <header class="hero">
   <div class="wrap">
-    <span class="badge">新人基础 · 仓网设计 · 公开教学版</span>
-    <h1>仓网与库存布局<em>入门</em></h1>
-    <div class="summary">
-      仓网回答三个问题：<strong>货放在哪、订单从哪发、库存如何补充</strong>。
-      好的仓网不是节点越多越好，而是在服务速度、运输距离、库存总量和运营复杂度之间取得平衡。
-    </div>
-    <div class="meta">
-      <span>概念模型，不代表真实生产网络</span>
-      <span>不包含企业仓点或覆盖范围</span>
-      <span>适用于电商自营履约学习</span>
+    <div class="badge">新人必读 · 京东仓网知识汇总</div>
+    <h1>JD 仓网<em>入门</em></h1>
+    <div class="abstract">
+      仓网 = <strong>货放在哪张网上</strong>。理解<strong>仓网结构、库存怎么在仓间流动、货该放哪</strong>，以及「放错地方就多花异常费」，
+      是做好补货、时效与成本的地基。一句话记住：<strong>库存分布 ≠ 需求分布 → 拆单/代发 → 多花钱</strong>。
     </div>
   </div>
 </header>
 
-<main>
-  <section id="goals">
-    <div class="wrap">
-      <span class="section-kicker">DESIGN GOALS</span>
-      <h2>仓网设计同时追求四个目标</h2>
-      <div class="cards four">
-        <article class="card"><span class="label">服务</span><h3>更快触达消费者</h3><p>库存离需求越近，通常越容易提供更稳定的配送时效。</p></article>
-        <article class="card"><span class="label">成本</span><h3>减少不必要的距离</h3><p>合理布局可以降低跨区域运输、重复操作和异常履约资源。</p></article>
-        <article class="card violet"><span class="label">库存</span><h3>控制库存分散</h3><p>节点增加会放大安全库存、预测误差和长尾滞留风险。</p></article>
-        <article class="card amber"><span class="label">韧性</span><h3>应对波动与中断</h3><p>网络需要在促销、天气、供应延迟或局部产能紧张时具备替代能力。</p></article>
-      </div>
-      <div class="formula"><b>仓网设计</b> = 服务水平 × 成本效率 × 库存健康 × 运营韧性</div>
+<section id="why">
+  <div class="wrap">
+    <h2><span class="n">01</span>为什么先学仓网</h2>
+    <p class="lead">京东零售的仓网极「重」，且强制绑定京东物流服务，因此仓网变动常常与前台零售决策彼此牵制。「库存放哪」这一个决定，同时牵动两件事：</p>
+    <div class="grid">
+      <div class="card"><h3>⏱️ 时效</h3><p>货越近消费者，211/次日达越容易达成，转化越高（大促调研 76% 首选当日/次日达）。</p></div>
+      <div class="card"><h3>💰 成本 · 异常费</h3><p>是否就近整单履约 + 是否是合适的仓型，直接决定仓配费高低。异常仓配费主要来源：本地没货 → 拆单/代发/平行履约 → 额外 upcharge。异常费是「货没放对地方多付的钱」。</p></div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section id="roles">
-    <div class="wrap">
-      <span class="section-kicker">NODE ROLES</span>
-      <h2>用四种抽象角色理解仓网</h2>
-      <p class="lead">实际网络可能有更多名称和层级，但先理解节点承担什么功能，比记住具体仓名更重要。</p>
+<section id="skeleton">
+  <div class="wrap">
+    <h2><span class="n">02</span>仓网骨架：11 大 RDC + 三层级</h2>
+    <p class="lead">京东自营仓网骨架 = 约 11 个大仓 + 60 个左右的下沉仓。宝洁直送范围按事业部不同：<strong>大商超事业部 62 城，美妆事业部 11 城</strong>。</p>
 
-      <div class="flow">
-        <div class="flow-step"><b>供应源</b><span>工厂、供应商或上游库存，为网络提供商品。</span></div>
-        <div class="flow-step"><b>区域枢纽</b><span>集中承接库存，并向多个需求区域补充或直接履约。</span></div>
-        <div class="flow-step"><b>需求节点</b><span>靠近消费者，主要承担本地或周边订单履约。</span></div>
-        <div class="flow-step"><b>特殊网络</b><span>针对速度、成本、温控、体积或特定订单设计的独立能力。</span></div>
-      </div>
-
-      <div class="callout tip">
-        <span class="title">业务区域不等于物理地址</span>
-        报表中的 region、区域或配送中心字段可能代表管理归属、服务范围或统计口径。分析距离和库存位置时，应确认它到底是物理设施、业务区域还是汇总标签。
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>概念</th><th>主要回答的问题</th><th>常见误区</th></tr></thead>
-          <tbody>
-            <tr><td>物理设施</td><td>库存实际存放在哪里</td><td>把管理区域名称直接当成仓库地址</td></tr>
-            <tr><td>服务范围</td><td>某节点可以履约哪些消费者地址</td><td>认为服务范围永远固定不变</td></tr>
-            <tr><td>库存归属</td><td>报表将库存统计到哪个节点或区域</td><td>忽略在途、共享或虚拟库存口径</td></tr>
-            <tr><td>补货关系</td><td>上游如何向节点提供库存</td><td>把订单履约路径和补货路径混为一谈</td></tr>
-          </tbody>
-        </table>
-      </div>
+    <h3>11 大 RDC（区域配送中心）</h3>
+    <div>
+      <span class="pill">北京</span><span class="pill">上海</span><span class="pill">广州</span><span class="pill">成都</span>
+      <span class="pill">武汉</span><span class="pill">西安</span><span class="pill">沈阳</span><span class="pill">德州</span>
+      <span class="pill">郑州</span><span class="pill">杭州</span><span class="pill">南京</span>
     </div>
-  </section>
 
-  <section id="flows">
-    <div class="wrap">
-      <span class="section-kicker">INVENTORY FLOWS</span>
-      <h2>订单履约、仓间调拨和跨节点支援不是一回事</h2>
-      <div class="cards three">
-        <article class="card">
-          <span class="label">消费者履约</span>
-          <h3>库存直接发给消费者</h3>
-          <p>订单由具备库存和服务能力的节点完成，商品不再进入另一个仓。</p>
-        </article>
-        <article class="card violet">
-          <span class="label">仓间调拨</span>
-          <h3>库存先移动到另一个节点</h3>
-          <p>实物经过出库、运输和入库后，成为目标节点库存，再用于后续订单。</p>
-        </article>
-        <article class="card amber">
-          <span class="label">跨节点支援</span>
-          <h3>其他节点帮助完成订单</h3>
-          <p>可能改善有货，但也可能增加距离、拆单和消费者等待时间。</p>
-        </article>
-      </div>
+    <h3>三层级（2025，共 ~62 仓）</h3>
+    <table>
+      <tr><th>层</th><th>仓</th><th>说明</th></tr>
+      <tr><td>一层</td><td><strong>11 大 RDC</strong></td><td>传统主仓 + 新增 3 大主仓，一仓覆盖多区域</td></tr>
+      <tr><td>二层</td><td><strong>19 个 2025 以前升级仓</strong></td><td>—</td></tr>
+      <tr><td>三层</td><td><strong>32 个 2025 以后新增 BBCC 直送仓</strong></td><td>覆盖剩 ~20% 消费者（三四线）</td></tr>
+    </table>
 
-      <div class="callout warn">
-        <span class="title">“可以异地发货”不等于“库存可以自由调拨”</span>
-        履约、调拨和支援通常由不同规则、系统状态与资源约束控制。分析库存时必须先确认发生的是哪一种流动。
-      </div>
-    </div>
-  </section>
+    <h3>按事业部看宝洁直送城市</h3>
+    <table>
+      <tr><th>事业部</th><th>包含业务</th><th>宝洁直送范围</th></tr>
+      <tr><td><strong>大商超事业部</strong></td><td>洁护母婴家清（个护、母婴、家清）</td><td><strong>62 个城市</strong></td></tr>
+      <tr><td><strong>美妆事业部</strong></td><td>SK-II、OLAY</td><td><strong>11 个城市</strong>，即 11 个 RDC 城市</td></tr>
+    </table>
 
-  <section id="tradeoff">
-    <div class="wrap">
-      <span class="section-kicker">CENTRALIZE OR LOCALIZE</span>
-      <h2>集中库存与下沉库存的取舍</h2>
-      <div class="compare">
+    <div class="network-map" id="direct-delivery-map">
+      <div class="map-toolbar">
         <div>
-          <h3>集中在少量枢纽</h3>
-          <ul>
-            <li>库存池更大，长尾商品更容易共享需求；</li>
-            <li>安全库存和运营复杂度相对较低；</li>
-            <li>离部分消费者更远，运输距离可能增加；</li>
-            <li>多商品订单仍可能因其他商品位置而拆分。</li>
-          </ul>
+          <strong>宝洁直送城市分布</strong>
+          <span class="map-summary" id="map-summary">大商超事业部 · 62 个直送城市</span>
         </div>
-        <div>
-          <h3>下沉到更多需求节点</h3>
-          <ul>
-            <li>更接近消费者，有利于速度和本地整单；</li>
-            <li>稳定畅销品可能减少跨区域履约；</li>
-            <li>每个节点都需要库存，整体库存可能增加；</li>
-            <li>低频商品更容易出现滞留和节点间不均衡。</li>
-          </ul>
+        <div class="map-actions">
+          <div class="segmented" role="group" aria-label="选择事业部地图">
+            <button type="button" data-map-mode="mass" aria-pressed="true">大商超</button>
+            <button type="button" data-map-mode="beauty" aria-pressed="false">美妆</button>
+            <button type="button" data-map-mode="compare" aria-pressed="false">对比</button>
+          </div>
+          <label class="coverage-toggle"><input id="coverage-toggle" type="checkbox" checked />显示覆盖城市</label>
+          <button class="map-icon-btn" type="button" data-map-action="zoom-in" title="放大" aria-label="放大地图">+</button>
+          <button class="map-icon-btn" type="button" data-map-action="zoom-out" title="缩小" aria-label="缩小地图">−</button>
+          <button class="map-icon-btn" type="button" data-map-action="reset" title="重置视图" aria-label="重置地图视图">↺</button>
         </div>
       </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>商品特征</th><th>更偏集中</th><th>更偏下沉</th></tr></thead>
-          <tbody>
-            <tr><td>需求频率</td><td>低频、长尾、波动大</td><td>高频、稳定、区域需求明确</td></tr>
-            <tr><td>供应周期</td><td>补货慢且不稳定时需谨慎分散</td><td>供应稳定且可频繁补充</td></tr>
-            <tr><td>服务要求</td><td>消费者可接受较宽松时效</td><td>速度和本地可得性非常重要</td></tr>
-            <tr><td>商品生命周期</td><td>新品早期、退市期或需求不确定</td><td>成熟期且历史模式稳定</td></tr>
-            <tr><td>库存风险</td><td>高货值、易过期或库容占用大</td><td>库存风险较低且周转健康</td></tr>
-          </tbody>
-        </table>
+      <div class="rdc-filter" role="group" aria-label="按 RDC 筛选">
+        <button type="button" data-rdc="" aria-pressed="true">全部 RDC</button>
+        <button type="button" data-rdc="北京" aria-pressed="false" style="--rdc-color:#C43C4E"><span class="swatch"></span>北京</button>
+        <button type="button" data-rdc="上海" aria-pressed="false" style="--rdc-color:#008A91"><span class="swatch"></span>上海</button>
+        <button type="button" data-rdc="广州" aria-pressed="false" style="--rdc-color:#F28E2B"><span class="swatch"></span>广州</button>
+        <button type="button" data-rdc="成都" aria-pressed="false" style="--rdc-color:#4E9A51"><span class="swatch"></span>成都</button>
+        <button type="button" data-rdc="武汉" aria-pressed="false" style="--rdc-color:#8B5FBF"><span class="swatch"></span>武汉</button>
+        <button type="button" data-rdc="西安" aria-pressed="false" style="--rdc-color:#3F72AF"><span class="swatch"></span>西安</button>
+        <button type="button" data-rdc="沈阳" aria-pressed="false" style="--rdc-color:#E05A47"><span class="swatch"></span>沈阳</button>
+        <button type="button" data-rdc="德州" aria-pressed="false" style="--rdc-color:#49A7A0"><span class="swatch"></span>德州</button>
+        <button type="button" data-rdc="郑州" aria-pressed="false" style="--rdc-color:#D4A514"><span class="swatch"></span>郑州</button>
+        <button type="button" data-rdc="杭州" aria-pressed="false" style="--rdc-color:#D95F9A"><span class="swatch"></span>杭州</button>
+        <button type="button" data-rdc="南京" aria-pressed="false" style="--rdc-color:#8C6D5A"><span class="swatch"></span>南京</button>
       </div>
-    </div>
-  </section>
-
-  <section id="decision">
-    <div class="wrap">
-      <span class="section-kicker">PLACEMENT DECISION</span>
-      <h2>SKU 布货决策的通用顺序</h2>
-      <ol class="checklist">
-        <li><strong>确认需求</strong><br />需求是否稳定、持续，并且能定位到明确区域？</li>
-        <li><strong>确认服务价值</strong><br />更近库存能否实质改善时效、整单率或消费者体验？</li>
-        <li><strong>确认供应能力</strong><br />能否以合适频率和批量持续补充多个节点？</li>
-        <li><strong>评估库存代价</strong><br />增加节点后，安全库存、库龄和滞留风险会怎样变化？</li>
-        <li><strong>评估订单关联</strong><br />常被一起购买的商品是否需要共置，避免只优化单个 SKU？</li>
-        <li><strong>小范围验证</strong><br />使用对照区域观察时效、成本、缺货和库存健康。</li>
-      </ol>
-
-      <h3>虚构案例</h3>
-      <div class="compare">
-        <div>
-          <h3>商品 A：稳定畅销</h3>
-          <p>北区和南区持续有稳定需求，供应周期短，缺货会明显影响体验。可以评估在需求节点配置库存。</p>
+      <div class="map-stage" id="map-stage" data-mode="mass">
+        <object id="network-map-object" type="image/svg+xml" data="../assets/warehouse-network-direct-delivery.svg" aria-label="宝洁直送城市与 11 RDC 覆盖互动地图"></object>
+        <div class="map-loading" id="map-loading">地图加载中…</div>
+      </div>
+      <div class="map-footer">
+        <div class="map-key" aria-label="地图符号说明">
+          <span><i class="key-dot"></i>事业部直送城市</span>
+          <span><i class="key-dot faint"></i>推测覆盖城市</span>
+          <span><i class="key-star">★</i>11 大 RDC</span>
         </div>
-        <div>
-          <h3>商品 B：低频长尾</h3>
-          <p>需求零散、区域分布不稳定且货值较高。保留在区域枢纽通常更有利于共享库存。</p>
-        </div>
+        <div class="map-detail" id="map-detail" aria-live="polite">悬停城市查看详情</div>
       </div>
-
-      <div class="callout danger">
-        <span class="title">最常见的错误：只看单品销量，不看整张订单</span>
-        即使某个 SKU 本地有货，如果与它一起购买的商品不在同一节点，订单仍可能拆分。仓网优化需要同时观察商品关联和订单结构。
-      </div>
+      <p class="map-note">直送城市来自《宝洁直送region.xlsx》；RDC 覆盖结合 2026 年 3—6 月库存关系、11 仓扩仓材料及城市地理推测。城市级静态归属不代表官方行政边界或 SKU 级实时路由。</p>
     </div>
-  </section>
-</main>
+
+    <h3>仓网怎么长起来的（2018 → 2025）</h3>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart LR
+    A["2018<br/>8 仓发全国"] --> B["2019~2024<br/>8 + 22 升级仓"]
+    B --> C["2025<br/>8 + 22 + 32 BBCC直送仓"]
+    C --> D["2025<br/>62 仓 · 三四线翻倍"]
+    D --> S1["轻货仓 ×6<br/>小件/赠品 ~50%仓配费"]
+    D --> S2["城市仓 ×3<br/>爆品直达站点 ~50%仓配费"]
+    style D fill:#FFC000,color:#111,stroke:#c99a00
+      </pre>
+    </div>
+    <p>核心叙事：靠 <strong>库存下沉</strong>（仓网 8→62 仓）换生意增长，靠 <strong>仓网合并 / 集约订单 / 集中预约</strong> 规避部分复杂化、换物流效率。</p>
+  </div>
+</section>
+
+<section id="rdc">
+  <div class="wrap">
+    <h2><span class="n">03</span>RDC vs 配送中心（别搞混）</h2>
+    <table>
+      <tr><th>概念</th><th>理解</th></tr>
+      <tr><td><strong>RDC</strong></td><td>京东希望商家送货/沉库存的城市或节点，带<strong>目标与指引</strong>意义</td></tr>
+      <tr><td><strong>配送中心</strong></td><td>京东已有基础设施、可承接 to C 履约的城市节点</td></tr>
+      <tr><td>关系</td><td>可能重叠也可能不重叠，<strong>不再是严格一对多</strong></td></tr>
+    </table>
+    <div class="callout tip">
+      <span class="t">⭐ 反直觉但要记牢</span>
+      <strong>RDC 也是 C 仓、也能 to C 履约</strong>——不是只有配送中心才面向消费者发货。而且现在是 <strong>动态·SKU 级</strong>：同品牌不同 SKU 的 RDC 范围可不同，同一 SKU 不同阶段可从 11→20→…→62 仓扩展。
+    </div>
+
+    <h3>京东仓类型速览</h3>
+    <table>
+      <tr><th>类型</th><th>说明</th></tr>
+      <tr><td><strong>C 仓</strong></td><td>城市维度主仓，全品类；含 11 大主仓 + 省会主力 + 三四线下沉，共 <strong>62</strong> 个</td></tr>
+      <tr><td><strong>B 仓</strong></td><td>集货/向 C 仓调拨的枢纽仓，当前有 24 个（BBCC 方案，宝洁未采用）</td></tr>
+      <tr><td><strong>城市仓</strong></td><td>本地爆品聚合，链路<strong>剔除分拣、直发站点</strong>，具 211 时效甚至更优时效</td></tr>
+      <tr><td><strong>轻货仓</strong></td><td>小件廉价特殊仓型，时效降级，但仓配费更为便宜</td></tr>
+    </table>
+    <p style="color:var(--muted);font-size:14px">事业部差异：大商超事业部，即洁护母婴家清（个护、母婴、家清），直送 62 城；美妆事业部（SK-II、OLAY）直送 11 城，即传统 8 RDC + 杭州、郑州、南京。</p>
+  </div>
+</section>
+
+<section id="flow">
+  <div class="wrap">
+    <h2><span class="n">04</span>库存怎么在城市/区域间流动</h2>
+    <p class="lead">三种跨仓机制 + 一个注意，规则各异——记住谁能借谁、谁入库才算数。</p>
+    <table>
+      <tr><th>机制</th><th>何时发生</th><th>规则要点</th></tr>
+      <tr><td><strong>平行</strong></td><td>to 消费者履约时</td><td>本仓无货，从<strong>他区域仓</strong>直发消费者（有平行库存返利费）</td></tr>
+      <tr><td><strong>支援</strong></td><td>to 消费者履约时</td><td><strong>同区域</strong> RDC↔FDC 互借；RDC 可支援 FDC，FDC 不能支援 RDC</td></tr>
+      <tr><td><strong>内配</strong></td><td>京东内部京仓间</td><td>实物调库，<strong>入目标库后才能履约</strong>；仅限同区 RDC 与 FDC 调配，跨区域 RDC 与 FDC 不能内配</td></tr>
+      <tr><td><strong>注意：预定</strong></td><td>页面可下单量</td><td>采购/内配在途可开预定；平行不影响预定，支援可影响预定</td></tr>
+    </table>
+
+    <h3>一个黑话</h3>
+    <table>
+      <tr><th>概念</th><th>含义</th></tr>
+      <tr><td><strong>拉黑</strong></td><td>对某城市/仓屏蔽某 SKU 的本地履约，订单改由上游仓发，<strong>主动制造大仓对下仓的代发关系</strong>。</td></tr>
+    </table>
+    <div class="callout">
+      💡 <b>只要不是本地发货，都可视为某种「异地代发」。</b>　平行更像一个「跨区代发工具」；同区上游支援与跨区平行都可能拆单，但<strong>费用归属与计算方式不同</strong>——优化时要看「谁买单」，不是只看「是否拆单」。
+    </div>
+  </div>
+</section>
+
+<section id="place">
+  <div class="wrap">
+    <h2><span class="n">05</span>货放哪：62 仓 vs 11 仓 + 布货决策</h2>
+    <p class="lead">理想是所有 SKU 沉到所有 C 仓，但现实不可行（含赠品可达两三千 SKU、长尾流速低、新品无历史流速）。</p>
+    <div class="grid">
+      <div class="card"><h3>🏢 11 大仓 = 核心枢纽</h3><p>覆盖全国的枢纽；适合长尾、明星周边、一次性活动品、供应受限赠品、流速不稳的新品早期。</p></div>
+      <div class="card"><h3>🏘️ 62 仓 = 深度下沉</h3><p>提本地发货率/时效、改善体验、减部分异常费；代价是库存分散、补货复杂、滞销风险高。</p></div>
+    </div>
+
+    <h3>新 SKU 布几仓？按类型决策</h3>
+    <div class="diagram">
+      <pre class="mermaid">
+flowchart TD
+    Q["新 SKU 要布几仓?"] --> T1{"SKU 类型?"}
+    T1 -->|大体量新品| D1["参考历史对标品<br/>可 day-one 深铺"]
+    T1 -->|普通/中等新品| D2["先布 11 仓<br/>看流速再扩 20/30/62"]
+    T1 -->|明星周边/活动品| D3["只布 11 仓<br/>活动后一次性消化"]
+    T1 -->|常规品| D4["按品类表现与销量判断"]
+    style D2 fill:#6ee7b7,color:#111,stroke:#2f9e79
+      </pre>
+    </div>
+    <div class="callout tip">
+      <span class="t">🎯 决策心法</span>
+      核心变量 = <strong>流速（是否可预测）× 供应能力 × 生命周期</strong>。先用 11 仓兜底覆盖，再用流速数据驱动深下沉——把「下沉」当作<strong>可观测后再加码</strong>的动作，而非默认全铺。
+    </div>
+  </div>
+</section>
+
+<section id="hubs">
+  <div class="wrap">
+    <h2><span class="n">06</span>两个省钱枢纽仓：轻货仓 vs 城市仓</h2>
+    <p class="lead">两者都能把仓配费压到<strong>主仓的 ~50%</strong>，但目的与时效不同。</p>
+    <table>
+      <tr><th></th><th>轻货仓（= 经济仓）</th><th>城市仓</th></tr>
+      <tr><td>数量/位置</td><td>6 个：北、广、上、武汉、西安、成都</td><td>3 个：北、上、广</td></tr>
+      <tr><td>为谁设计</td><td>小件<strong>赠品</strong>专仓</td><td>一线城市<strong>爆品</strong>专仓</td></tr>
+      <tr><td>为何便宜</td><td>降级时效换低价</td><td>出库<strong>不过分拣</strong>、直达派送站点</td></tr>
+      <tr><td>时效</td><td>更慢</td><td>更快（211 及以上）</td></tr>
+      <tr><td>边界</td><td>时效降级</td><td>仅北上广核心城区</td></tr>
+    </table>
+    <div class="callout">
+      🔎 <b>轻货仓几个坑：</b>自动平行但<strong>不与主仓平行</strong>；与主仓/经济仓间<strong>无内配</strong>（发不完不能转主仓）；单线路 <strong>MOQ 200cs</strong>，赠品需搭配主仓主品 &gt;200cs 且 FGOI 配额提前 ready。
+    </div>
+  </div>
+</section>
+
+<section id="pit">
+  <div class="wrap">
+    <h2><span class="n">07</span>新人最容易踩的坑</h2>
+    <div class="callout warn">
+      <span class="t">① region 字段 ≠ 物理城市</span>
+      主数据用<strong>付运点（ship-to，实际的运输线路/送达点）</strong>描述直送网络；<span class="mono">region</span> 对应库存大表的「配送中心」，但<strong>不等于实际物理城市</strong>——「上海 region」下的付运点可能在昆山，「北京 region」下可能在天津。做覆盖/距离分析前先确认真实地址。
+    </div>
+    <div class="callout warn">
+      <span class="t">② 拆单「谁买单」</span>
+      不是所有拆单都由京东自己买单。<strong>同区代发京东自行承担；跨区平行的 upcharge 会推账单给宝洁</strong>。
+    </div>
+    <div class="callout warn">
+      <span class="t">③ 绑赠品要一起下沉</span>
+      JD 路由是<strong>整单优先</strong>。只下沉主品、赠品不在本地，会触发跨区/拆单——<strong>绑送赠品也要一起下沉</strong>。
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2><span class="n">08</span>想深入？读这些原子笔记</h2>
+    <p class="lead">本页是新人汇总；细节见知识库 vault「16 仓网」域：</p>
+    <div>
+      <span class="pill">仓网地理 11 RDC</span>
+      <span class="pill">RDC 与配送中心 概念演进</span>
+      <span class="pill">62 仓直送与 11 仓取舍</span>
+      <span class="pill">库存流转 平行支援内配预定</span>
+      <span class="pill">拉黑 同区代发 与平行履约</span>
+      <span class="pill">SKU 仓网布货决策</span>
+      <span class="pill">轻货仓与经济仓</span>
+      <span class="pill">付运点与 region 字段</span>
+      <span class="pill">物流价值创造与仓网演进</span>
+      <span class="pill">BBCC B仓B网</span>
+    </div>
+    <div class="callout" style="margin-top:22px">
+      <span class="t">下一步：订单来了，系统如何找货？</span>
+      从仓网结构继续学习需求收敛、候选寻仓、整单拆单和增量成本：
+      <a href="./fulfillment-routing-primer.html"><strong>消费者订单履约逻辑入门 →</strong></a>
+    </div>
+  </div>
+</section>
 
 <footer>
-  <div class="wrap">本页使用抽象仓网模型进行教学，不展示任何企业的实际仓点、覆盖范围、路由规则或库存策略 · <a href="../">返回首页</a></div>
+  <div class="wrap">
+    <p><b>JD Supply Chain 团队知识库</b> · 仓网入门（新人向汇总）</p>
+    <p style="font-size:13px">源自 vault：<span class="mono">16 仓网/*</span> · <a href="./fulfillment-routing-primer.html">消费者订单履约逻辑入门</a> · <a href="../">返回首页</a> · <a href="./guide.html">使用指南</a></p>
+  </div>
 </footer>
 
+<script defer src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!window.mermaid) return;
+    mermaid.initialize({
+      startOnLoad:false, theme:'dark',
+      themeVariables:{
+        fontFamily:'Segoe UI, Microsoft YaHei, sans-serif',
+        primaryColor:'#151d3b', primaryTextColor:'#eaf0ff', primaryBorderColor:'#4f7cff',
+        lineColor:'#6b7bb5', secondaryColor:'#111834', tertiaryColor:'#0e1430',
+        clusterBkg:'#0e1430', background:'#0e1430'
+      }
+    });
+    mermaid.run({ querySelector:'.mermaid' });
+  }, { once:true });
+
+  (() => {
+    const mapObject = document.getElementById('network-map-object');
+    const stage = document.getElementById('map-stage');
+    const summary = document.getElementById('map-summary');
+    const detail = document.getElementById('map-detail');
+    const coverageToggle = document.getElementById('coverage-toggle');
+    const modeButtons = [...document.querySelectorAll('[data-map-mode]')];
+    const rdcButtons = [...document.querySelectorAll('[data-rdc]')];
+    const actionButtons = [...document.querySelectorAll('[data-map-action]')];
+    const views = {
+      mass: { x: 25, y: 110, width: 850, height: 770, label: '大商超事业部 · 62 个直送城市' },
+      beauty: { x: 925, y: 110, width: 850, height: 770, label: '美妆事业部 · 11 个直送城市' },
+      compare: { x: 25, y: 110, width: 1750, height: 770, label: '大商超 62 城 vs 美妆 11 城' }
+    };
+    let svgRoot;
+    let mapItems = [];
+    let mode = 'mass';
+    let activeRdc = '';
+    let baseView = { ...views.mass };
+    let currentView = { ...views.mass };
+    let dragStart;
+    let mapInitialized = false;
+
+    const setViewBox = view => {
+      if (!svgRoot) return;
+      currentView = { ...view };
+      svgRoot.setAttribute('viewBox', `${view.x} ${view.y} ${view.width} ${view.height}`);
+    };
+
+    const resetView = () => setViewBox(baseView);
+
+    const zoom = factor => {
+      if (!svgRoot) return;
+      const minWidth = baseView.width * .42;
+      const nextWidth = Math.max(minWidth, Math.min(baseView.width, currentView.width * factor));
+      const nextHeight = nextWidth * baseView.height / baseView.width;
+      const centerX = currentView.x + currentView.width / 2;
+      const centerY = currentView.y + currentView.height / 2;
+      setViewBox({ x: centerX - nextWidth / 2, y: centerY - nextHeight / 2, width: nextWidth, height: nextHeight });
+    };
+
+    const itemDetail = item => {
+      if (item.kind === 'direct') return `${item.city} · ${item.business}直送 · ${item.rdc} RDC 区域`;
+      if (item.kind === 'coverage') return `${item.city} · 推测由 ${item.rdc} RDC 覆盖`;
+      return `${item.rdc} RDC`;
+    };
+
+    const updateSummary = () => {
+      const visibleDirect = new Set(mapItems
+        .filter(item => item.kind === 'direct')
+        .filter(item => mode === 'compare' || item.mode === mode)
+        .filter(item => !activeRdc || item.rdc === activeRdc)
+        .map(item => `${item.mode}:${item.city}`));
+      summary.textContent = activeRdc
+        ? `${views[mode].label} · ${activeRdc} RDC · ${visibleDirect.size} 个直送城市`
+        : views[mode].label;
+    };
+
+    const applyFilters = () => {
+      mapItems.forEach(item => {
+        const rdcMatch = !activeRdc || item.rdc === activeRdc;
+        const showCoverage = coverageToggle.checked || item.kind !== 'coverage';
+        item.element.style.display = showCoverage ? '' : 'none';
+        item.element.style.opacity = rdcMatch ? '1' : '.08';
+      });
+      updateSummary();
+    };
+
+    const selectMode = nextMode => {
+      mode = nextMode;
+      baseView = { ...views[mode] };
+      stage.dataset.mode = mode;
+      modeButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.mapMode === mode)));
+      resetView();
+      applyFilters();
+    };
+
+    const selectRdc = rdc => {
+      activeRdc = rdc;
+      rdcButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.rdc === rdc)));
+      detail.textContent = rdc ? `${rdc} RDC 已高亮` : '悬停城市查看详情';
+      applyFilters();
+    };
+
+    modeButtons.forEach(button => button.addEventListener('click', () => selectMode(button.dataset.mapMode)));
+    rdcButtons.forEach(button => button.addEventListener('click', () => selectRdc(button.dataset.rdc)));
+    coverageToggle.addEventListener('change', applyFilters);
+    actionButtons.forEach(button => button.addEventListener('click', () => {
+      if (button.dataset.mapAction === 'zoom-in') zoom(.78);
+      if (button.dataset.mapAction === 'zoom-out') zoom(1.28);
+      if (button.dataset.mapAction === 'reset') resetView();
+    }));
+
+    const initializeMap = () => {
+      if (mapInitialized) return;
+      const svgDocument = mapObject.contentDocument;
+      svgRoot = svgDocument && svgDocument.documentElement;
+      if (!svgRoot || !svgDocument.querySelector('circle > title')) {
+        return;
+      }
+      mapInitialized = true;
+
+      svgRoot.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      svgRoot.style.cursor = 'grab';
+      svgRoot.style.touchAction = 'none';
+      const parseElement = element => {
+        const title = element.querySelector(':scope > title');
+        if (!title) return;
+        const text = title.textContent.trim();
+        let match;
+        let item;
+        if ((match = text.match(/^(.+?)｜推测由(.+?)RDC覆盖$/))) {
+          item = { element, city: match[1], rdc: match[2], kind: 'coverage', mode: element.getAttribute('cx') < 900 ? 'mass' : 'beauty' };
+        } else if ((match = text.match(/^(.+?)｜(大商超|美妆)事业部直送｜(.+?)RDC区域$/))) {
+          item = { element, city: match[1], business: match[2], rdc: match[3], kind: 'direct', mode: match[2] === '大商超' ? 'mass' : 'beauty' };
+        } else if ((match = text.match(/^(.+?)RDC$/))) {
+          item = { element, rdc: match[1], kind: 'rdc', mode: 'both' };
+        }
+        if (!item) return;
+        element.style.transition = 'opacity .18s ease';
+        if (item.kind !== 'rdc') {
+          element.style.cursor = 'pointer';
+          element.setAttribute('tabindex', '0');
+          element.setAttribute('role', 'button');
+          element.setAttribute('aria-label', itemDetail(item));
+          const showDetail = () => { detail.textContent = itemDetail(item); };
+          element.addEventListener('pointerenter', showDetail);
+          element.addEventListener('focus', showDetail);
+          element.addEventListener('click', () => selectRdc(item.rdc));
+          element.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              selectRdc(item.rdc);
+            }
+          });
+        }
+        mapItems.push(item);
+      };
+
+      svgDocument.querySelectorAll('circle, polygon').forEach(parseElement);
+      svgDocument.querySelectorAll('text').forEach(element => {
+        const match = element.textContent.trim().match(/^(.+?)RDC$/);
+        if (match && views.mass && Object.prototype.hasOwnProperty.call({北京:1,上海:1,广州:1,成都:1,武汉:1,西安:1,沈阳:1,德州:1,郑州:1,杭州:1,南京:1}, match[1])) {
+          mapItems.push({ element, rdc: match[1], kind: 'rdc-label', mode: 'both' });
+        }
+      });
+
+      svgRoot.addEventListener('wheel', event => {
+        event.preventDefault();
+        zoom(event.deltaY > 0 ? 1.14 : .86);
+      }, { passive: false });
+      svgRoot.addEventListener('pointerdown', event => {
+        dragStart = { clientX: event.clientX, clientY: event.clientY, view: { ...currentView } };
+        svgRoot.style.cursor = 'grabbing';
+        svgRoot.setPointerCapture?.(event.pointerId);
+      });
+      svgRoot.addEventListener('pointermove', event => {
+        if (!dragStart) return;
+        const rect = svgRoot.getBoundingClientRect();
+        const dx = (event.clientX - dragStart.clientX) * dragStart.view.width / rect.width;
+        const dy = (event.clientY - dragStart.clientY) * dragStart.view.height / rect.height;
+        setViewBox({ ...dragStart.view, x: dragStart.view.x - dx, y: dragStart.view.y - dy });
+      });
+      const endDrag = () => { dragStart = undefined; svgRoot.style.cursor = 'grab'; };
+      svgRoot.addEventListener('pointerup', endDrag);
+      svgRoot.addEventListener('pointercancel', endDrag);
+
+      stage.classList.add('is-ready');
+      selectMode('mass');
+    };
+
+    mapObject.addEventListener('load', initializeMap);
+    initializeMap();
+  })();
+</script>
 </body>
 </html>
