@@ -7,7 +7,9 @@ $Publisher = Join-Path $PSScriptRoot 'publish-warehouse-ratio.ps1'
 
 "=== $(Get-Date -Format o) ===" | Out-File -LiteralPath $LogFile -Encoding utf8
 try {
-    & $Publisher *>> $LogFile
+    & $Publisher 2>&1 | ForEach-Object {
+        $_ | Out-String | Out-File -LiteralPath $LogFile -Append -Encoding utf8
+    }
     $exitCode = $LASTEXITCODE
     "=== exit $exitCode @ $(Get-Date -Format o) ===" |
         Out-File -LiteralPath $LogFile -Append -Encoding utf8

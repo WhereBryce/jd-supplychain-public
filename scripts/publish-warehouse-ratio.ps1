@@ -21,13 +21,24 @@ $GitBase = @('-c', "safe.directory=$RepoRoot", '-C', $RepoRoot)
 
 function Invoke-Git {
     param([Parameter(Mandatory)][string[]]$Arguments)
-    $previousPreference = $ErrorActionPreference
+
+    $stdoutPath = [IO.Path]::GetTempFileName()
+    $stderrPath = [IO.Path]::GetTempFileName()
     try {
-        $ErrorActionPreference = 'Continue'
-        & git @GitBase @Arguments
-        $exitCode = $LASTEXITCODE
+        $process = Start-Process `
+            -FilePath 'git.exe' `
+            -ArgumentList @($GitBase + $Arguments) `
+            -Wait `
+            -PassThru `
+            -NoNewWindow `
+            -RedirectStandardOutput $stdoutPath `
+            -RedirectStandardError $stderrPath
+        $exitCode = $process.ExitCode
+        Get-Content -LiteralPath $stdoutPath -ErrorAction SilentlyContinue
+        Get-Content -LiteralPath $stderrPath -ErrorAction SilentlyContinue
     } finally {
-        $ErrorActionPreference = $previousPreference
+        Remove-Item -LiteralPath $stdoutPath -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath $stderrPath -Force -ErrorAction SilentlyContinue
     }
     if ($exitCode -ne 0) {
         throw "git $($Arguments -join ' ') 失败，退出码 $exitCode"
