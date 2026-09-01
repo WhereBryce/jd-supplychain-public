@@ -21,9 +21,16 @@ $GitBase = @('-c', "safe.directory=$RepoRoot", '-C', $RepoRoot)
 
 function Invoke-Git {
     param([Parameter(Mandatory)][string[]]$Arguments)
-    & git @GitBase @Arguments
-    if ($LASTEXITCODE -ne 0) {
-        throw "git $($Arguments -join ' ') 失败，退出码 $LASTEXITCODE"
+    $previousPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        & git @GitBase @Arguments
+        $exitCode = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
+    if ($exitCode -ne 0) {
+        throw "git $($Arguments -join ' ') 失败，退出码 $exitCode"
     }
 }
 
