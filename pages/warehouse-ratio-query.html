@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="基于最新JD库存切片计算11RDC与宝洁直送62仓备货占比">
+  <title>JD 仓比查询 · JD Supply Chain</title>
+  <link rel="stylesheet" href="../assets/warehouse-ratio-query.css">
+  <script src="../assets/warehouse-ratio-engine.js" defer></script>
+  <script src="../assets/warehouse-ratio-query.js" defer></script>
+</head>
+<body>
+  <main id="unlock" class="unlock">
+    <section class="unlock-card" aria-labelledby="unlockTitle">
+      <div class="mark">JD</div>
+      <p class="eyebrow">ENCRYPTED ALLOCATION QUERY</p>
+      <h1 id="unlockTitle">11RDC / 62仓<br>备货仓比查询</h1>
+      <p class="unlock-copy">输入内部访问密码，在当前浏览器本地解密最新库存模型。密码和查询条件不会上传。</p>
+      <dl class="freshness">
+        <div><dt>当前切片</dt><dd id="unlockDate">读取中…</dd></div>
+        <div><dt>商品范围</dt><dd id="unlockProducts">—</dd></div>
+        <div><dt>配送中心</dt><dd id="unlockWarehouses">—</dd></div>
+        <div><dt>加密标准</dt><dd>AES-256-GCM</dd></div>
+      </dl>
+      <p id="unlockWarning" class="fallback-note" hidden></p>
+      <form id="unlockForm">
+        <label class="field">访问密码
+          <input id="password" type="password" autocomplete="current-password" required>
+        </label>
+        <p id="unlockStatus" class="status" role="status"></p>
+        <button id="unlockButton" class="primary" type="submit">解锁并加载模型</button>
+      </form>
+      <p class="privacy">采购价空值不会进入模型。业务明细只以 PBKDF2-SHA256 + AES-256-GCM 密文存放于 GitHub Pages。</p>
+      <a href="../index.html">返回主页</a>
+    </section>
+  </main>
+
+  <div id="app" hidden>
+    <header class="topbar">
+      <div>
+        <div class="identity">
+          <span class="mark">JD</span>
+          <section>
+            <p class="eyebrow">WAREHOUSE ALLOCATION</p>
+            <h1>11RDC / 62仓备货仓比查询</h1>
+          </section>
+        </div>
+        <div class="actions">
+          <span id="meta" class="meta">加密模型已解锁</span>
+          <button id="lock" class="quiet" type="button">锁定</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <div id="notice" class="notice" hidden></div>
+      <section class="hero">
+        <div>
+          <p class="eyebrow">90-DAY RECEIVING-LOCATION DEMAND</p>
+          <h2>按商品范围和销量仓网，计算两套全国备货比例。</h2>
+          <p>11RDC方案收敛到11仓；62仓方案将未直送配送中心按同城优先、城市中心球面距离最近原则收敛到普通C仓。</p>
+        </div>
+        <button id="download" class="primary" type="button" disabled>下载 Excel</button>
+      </section>
+
+      <section class="card query-card">
+        <div class="heading">
+          <div><p class="eyebrow">FILTERS</p><h3>查询条件</h3></div>
+          <button id="reset" class="quiet" type="button">恢复默认</button>
+        </div>
+
+        <div class="filter-grid">
+          <label class="field">品牌
+            <select id="brand"><option value="">全部品牌</option></select>
+          </label>
+          <label class="field">一级类目
+            <select id="l1"><option value="">全部一级类目</option></select>
+          </label>
+          <label class="field">二级类目
+            <select id="l2"><option value="">全部二级类目</option></select>
+          </label>
+          <label class="field">三级类目
+            <select id="l3"><option value="">全部三级类目</option></select>
+          </label>
+          <label class="field">全国采购价是否为0
+            <select id="price">
+              <option value="">全部非空采购价</option>
+              <option value="zero">采购价为0</option>
+              <option value="nonzero">采购价不为0</option>
+            </select>
+          </label>
+        </div>
+
+        <fieldset class="scope-panel">
+          <legend>计算销量时包含的配送中心</legend>
+          <div class="scope-grid">
+            <label><input type="checkbox" name="scope" value="all" checked> 全国全仓</label>
+            <label><input type="checkbox" name="scope" value="11rdc"> 仅11RDC</label>
+            <label><input type="checkbox" name="scope" value="direct62"> 宝洁直送62仓</label>
+            <label><input type="checkbox" name="scope" value="light"> 轻货仓</label>
+            <label><input type="checkbox" name="scope" value="city"> 城市仓</label>
+          </div>
+          <div class="light-exclusion">
+            <label><input id="excludeLight" type="checkbox" checked> 排除轻货仓</label>
+            <strong id="scopeReminder">当前默认口径：全国全仓，不含轻货仓</strong>
+          </div>
+          <p>多选按配送中心并集去重；全国全仓已经包含11RDC。选择轻货仓时会自动取消“排除轻货仓”。</p>
+        </fieldset>
+
+        <button id="query" class="primary query-button" type="button">计算仓比</button>
+      </section>
+
+      <section id="results" class="results">
+        <div id="kpis" class="kpis"></div>
+        <div class="two">
+          <article class="card">
+            <div class="heading"><div><p class="eyebrow">SCENARIO 01</p><h3>11RDC发全国</h3></div><small>所选销量收敛到11仓</small></div>
+            <div class="table-wrap compact-table">
+              <table>
+                <thead><tr><th>11RDC</th><th class="numeric">90日件数</th><th class="numeric">备货占比</th></tr></thead>
+                <tbody id="rdcBody"></tbody>
+              </table>
+            </div>
+          </article>
+          <article class="card">
+            <div class="heading"><div><p class="eyebrow">SCENARIO 02</p><h3>普通C仓62仓发全国</h3></div><small>未直送按临近原则收敛</small></div>
+            <div class="table-wrap compact-table">
+              <table>
+                <thead><tr><th>普通C仓</th><th class="numeric">90日件数</th><th class="numeric">备货占比</th></tr></thead>
+                <tbody id="c62Body"></tbody>
+              </table>
+            </div>
+          </article>
+        </div>
+
+        <article class="card">
+          <div class="heading">
+            <div><p class="eyebrow">MAPPING AUDIT</p><h3>配送中心收敛审计</h3></div>
+            <input id="mappingSearch" type="search" placeholder="搜索配送中心">
+          </div>
+          <div class="table-wrap mapping-table">
+            <table>
+              <thead>
+                <tr><th>原配送中心</th><th>仓型</th><th>标准城市</th><th>11RDC</th><th>目标62仓</th><th class="numeric">距离km</th><th>第二候选</th><th>边界</th><th class="numeric">90日件数</th></tr>
+              </thead>
+              <tbody id="mappingBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section class="card methodology">
+        <h3>计算口径</h3>
+        <p>销量字段为“近90日收货地商品件数”；排除全国汇总行；同一SKU×配送中心重复时取最大值。采购价空值SKU不进入计算。城市仓、轻货仓和同城特殊仓优先归同城普通C仓，其他未直送仓按标准城市中心到62个普通C仓城市的Haversine球面距离取最近仓。</p>
+      </section>
+    </main>
+    <footer>JD SUPPLY CHAIN · WAREHOUSE ALLOCATION QUERY</footer>
+  </div>
+</body>
+</html>
