@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>供应链指标地图 · JD Supply Chain</title>
+<meta name="description" content="从商品基础、供给、库存、履约、质量、成本与现金六个领域理解供应链指标及其因果关系。" />
+<link rel="stylesheet" href="../assets/learning-page.css" />
+<style>
+  .metric-map{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin:20px 0}
+  .domain{position:relative;padding:18px;border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(145deg,var(--panel),var(--panel2))}
+  .domain::before{content:attr(data-step);position:absolute;right:14px;top:10px;color:rgba(255,255,255,.08);font-size:40px;font-weight:900}
+  .domain h3{position:relative;margin:0 0 4px;font-size:17px}
+  .domain > p{position:relative;margin:0 0 13px;color:var(--muted);font-size:12.5px}
+  .metric-list{display:flex;gap:7px;flex-wrap:wrap}
+  .metric-chip{padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:#090f23;color:#cbd7f4;font-size:11.5px}
+  .chain{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:18px;margin:20px 0}
+  .chain-step{position:relative;padding:14px;border:1px solid var(--line);border-radius:11px;background:var(--panel);text-align:center}
+  .chain-step:not(:last-child)::after{content:"→";position:absolute;right:-15px;top:34%;color:var(--mint);font-size:18px}
+  .chain-step b{display:block;font-size:13px}
+  .chain-step span{display:block;margin-top:5px;color:var(--muted);font-size:11.5px}
+  @media(max-width:860px){.metric-map{grid-template-columns:repeat(2,minmax(0,1fr))}.chain{grid-template-columns:repeat(3,minmax(0,1fr))}.chain-step::after{display:none}}
+  @media(max-width:620px){.metric-map,.chain{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="wrap">
+    <div class="brand">JD <span>Supply Chain</span> · 指标地图</div>
+    <div class="nav-links">
+      <a href="#map">指标地图</a>
+      <a href="#chain">因果链</a>
+      <a href="#definitions">定义</a>
+      <a href="#balance">权衡</a>
+      <a href="#learning">学习路径</a>
+      <a href="../">首页</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="badge">指标体系 · 因果关系 · 学习导航</span>
+    <h1>供应链<em>指标地图</em></h1>
+    <div class="summary">
+      指标地图不是 KPI 清单，而是帮助我们回答：<strong>问题发生在哪个环节、哪个指标是原因、哪个指标只是结果</strong>。
+      本页将供应链拆成六个相互连接的领域，并链接到库存、履约、质量、成本和现金等专题。
+    </div>
+    <div class="meta">
+      <span>原创六域结构</span>
+      <span>参考 SCOR 过程与绩效思想</span>
+      <span>不包含企业考核目标值</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="map">
+    <div class="wrap">
+      <span class="section-kicker">KPI LANDSCAPE</span>
+      <h2>从基础数据到经营价值的六域地图</h2>
+      <p class="lead">同一个问题往往跨越多个领域。例如缺货可能来自主数据、预测、采购、库存布局或履约规则，不能只盯现货率。</p>
+
+      <div class="metric-map">
+        <article class="domain" data-step="01">
+          <h3>商品与数据基础</h3>
+          <p>确保后续计划、仓储和履约使用可信数据。</p>
+          <div class="metric-list">
+            <span class="metric-chip">主数据准确率</span>
+            <span class="metric-chip">属性完整率</span>
+            <span class="metric-chip">可售状态准确率</span>
+            <span class="metric-chip">条码匹配率</span>
+          </div>
+        </article>
+        <article class="domain" data-step="02">
+          <h3>计划、采购与供给</h3>
+          <p>衡量需求能否被及时、完整地转化为可用供给。</p>
+          <div class="metric-list">
+            <span class="metric-chip">预测偏差</span>
+            <span class="metric-chip">订单确认及时率</span>
+            <span class="metric-chip">订单满足率</span>
+            <span class="metric-chip">到货及时完整率</span>
+          </div>
+        </article>
+        <article class="domain" data-step="03">
+          <h3>库存与可得性</h3>
+          <p>平衡消费者有货、库存周转和老化风险。</p>
+          <div class="metric-list">
+            <span class="metric-chip">现货率</span>
+            <span class="metric-chip">有货天数</span>
+            <span class="metric-chip">库存周转天数</span>
+            <span class="metric-chip">长库龄占比</span>
+          </div>
+        </article>
+        <article class="domain" data-step="04">
+          <h3>仓网、履约与体验</h3>
+          <p>观察订单能否按承诺以合适路径交付。</p>
+          <div class="metric-list">
+            <span class="metric-chip">整单率</span>
+            <span class="metric-chip">准时交付率</span>
+            <span class="metric-chip">履约周期</span>
+            <span class="metric-chip">订单准确率</span>
+          </div>
+        </article>
+        <article class="domain" data-step="05">
+          <h3>质量、售后与逆向</h3>
+          <p>识别交付后的质量损失和逆向处置效率。</p>
+          <div class="metric-list">
+            <span class="metric-chip">临期风险库存</span>
+            <span class="metric-chip">售后申请率</span>
+            <span class="metric-chip">退换率</span>
+            <span class="metric-chip">逆向处理时长</span>
+          </div>
+        </article>
+        <article class="domain" data-step="06">
+          <h3>成本、资产与现金</h3>
+          <p>将运营动作连接到资源消耗和资金占用。</p>
+          <div class="metric-list">
+            <span class="metric-chip">单位履约成本</span>
+            <span class="metric-chip">DIO / DSO / DPO</span>
+            <span class="metric-chip">现金转换周期</span>
+            <span class="metric-chip">库存减值风险</span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="chain">
+    <div class="wrap">
+      <span class="section-kicker">CAUSE AND EFFECT</span>
+      <h2>指标之间如何形成因果链</h2>
+      <div class="chain">
+        <div class="chain-step"><b>数据质量</b><span>商品属性与状态可信</span></div>
+        <div class="chain-step"><b>计划质量</b><span>预测与订单更准确</span></div>
+        <div class="chain-step"><b>供给与库存</b><span>适量库存到达正确位置</span></div>
+        <div class="chain-step"><b>履约表现</b><span>订单完整并准时交付</span></div>
+        <div class="chain-step"><b>客户与逆向</b><span>投诉、退换和损失下降</span></div>
+        <div class="chain-step"><b>成本与现金</b><span>资源和营运资金更高效</span></div>
+      </div>
+      <div class="callout tip">
+        <span class="title">领先指标与结果指标要配对</span>
+        主数据准确率、预测偏差和到货及时率通常更接近过程原因；现货率、投诉率、履约成本和现金周期更接近综合结果。
+        只看结果指标容易发现问题太晚，只看过程指标又无法证明经营价值。
+      </div>
+      <div class="callout warn">
+        <span class="title">相关性不等于因果性</span>
+        现货率提高后销量增加，不一定完全由库存推动，还可能同时受到价格、促销、季节、新品和流量变化影响。指标分析需要对照组、时间窗口和业务背景。
+      </div>
+    </div>
+  </section>
+
+  <section id="definitions">
+    <div class="wrap">
+      <span class="section-kicker">KEY DEFINITIONS</span>
+      <h2>十个常用指标的公开定义</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>指标</th><th>通用定义</th><th>使用时必须说明</th></tr></thead>
+          <tbody>
+            <tr><td>主数据准确率</td><td>抽检记录中，关键属性与实物或权威资料一致的比例。</td><td>抽检范围、关键字段和判错规则</td></tr>
+            <tr><td>预测偏差</td><td>预测相对实际需求持续高估或低估的方向性误差。</td><td>粒度、周期、实际需求口径</td></tr>
+            <tr><td>订单满足率</td><td>实际确认或交付数量占需求数量的比例。</td><td>确认、出库还是签收口径</td></tr>
+            <tr><td>现货率</td><td>处于可承诺状态的商品或需求占考察对象的比例。</td><td>按 SKU、需求量还是访问量加权</td></tr>
+            <tr><td>库存周转天数</td><td>库存平均需要多少天完成一次销售或消耗。</td><td>数量/金额口径、平均库存和时间窗口</td></tr>
+            <tr><td>整单率</td><td>无需拆分即可由一个履约单元完成的订单比例。</td><td>父单、子单和取消订单定义</td></tr>
+            <tr><td>准时交付率</td><td>在承诺或约定时间内完成交付的订单比例。</td><td>承诺时间、签收时间和例外规则</td></tr>
+            <tr><td>售后申请率</td><td>售后申请量或金额占对应销售量或金额的比例。</td><td>申请窗口、原因和分母</td></tr>
+            <tr><td>单位履约成本</td><td>仓储、操作和运输等履约资源除以订单或商品数量。</td><td>成本范围、订单粒度和异常费用</td></tr>
+            <tr><td>现金转换周期</td><td>库存天数加应收天数，再减应付天数。</td><td>平均余额、期间天数和财务分母</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="balance">
+    <div class="wrap">
+      <span class="section-kicker">TRADE-OFFS</span>
+      <h2>三组最常见的指标权衡</h2>
+      <div class="cards three">
+        <article class="card">
+          <span class="label">可得性 vs 库存</span>
+          <h3>现货率提高并非没有代价</h3>
+          <p>更多库存可能改善销售机会，也可能增加资金占用、库龄和减值风险。</p>
+        </article>
+        <article class="card violet">
+          <span class="label">速度 vs 成本</span>
+          <h3>更快服务需要更多资源</h3>
+          <p>更近节点、更高运力冗余和更严格时间窗通常会提高履约成本。</p>
+        </article>
+        <article class="card amber">
+          <span class="label">集中 vs 灵活</span>
+          <h3>效率与韧性需要平衡</h3>
+          <p>高度集中可能降低库存和操作成本，但面对区域中断时替代能力更弱。</p>
+        </article>
+      </div>
+      <div class="formula"><b>好的 KPI 组合</b> = 服务结果 + 过程原因 + 成本代价 + 风险边界</div>
+    </div>
+  </section>
+
+  <section id="learning">
+    <div class="wrap">
+      <span class="section-kicker">LEARNING PATH</span>
+      <h2>从指标地图继续学习</h2>
+      <div class="cards three">
+        <a class="card" href="./working-capital-cash-conversion-cycle.html"><span class="label">成本、资产与现金</span><h3>营运资金与现金转换周期</h3><p>计算 DIO、DSO、DPO 和 CCC，理解库存如何占用现金。</p></a>
+        <a class="card" href="./shelf-life-management.html"><span class="label">质量与库存风险</span><h3>临期品与剩余保质期管理</h3><p>计算剩余期限，理解 FEFO、批次追溯和分层预警。</p></a>
+        <a class="card" href="./jd-inventory-report-fields.html"><span class="label">库存与可得性</span><h3>JD 库存字段与健康诊断</h3><p>理解现货、可用、可订购、周转、库龄和需求口径。</p></a>
+        <a class="card" href="./warehouse-network-primer.html"><span class="label">仓网与履约</span><h3>JD 仓网入门</h3><p>了解库存位置、节点角色和履约路径如何影响指标。</p></a>
+        <a class="card" href="./warehouse-cost-reduction.html"><span class="label">成本效率</span><h3>仓配费节降通用框架</h3><p>从费项、履约方式和改善抓手理解仓配成本。</p></a>
+        <a class="card" href="./jd-delivery-service-levels.html"><span class="label">客户体验</span><h3>京东配送时效产品入门</h3><p>理解配送承诺、服务条件和实时履约限制。</p></a>
+      </div>
+    </div>
+  </section>
+
+  <section id="sources">
+    <div class="wrap sources">
+      <span class="section-kicker">FRAMEWORK SOURCES</span>
+      <h2>框架来源与边界</h2>
+      <ul>
+        <li><a href="https://www.scor-ds.com/">SCOR Digital Standard</a>：供应链活动覆盖 Orchestrate、Plan、Order、Source、Transform、Fulfill 和 Return。</li>
+        <li><a href="https://www.accaglobal.com/gb/en/student/exam-support-resources/fundamentals-exams-study-resources/f9/technical-articles/wcm.html">ACCA · Working capital management</a>：营运资金与现金周期基础。</li>
+      </ul>
+      <p class="source-note">本页为原创教学地图，并非 SCOR 指标目录的复制或官方解释。不同企业应根据战略、数据能力和业务模式选择指标，不应直接照搬目标值。</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">JD Supply Chain 团队知识库 · 供应链指标地图 · <a href="../">返回首页</a></div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>临期品与剩余保质期管理 · JD Supply Chain</title>
+<meta name="description" content="理解保质期、临期品、剩余保质期比例、批次追溯和FEFO，并使用自定义阈值计算批次状态。" />
+<link rel="stylesheet" href="../assets/learning-page.css" />
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="wrap">
+    <div class="brand">JD <span>Supply Chain</span> · 临期管理</div>
+    <div class="nav-links">
+      <a href="#concepts">基础概念</a>
+      <a href="#calculator">计算器</a>
+      <a href="#fefo">FEFO</a>
+      <a href="#controls">管理闭环</a>
+      <a href="#rules">法规边界</a>
+      <a href="../">首页</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="badge">库存质量 · 批次管理 · 互动计算</span>
+    <h1>临期品与<em>剩余保质期管理</em></h1>
+    <div class="summary">
+      临期管理的核心不是等到商品过期，而是提前识别<strong>剩余期限、交付时间、库存位置和需求速度</strong>之间的风险。
+      通过批次追溯、FEFO 和分层预警，可以在质量要求仍被满足时更早采取行动。
+    </div>
+    <div class="meta">
+      <span>阈值可自行配置</span>
+      <span>示例比例不是法规标准</span>
+      <span>核验日期：2026-09-01</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="concepts">
+    <div class="wrap">
+      <span class="section-kicker">CORE CONCEPTS</span>
+      <h2>四个容易混淆的概念</h2>
+      <div class="cards four">
+        <article class="card"><span class="label">保质期</span><h3>在规定条件下保持品质的期限</h3><p>必须结合标签标示和储存条件理解；温控或包装失效可能使日期本身失去意义。</p></article>
+        <article class="card"><span class="label">到期日</span><h3>标签规定的最后有效日期</h3><p>日期含义应以商品标签和适用法规为准，不应根据模糊信息自行推断。</p></article>
+        <article class="card violet"><span class="label">临期品</span><h3>尚未过期，但进入预警区间</h3><p>临期阈值通常由法规要求、平台规则、渠道交付标准和企业风险政策共同决定。</p></article>
+        <article class="card amber"><span class="label">过期品</span><h3>已经超过标示保质期</h3><p>食品安全法禁止生产经营超过保质期的食品，应立即隔离并按适用程序处置。</p></article>
+      </div>
+
+      <div class="formula"><b>剩余保质期</b> = 到期日 − 评估日</div>
+      <div class="formula"><b>剩余保质期比例</b> = 剩余保质期 ÷ 总保质期 × 100%</div>
+      <div class="callout tip">
+        <span class="title">评估日必须明确</span>
+        同一批商品在收货日、拣货日、发货日和预计交付日计算出的剩余期限不同。面向客户交付时，应预留仓内处理、运输和客户验收所需时间。
+      </div>
+    </div>
+  </section>
+
+  <section id="calculator">
+    <div class="wrap">
+      <span class="section-kicker">INTERACTIVE CALCULATOR</span>
+      <h2>剩余保质期计算器</h2>
+      <p class="lead">默认日期和预警比例仅用于教学。请根据产品、法规、合同、平台和企业质量政策设置真实阈值。</p>
+
+      <div class="calculator">
+        <div class="form-grid">
+          <div class="field">
+            <label for="manufacture-date">生产日期</label>
+            <input id="manufacture-date" type="date" value="2026-01-01" />
+          </div>
+          <div class="field">
+            <label for="expiry-date">到期日</label>
+            <input id="expiry-date" type="date" value="2026-12-31" />
+          </div>
+          <div class="field">
+            <label for="evaluation-date">评估日</label>
+            <input id="evaluation-date" type="date" value="2026-09-01" />
+          </div>
+          <div class="field">
+            <label for="warning-threshold">关注阈值（剩余比例）</label>
+            <input id="warning-threshold" type="number" min="0" max="100" step="1" value="33" />
+            <small>教学默认值，不是法规或平台统一标准。</small>
+          </div>
+          <div class="field">
+            <label for="action-threshold">行动阈值（剩余比例）</label>
+            <input id="action-threshold" type="number" min="0" max="100" step="1" value="20" />
+            <small>应小于或等于关注阈值。</small>
+          </div>
+        </div>
+        <div class="calculator-actions">
+          <button class="button" id="calculate-shelf-life" type="button">重新计算</button>
+          <span class="calc-message" id="shelf-life-message">使用自然日计算，起止日期差不包含到期日当天。</span>
+        </div>
+        <div class="result-grid" aria-live="polite">
+          <div class="result-card"><span>总保质期</span><strong id="total-days">364 天</strong></div>
+          <div class="result-card"><span>剩余保质期</span><strong id="remaining-days">121 天</strong></div>
+          <div class="result-card"><span>剩余比例</span><strong id="remaining-ratio">33.2%</strong></div>
+          <div class="result-card"><span>教学预警状态</span><strong id="status-result"><span class="status-badge">正常层</span></strong></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="fefo">
+    <div class="wrap">
+      <span class="section-kicker">FEFO</span>
+      <h2>FEFO 与 FIFO 有什么不同</h2>
+      <div class="compare">
+        <div>
+          <h3>FIFO · 先进先出</h3>
+          <p>优先处理最早进入库存的批次。它关注入库顺序，在批次保质期一致时通常简单有效。</p>
+        </div>
+        <div>
+          <h3>FEFO · 先到期先出</h3>
+          <p>优先处理最早到期、且仍满足质量和交付条件的批次。它关注到期顺序，更适合有效期商品。</p>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>虚构批次</th><th>入库日期</th><th>到期日</th><th>FIFO 顺序</th><th>FEFO 顺序</th></tr></thead>
+          <tbody>
+            <tr><td>批次 A</td><td>4 月 1 日</td><td>12 月 31 日</td><td>第 1</td><td>第 2</td></tr>
+            <tr><td>批次 B</td><td>4 月 10 日</td><td>11 月 30 日</td><td>第 2</td><td>第 1</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout warn">
+        <span class="title">FEFO 不是无条件发出最老批次</span>
+        批次还必须满足质检状态、储存条件、客户可接受剩余期限、预计运输时间和追溯要求。无法满足交付条件的库存应冻结，而不是继续分配。
+      </div>
+    </div>
+  </section>
+
+  <section id="controls">
+    <div class="wrap">
+      <span class="section-kicker">CONTROL LOOP</span>
+      <h2>从收货到处置的管理闭环</h2>
+      <div class="flow">
+        <div class="flow-step"><b>收货核验</b><span>核对批号、生产日期、到期日、数量、包装和储存条件。</span></div>
+        <div class="flow-step"><b>批次追溯</b><span>记录库存状态、库位、移动、拣选和发运去向。</span></div>
+        <div class="flow-step"><b>动态预警</b><span>结合剩余比例、需求速度和预计交付时间分层管理。</span></div>
+        <div class="flow-step"><b>行动与复盘</b><span>采取合规调拨、销售计划、冻结或处置，并追溯形成原因。</span></div>
+      </div>
+
+      <div class="cards four">
+        <article class="card"><span class="label">正常层</span><h3>常规 FEFO</h3><p>剩余期限充足，按正常需求和批次顺序分配。</p></article>
+        <article class="card violet"><span class="label">关注层</span><h3>增加复核频率</h3><p>检查需求、库存位置、渠道要求和未来交付计划。</p></article>
+        <article class="card amber"><span class="label">行动层</span><h3>制定处置计划</h3><p>在合规前提下评估调拨、销售计划或其他风险降低措施。</p></article>
+        <article class="card red"><span class="label">冻结 / 过期</span><h3>停止正常分配</h3><p>隔离库存并交由质量或合规流程判定，禁止销售过期食品。</p></article>
+      </div>
+
+      <ul class="checklist">
+        <li><strong>按批次而非只按 SKU 管理</strong><br />同一商品不同批次可能具有完全不同的风险。</li>
+        <li><strong>连接需求速度</strong><br />剩余期限相同，低流速节点的风险通常更高。</li>
+        <li><strong>预留交付时间</strong><br />仓内处理、运输和客户验收都需要消耗剩余期限。</li>
+        <li><strong>保留完整记录</strong><br />阈值、行动、审批和处置结果应可追溯。</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="rules">
+    <div class="wrap sources">
+      <span class="section-kicker">REGULATORY BOUNDARY</span>
+      <h2>法律、国家标准和企业阈值要分开</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>层级</th><th>公开学习中的正确理解</th></tr></thead>
+          <tbody>
+            <tr><td>法律要求</td><td>《中华人民共和国食品安全法》禁止生产经营超过保质期的食品。</td></tr>
+            <tr><td>推荐性国家标准</td><td>GB/T 47141-2026《食品保质期确定指南》自 2026 年 8 月 1 日实施，为科学确定食品保质期提供指导。</td></tr>
+            <tr><td>平台与渠道规则</td><td>可能设置临期标识、剩余期限或收货标准，应以当前公开规则和合同为准。</td></tr>
+            <tr><td>企业预警阈值</td><td>用于提前管理风险，不等于全国统一法律标准，应按产品稳定性、渠道周期和风险评估制定。</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="callout danger">
+        <span class="title">不存在适用于所有产品的统一教学比例</span>
+        本页计算器中的 33% 和 20% 只是演示如何分层。食品、日化、药品和其他有效期商品适用的法规与风险完全不同，不能直接套用。
+      </div>
+
+      <ul>
+        <li><a href="https://sjfg.samr.gov.cn/law/file/pdf/3235243/1663322301314.pdf">国家市场监督管理总局 · 中华人民共和国食品安全法</a></li>
+        <li><a href="https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=6C6D4ED69432036B79BACA0DFC74E5CA">全国标准信息公共服务平台 · GB/T 47141-2026《食品保质期确定指南》</a></li>
+        <li><a href="https://www.gov.cn/gongbao/2026/issue_12686/202604/content_7066099.html">中国政府网 · 食品召回管理办法</a></li>
+      </ul>
+
+      <div class="cards two">
+        <a class="card" href="./supply-chain-kpi-map.html"><span class="label">返回总览</span><h3>供应链指标地图</h3><p>查看临期风险与库存周转、可得性、质量及现金之间的关系。</p></a>
+        <a class="card" href="./jd-inventory-report-fields.html"><span class="label">相关知识</span><h3>库存字段与健康诊断</h3><p>继续了解库龄、滞销、周转和可售库存字段。</p></a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">JD Supply Chain 团队知识库 · 临期品与剩余保质期管理 · <a href="../">返回首页</a></div>
+</footer>
+
+<script>
+  (function(){
+    var ids = ['manufacture-date','expiry-date','evaluation-date','warning-threshold','action-threshold'];
+    var dayMs = 24 * 60 * 60 * 1000;
+
+    function dateValue(id){
+      var raw = document.getElementById(id).value;
+      return raw ? new Date(raw + 'T00:00:00Z') : null;
+    }
+
+    function numberValue(id){
+      return document.getElementById(id).valueAsNumber;
+    }
+
+    function setStatus(label, level){
+      var badge = document.createElement('span');
+      badge.className = 'status-badge' + (level ? ' ' + level : '');
+      badge.textContent = label;
+      var target = document.getElementById('status-result');
+      target.textContent = '';
+      target.appendChild(badge);
+    }
+
+    function calculate(){
+      var manufacture = dateValue('manufacture-date');
+      var expiry = dateValue('expiry-date');
+      var evaluation = dateValue('evaluation-date');
+      var warning = numberValue('warning-threshold');
+      var action = numberValue('action-threshold');
+      var message = document.getElementById('shelf-life-message');
+
+      if (!manufacture || !expiry || !evaluation || expiry <= manufacture || evaluation < manufacture ||
+          !Number.isFinite(warning) || !Number.isFinite(action) || warning < 0 || warning > 100 ||
+          action < 0 || action > warning) {
+        message.textContent = '请检查日期顺序和阈值：到期日应晚于生产日期，行动阈值应不高于关注阈值。';
+        return;
+      }
+
+      var total = Math.round((expiry - manufacture) / dayMs);
+      var remaining = Math.ceil((expiry - evaluation) / dayMs);
+      var ratio = remaining / total * 100;
+
+      document.getElementById('total-days').textContent = total + ' 天';
+      document.getElementById('remaining-days').textContent = remaining + ' 天';
+      document.getElementById('remaining-ratio').textContent = ratio.toFixed(1) + '%';
+
+      if (remaining < 0) {
+        setStatus('已过期', 'danger');
+      } else if (remaining === 0) {
+        setStatus('到期日', 'danger');
+      } else if (ratio <= action) {
+        setStatus('行动层', 'danger');
+      } else if (ratio <= warning) {
+        setStatus('关注层', 'warn');
+      } else {
+        setStatus('正常层', '');
+      }
+      message.textContent = '计算完成。状态仅依据自定义比例，不替代质量、法规或渠道判断。';
+    }
+
+    document.getElementById('calculate-shelf-life').addEventListener('click', calculate);
+    ids.forEach(function(id){ document.getElementById(id).addEventListener('input', calculate); });
+    calculate();
+  }());
+</script>
+
+</body>
+</html>
