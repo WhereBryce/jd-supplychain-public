@@ -4,130 +4,222 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>JD Supply Chain 团队知识库 · 发布站</title>
-<meta name="description" content="JD 供应链团队知识库的对外发布站：使用指南与精选洞察的导航中心。" />
+<meta name="description" content="JD 供应链团队知识库的对外发布站：工具、指南与精选洞察的统一入口。" />
 <style>
   :root{
-    --bg:#0b1020; --card:#151d3b; --line:#26305a; --ink:#eaf0ff; --muted:#9fb0d8;
-    --brand:#4f7cff; --brand2:#6ee7b7; --accent:#ffd166; --radius:16px;
+    --bg:#080d1b; --panel:#111936; --panel2:#0d1530; --line:#26345f; --ink:#edf3ff;
+    --muted:#9aabd0; --brand:#6f8cff; --mint:#62dfbd; --amber:#ffd166; --violet:#b49cff;
+    --radius:16px;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
-  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,"Microsoft YaHei",sans-serif;
-    color:var(--ink);background:linear-gradient(180deg,#0b1020,#0d1330 40%,#0b1020);line-height:1.7;}
-  a{color:var(--brand);text-decoration:none}
-  .wrap{max-width:960px;margin:0 auto;padding:0 20px}
-  header.hero{padding:72px 0 40px;text-align:center}
-  .badge{display:inline-block;font-size:12.5px;color:var(--brand2);border:1px solid var(--line);
-    background:var(--card);padding:5px 12px;border-radius:999px;margin-bottom:20px}
-  h1{font-size:clamp(30px,5vw,46px);line-height:1.2;margin:0 0 14px;font-weight:800}
-  h1 em{font-style:normal;background:linear-gradient(90deg,var(--brand),var(--brand2));
-    -webkit-background-clip:text;background-clip:text;color:transparent}
-  .sub{font-size:18px;color:var(--muted);max-width:660px;margin:0 auto}
-  section{padding:20px 0 50px}
-  h2{font-size:22px;margin:0 0 6px;font-weight:800}
-  .lead{color:var(--muted);margin:0 0 24px}
-  .grid{display:grid;gap:18px;grid-template-columns:repeat(2,1fr)}
-  @media(max-width:760px){.grid{grid-template-columns:1fr}}
-  .cardlink{display:block;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-    padding:22px;transition:transform .12s,border-color .12s}
-  .cardlink:hover{transform:translateY(-2px);border-color:var(--brand)}
-  .cardlink .tag{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;
-    background:#0a0f22;border:1px solid var(--line);color:var(--brand2);margin-bottom:12px}
-  .cardlink .tag.guide{color:var(--accent)}
-  .cardlink h3{margin:0 0 8px;font-size:19px;color:var(--ink)}
-  .cardlink p{margin:0;color:var(--muted);font-size:14.5px}
-  .cardlink .go{margin-top:14px;color:var(--brand);font-size:14px;font-weight:600}
-  .note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);
-    border-radius:0 12px 12px 0;padding:14px 18px;color:#e6ecff;margin-top:30px;font-size:14.5px}
-  footer{padding:36px 0 60px;color:var(--muted);text-align:center;border-top:1px solid var(--line)}
-  .mono{font-family:"Cascadia Code",Consolas,monospace;font-size:13px;background:#0a0f22;
-    border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:#cfe0ff}
+  body{
+    margin:0;min-height:100vh;font-family:"Segoe UI",system-ui,-apple-system,"Microsoft YaHei",sans-serif;
+    color:var(--ink);background:
+      radial-gradient(circle at 12% 0%,rgba(79,124,255,.16),transparent 28rem),
+      radial-gradient(circle at 90% 12%,rgba(98,223,189,.09),transparent 24rem),
+      var(--bg);line-height:1.55;
+  }
+  a{color:inherit;text-decoration:none}
+  .wrap{width:min(1180px,calc(100% - 36px));margin:0 auto}
+  .hero{padding:34px 0 22px}
+  .hero-row{display:flex;align-items:flex-end;justify-content:space-between;gap:28px}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;margin-bottom:9px;color:var(--mint);
+    font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  }
+  .eyebrow::before{content:"";width:18px;height:2px;background:var(--mint);border-radius:999px}
+  h1{margin:0;font-size:clamp(30px,4vw,44px);line-height:1.08;letter-spacing:-.035em}
+  h1 span{
+    background:linear-gradient(100deg,var(--brand),var(--mint));background-clip:text;
+    -webkit-background-clip:text;color:transparent;
+  }
+  .hero-copy{max-width:560px}
+  .hero-copy p{margin:11px 0 0;color:var(--muted);font-size:15px}
+  .hero-meta{
+    display:flex;gap:10px;flex:0 0 auto;color:var(--muted);font-size:12px;
+  }
+  .hero-meta span{padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:rgba(17,25,54,.72)}
+
+  main{padding-bottom:24px}
+  .temporary{
+    display:grid;grid-template-columns:210px 1fr 1fr;gap:12px;align-items:stretch;
+    padding:12px;border:1px solid rgba(255,209,102,.3);border-radius:var(--radius);
+    background:linear-gradient(120deg,rgba(255,209,102,.09),rgba(17,25,54,.88) 38%);
+  }
+  .temporary-title{padding:11px 12px}
+  .temporary-title .label{display:block;color:var(--amber);font-size:12px;font-weight:800;letter-spacing:.08em}
+  .temporary-title h2{margin:3px 0 4px;font-size:20px}
+  .temporary-title p{margin:0;color:var(--muted);font-size:12.5px}
+  .temp-item{
+    display:flex;align-items:center;gap:12px;min-width:0;padding:11px 14px;border:1px solid var(--line);
+    border-radius:12px;background:rgba(8,13,27,.55);
+  }
+  .temp-type{
+    flex:0 0 auto;padding:4px 8px;border-radius:7px;background:rgba(255,209,102,.12);
+    color:var(--amber);font-size:11px;font-weight:800;
+  }
+  .temp-content{min-width:0}
+  .temp-content strong{display:block;font-size:14px}
+  .temp-content span{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .directory{padding-top:22px}
+  .section-head{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:12px}
+  .section-head h2{margin:0;font-size:20px}
+  .section-head p{margin:0;color:var(--muted);font-size:12.5px}
+  .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+  .cardlink{
+    position:relative;display:flex;min-height:136px;flex-direction:column;padding:17px;
+    border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(145deg,var(--panel),var(--panel2));
+    overflow:hidden;transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease;
+  }
+  .cardlink::after{
+    content:"";position:absolute;right:-36px;top:-42px;width:105px;height:105px;border-radius:50%;
+    background:var(--glow,var(--brand));opacity:.08;transition:transform .18s ease,opacity .18s ease;
+  }
+  .cardlink:hover{transform:translateY(-2px);border-color:var(--glow,var(--brand));box-shadow:0 12px 30px rgba(0,0,0,.18)}
+  .cardlink:hover::after{transform:scale(1.18);opacity:.14}
+  .cardlink.tool{--glow:var(--mint)}
+  .cardlink.guide{--glow:var(--amber)}
+  .cardlink.reference{--glow:var(--violet)}
+  .tag{
+    align-self:flex-start;margin-bottom:9px;color:var(--glow,var(--brand));font-size:10.5px;
+    font-weight:800;letter-spacing:.06em;
+  }
+  .cardlink h3{position:relative;z-index:1;margin:0 0 5px;font-size:16px;line-height:1.3}
+  .cardlink p{
+    position:relative;z-index:1;display:-webkit-box;margin:0;color:var(--muted);font-size:12.5px;line-height:1.5;
+    overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+  }
+  .go{position:relative;z-index:1;margin-top:auto;padding-top:9px;color:var(--glow,var(--brand));font-size:12px;font-weight:700}
+
+  footer{padding:14px 0 24px;color:#7889af;text-align:center;font-size:11.5px}
+
+  @media(max-width:980px){
+    .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .temporary{grid-template-columns:180px 1fr 1fr}
+  }
+  @media(max-width:760px){
+    .hero-row{align-items:flex-start;flex-direction:column;gap:14px}
+    .hero-meta{display:none}
+    .temporary{grid-template-columns:1fr 1fr}
+    .temporary-title{grid-column:1/-1;padding:4px 5px}
+    .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  }
+  @media(max-width:520px){
+    .wrap{width:min(100% - 24px,1180px)}
+    .hero{padding-top:24px}
+    .temporary,.grid{grid-template-columns:1fr}
+    .temporary-title{grid-column:auto}
+    .section-head{align-items:flex-start;flex-direction:column;gap:3px}
+    .cardlink{min-height:128px}
+  }
 </style>
 </head>
 <body>
 
 <header class="hero">
-  <div class="wrap">
-    <div class="badge">JD Supply Chain · 团队知识库发布站</div>
-    <h1>知识库<em>导航中心</em></h1>
-    <p class="sub">这里是团队知识库对外发布的所有页面入口。选一个进去 👇</p>
+  <div class="wrap hero-row">
+    <div class="hero-copy">
+      <div class="eyebrow">JD Supply Chain · Public Hub</div>
+      <h1>知识、工具与洞察的<span>统一入口</span></h1>
+      <p>优先进入常用工具，也可以快速查阅新人指南、仓网知识和业务方法论。</p>
+    </div>
+    <div class="hero-meta" aria-label="站点内容概览">
+      <span>7 个公开入口</span>
+      <span>GitHub Pages</span>
+    </div>
   </div>
 </header>
 
-<section>
-  <div class="wrap">
-    <h2>📚 页面目录</h2>
-    <p class="lead">按类型组织：指南帮你上手，洞察是精选的方法论与框架。</p>
+<main class="wrap">
+  <section class="temporary" aria-labelledby="temporary-heading">
+    <div class="temporary-title">
+      <span class="label">TEMPORARY</span>
+      <h2 id="temporary-heading">临时区</h2>
+      <p>短期入口、试用内容与团队公告放在这里。</p>
+    </div>
+
+    <!-- 有临时公告时，直接替换下方标题和说明。 -->
+    <article class="temp-item">
+      <span class="temp-type">公告</span>
+      <div class="temp-content">
+        <strong>暂无临时公告</strong>
+        <span>需要置顶的信息可直接替换本条内容</span>
+      </div>
+    </article>
+
+    <!-- 有短期页面时，可将 article 改为带 href 的 a 标签。 -->
+    <article class="temp-item">
+      <span class="temp-type">临时入口</span>
+      <div class="temp-content">
+        <strong>暂无临时入口</strong>
+        <span>试用工具或阶段性页面可放在这里</span>
+      </div>
+    </article>
+  </section>
+
+  <section class="directory" aria-labelledby="directory-heading">
+    <div class="section-head">
+      <h2 id="directory-heading">页面目录</h2>
+      <p>按使用频率重新排序：工具 → 指南 → 参考与洞察</p>
+    </div>
+
     <div class="grid">
-
-      <a class="cardlink" href="./pages/guide.html">
-        <span class="tag guide">指南</span>
-        <h3>团队知识库使用指南</h3>
-        <p>怎么把材料扔进 Inbox、知识库云 ⇄ 本地怎么运转、和 AI 协作的触发词。新同学从这里开始。</p>
-        <div class="go">进入 →</div>
-      </a>
-
-      <a class="cardlink" href="./pages/warehouse-cost-reduction.html">
-        <span class="tag">洞察 · 仓配成本</span>
-        <h3>仓配费节降通用框架</h3>
-        <p>把仓配费拆成 非异常+异常，按 费项→方式→抓手 三层拆解的跨品类可复用节降骨架（含流程图）。</p>
-        <div class="go">进入 →</div>
-      </a>
-
-      <a class="cardlink" href="./pages/warehouse-network-primer.html">
-        <span class="tag guide">新人 · 仓网</span>
-        <h3>JD 仓网入门（新人必读）</h3>
-        <p>11 大 RDC、三层级 8→62 仓、RDC vs 配送中心、库存流转、布货决策、枢纽仓与常见坑。</p>
-        <div class="go">进入 →</div>
-      </a>
-
-      <a class="cardlink" href="./pages/light-warehouse-primer.html">
-        <span class="tag guide">新人 · 轻货仓</span>
-        <h3>轻货仓入门</h3>
-        <p>六仓网络、低成本逻辑、SKU 准入、消费者路由、库存边界、MOQ，以及与城市仓的核心区别。</p>
-        <div class="go">进入 →</div>
-      </a>
-
-      <a class="cardlink" href="./pages/jd-inventory-report-fields.html">
-        <span class="tag">参考 · 库存字段</span>
-        <h3>JD 库存报告字段词典</h3>
-        <p>商智库存报告全字段逐条识别：现货/可用/可订购公式、滞销库龄、出库销量口径、PV现货率（带即时筛选）。</p>
-        <div class="go">进入 →</div>
-      </a>
-
-      <a class="cardlink" href="./pages/rdc-inventory-query.html">
-        <span class="tag guide">工具 · 加密访问</span>
+      <a class="cardlink tool" href="./pages/rdc-inventory-query.html">
+        <span class="tag">常用工具 · 库存</span>
         <h3>RDC 库存查询</h3>
-        <p>输入密码即可进入；中文商品名实时联想 5 个候选，支持空格分词、京东码搜索和全部 RDC 筛选。</p>
-        <div class="go">进入 →</div>
+        <p>按中文商品名、京东码和 RDC 快速查询加密库存。</p>
+        <span class="go">打开工具 →</span>
       </a>
 
-      <a class="cardlink" href="./pages/free-goods-bbcc-cost-simulation.html">
-        <span class="tag guide">工具 · 加密仿真</span>
-        <h3>Free Goods BBCC 灵活费用仿真</h3>
-        <p>调整B仓、调拨频次、C仓路径与折扣比例，浏览器本地计算BBCC增量成本和全国加权时效。</p>
-        <div class="go">进入 →</div>
+      <a class="cardlink tool" href="./pages/free-goods-bbcc-cost-simulation.html">
+        <span class="tag">常用工具 · 仿真</span>
+        <h3>Free Goods BBCC 费用仿真</h3>
+        <p>配置仓网、频次与折扣，测算增量成本和加权时效。</p>
+        <span class="go">打开工具 →</span>
       </a>
 
-      <a class="cardlink" href="./pages/fulfillment-decision.html">
-        <span class="tag guide">工具 · 履约决策</span>
-        <h3>订单履约分析</h3>
-        <p>输入真实订单或绑赠机制，按加密库存与仓网关系判断整单/拆单、本地/跨区模式，并计算 upcharge。</p>
-        <div class="go">进入 →</div>
+      <a class="cardlink guide" href="./pages/warehouse-network-primer.html">
+        <span class="tag">新人指南 · 仓网</span>
+        <h3>JD 仓网入门</h3>
+        <p>了解 RDC、配送中心、库存流转与布货决策。</p>
+        <span class="go">开始阅读 →</span>
       </a>
 
+      <a class="cardlink guide" href="./pages/light-warehouse-primer.html">
+        <span class="tag">新人指南 · 轻货仓</span>
+        <h3>轻货仓入门</h3>
+        <p>六仓网络、SKU 准入、路由、库存边界与 MOQ。</p>
+        <span class="go">开始阅读 →</span>
+      </a>
+
+      <a class="cardlink guide" href="./pages/guide.html">
+        <span class="tag">团队指南 · 知识库</span>
+        <h3>团队知识库使用指南</h3>
+        <p>材料沉淀、云端与本地协作，以及 AI 协作触发方式。</p>
+        <span class="go">查看指南 →</span>
+      </a>
+
+      <a class="cardlink reference" href="./pages/jd-inventory-report-fields.html">
+        <span class="tag">业务参考 · 库存字段</span>
+        <h3>JD 库存报告字段词典</h3>
+        <p>现货、可用、可订购、库龄和销量等字段口径。</p>
+        <span class="go">查阅词典 →</span>
+      </a>
+
+      <a class="cardlink reference" href="./pages/warehouse-cost-reduction.html">
+        <span class="tag">方法论 · 仓配成本</span>
+        <h3>仓配费节降通用框架</h3>
+        <p>按费项、方式和抓手拆解仓配成本节降机会。</p>
+        <span class="go">查看框架 →</span>
+      </a>
     </div>
-
-    <div class="note">
-      🧭 <b>怎么新增页面？</b>　除入口外的所有页面都放进 <span class="mono">pages/</span>（用英文 slug 命名，如 <span class="mono">warehouse-cost-reduction.html</span>），然后在本页「页面目录」加一张卡片。本页 <span class="mono">index.html</span> 是唯一总入口。
-    </div>
-  </div>
-</section>
+  </section>
+</main>
 
 <footer>
-  <div class="wrap">
-    <p><b>JD Supply Chain 团队知识库</b> · 存于 SharePoint · 发布站由 GitHub Pages 托管</p>
-  </div>
+  <div class="wrap">JD Supply Chain 团队知识库 · GitHub Pages</div>
 </footer>
 
 </body>
