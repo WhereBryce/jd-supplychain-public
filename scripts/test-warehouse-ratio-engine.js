@@ -64,4 +64,14 @@ const cityResult = engine.calculate(model, {
 assert.equal(cityResult.summary.totalSales90, 20);
 assert.equal(cityResult.rdcRows[0].ratio, 1);
 
+const skuResult = engine.calculate(model, {
+  filters: { skus: ["A", "MISSING"] },
+  scopes: ["all"],
+  excludeLight: false,
+});
+assert.equal(skuResult.summary.requestedSkuCount, 2);
+assert.equal(skuResult.summary.availableRequestedSkuCount, 1);
+assert.deepEqual(skuResult.summary.missingRequestedSkus, ["MISSING"]);
+assert.equal(skuResult.summary.totalSales90, 200);
+
 console.log("warehouse-ratio-engine: all tests passed");

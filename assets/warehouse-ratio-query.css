@@ -83,6 +83,19 @@ input, select {
   outline: none;
   background: #0d1429;
 }
+textarea {
+  width: 100%;
+  min-height: 132px;
+  padding: 11px;
+  resize: vertical;
+  border: 1px solid #405078;
+  border-radius: 4px;
+  outline: none;
+  background: #0d1429;
+  color: var(--ink);
+  font: 14px/1.55 "Cascadia Mono", Consolas, monospace;
+}
+textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px #6f8cff2e; }
 input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px #6f8cff2e; }
 input[type="checkbox"] { min-height: 18px; accent-color: var(--blue); }
 .primary {
@@ -140,6 +153,9 @@ input[type="checkbox"] { min-height: 18px; accent-color: var(--blue); }
 .heading h3, .card > h3 { margin: 2px 0 0; font-size: 20px; }
 .heading small { color: var(--muted); }
 .filter-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 13px; }
+.sku-filter { margin-top: 18px; }
+.sku-stats { color: var(--muted); font-size: 12px; font-weight: 500; }
+.sku-stats.warning { color: var(--amber); }
 .scope-panel { margin: 20px 0 0; padding: 17px; border: 1px solid var(--line); }
 .scope-panel legend { padding: 0 8px; font-weight: 750; }
 .scope-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }

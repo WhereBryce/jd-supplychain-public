@@ -7,7 +7,7 @@ const ids = [
   "unlock", "app", "unlockForm", "password", "unlockStatus", "unlockButton",
   "unlockDate", "unlockProducts", "unlockWarehouses", "unlockWarning", "lock",
   "meta", "notice", "brand", "l1", "l2", "l3", "price", "excludeLight",
-  "scopeReminder", "query", "reset", "download", "kpis", "rdcBody", "c62Body",
+  "skuList", "skuStats", "scopeReminder", "query", "reset", "download", "kpis", "rdcBody", "c62Body",
   "mappingBody", "mappingSearch",
 ];
 const el = Object.fromEntries(ids.map((id) => [id, $(id)]));
@@ -91,6 +91,47 @@ function uniqueSorted(values) {
   return [...new Set(values.filter(Boolean))].sort((first, second) => first.localeCompare(second, "zh-CN"));
 }
 
+function parseSkuList(value) {
+  const tokens = String(value || "").split(/[\s,，;；、]+/).map((token) => token.trim()).filter(Boolean);
+  const skus = [];
+  const invalid = [];
+  const seen = new Set();
+  const invalidSeen = new Set();
+  for (const token of tokens) {
+    const normalized = token.replace(/\.0$/, "");
+    if (!/^\d+$/.test(normalized)) {
+      if (!invalidSeen.has(token)) {
+        invalidSeen.add(token);
+        invalid.push(token);
+      }
+      continue;
+    }
+    if (!seen.has(normalized)) {
+      seen.add(normalized);
+      skus.push(normalized);
+    }
+  }
+  return { skus, invalid };
+}
+
+function updateSkuStats() {
+  const parsed = parseSkuList(el.skuList.value);
+  if (!el.skuList.value.trim()) {
+    el.skuStats.textContent = "未输入时不限制 SKU。";
+    el.skuStats.classList.remove("warning");
+    return parsed;
+  }
+  const available = state.model ? new Set(state.model.products.map((product) => product.sku)) : new Set();
+  const matched = parsed.skus.filter((sku) => available.has(sku)).length;
+  const missing = parsed.skus.length - matched;
+  const parts = [`识别 ${parsed.skus.length} 个`, `模型命中 ${matched} 个`];
+  if (missing) parts.push(`未找到 ${missing} 个`);
+  if (parsed.invalid.length) parts.push(`格式无效 ${parsed.invalid.length} 个`);
+  el.skuStats.textContent = parts.join(" · ");
+  el.skuStats.classList.toggle("warning", missing > 0 || parsed.invalid.length > 0);
+  return parsed;
+}
+
 function setOptions(select, values, label, selected = "") {
   select.innerHTML = `<option value="">${escapeHtml(label)}</option>${values.map((value) =>
     `<option value="${escapeHtml(value)}"${value === selected ? " selected" : ""}>${escapeHtml(value)}</option>`
@@ -128,6 +169,7 @@ function refreshCategoryOptions(changed = "") {
 function initializeFilters() {
   setOptions(el.brand, uniqueSorted(state.model.products.map((product) => product.brand)), "全部品牌");
   refreshCategoryOptions();
+  updateSkuStats();
   resetScopes();
 }
 
@@ -160,8 +202,13 @@ function resetScopes() {
 }
 
 function currentSettings() {
+  const parsed = updateSkuStats();
+  if (el.skuList.value.trim() && parsed.skus.length === 0) {
+    throw new Error("SKU列表中没有识别到有效的数字ID。");
+  }
   return {
     filters: {
+      skus: parsed.skus,
       brand: el.brand.value,
       l1: el.l1.value,
       l2: el.l2.value,
@@ -174,8 +221,11 @@ function currentSettings() {
 }
 
 function renderKpis(result) {
+  const skuNote = result.summary.requestedSkuCount
+    ? `批量输入 ${result.summary.requestedSkuCount} 个，模型命中 ${result.summary.availableRequestedSkuCount} 个`
+    : "采购价空值SKU已排除";
   const cards = [
-    ["纳入SKU", numberFormat.format(result.summary.selectedProductCount), "采购价空值SKU已排除"],
+    ["纳入SKU", numberFormat.format(result.summary.selectedProductCount), skuNote],
     ["纳入90日销量", numberFormat.format(result.summary.totalSales90), "近90日收货地商品件数"],
     ["贡献销量配送中心", numberFormat.format(result.summary.contributingWarehouseCount), `口径选择 ${result.summary.selectedWarehouseCount} 个配送中心`],
     ["排除轻货仓销量", numberFormat.format(result.summary.excludedLightSales), el.excludeLight.checked ? "当前未进入仓比" : "当前已包含"],
@@ -244,9 +294,11 @@ function filterMappings() {
 }
 
 function resetFilters() {
+  el.skuList.value = "";
   el.brand.value = "";
   el.price.value = "";
   refreshCategoryOptions("brand");
+  updateSkuStats();
   resetScopes();
   runQuery();
 }
@@ -387,6 +439,7 @@ function filterDescription(settings) {
   const filters = settings.filters;
   const priceNames = { "": "全部非空采购价", zero: "采购价为0", nonzero: "采购价不为0" };
   return [
+    ["SKU批量筛选数量", filters.skus?.length || 0],
     ["品牌", filters.brand || "全部"],
     ["一级类目", filters.l1 || "全部"],
     ["二级类目", filters.l2 || "全部"],
@@ -443,6 +496,11 @@ async function downloadExcel() {
       ["62仓方案", "普通C仓归自身；同城特殊仓归同城普通C仓；其他仓按城市中心球面距离归最近普通C仓"],
       ["多选", "配送中心范围按并集去重；全国全仓已包含11RDC"],
     ];
+    const modelSkuSet = new Set(state.model.products.map((product) => product.sku));
+    const skuFilterRows = [
+      ["SKU ID", "模型是否存在"],
+      ...(result.settings.filters.skus || []).map((sku) => [sku, modelSkuSet.has(sku) ? "是" : "否（可能不存在或采购价为空）"]),
+    ];
     const blob = workbookBlob([
       { name: "01_查询摘要", rows: summaryRows },
       { name: "02_11RDC备货比", rows: rdcRows },
@@ -451,6 +509,7 @@ async function downloadExcel() {
       { name: "05_SKU销量明细", rows: detailRows },
       { name: "06_异常与排除", rows: exceptionRows },
       { name: "07_口径说明", rows: methodologyRows },
+      { name: "08_SKU筛选清单", rows: skuFilterRows },
     ]);
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -525,6 +584,7 @@ el.excludeLight.addEventListener("change", () => {
   }
   updateScopeReminder();
 });
+el.skuList.addEventListener("input", updateSkuStats);
 el.query.addEventListener("click", runQuery);
 el.reset.addEventListener("click", resetFilters);
 el.mappingSearch.addEventListener("input", filterMappings);

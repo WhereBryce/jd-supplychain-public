@@ -38,7 +38,8 @@
     };
   }
 
-  function productMatches(product, filters) {
+  function productMatches(product, filters, skuSet = null) {
+    if (skuSet?.size && !skuSet.has(product.sku)) return false;
     if (filters.brand && product.brand !== filters.brand) return false;
     if (filters.l1 && product.l1 !== filters.l1) return false;
     if (filters.l2 && product.l2 !== filters.l2) return false;
@@ -62,7 +63,9 @@
     const filters = settings.filters || {};
     const scopes = new Set(settings.scopes?.length ? settings.scopes : ["all"]);
     const excludeLight = settings.excludeLight !== false;
-    const productMask = model.products.map((product) => productMatches(product, filters));
+    const skuSet = new Set(Array.isArray(filters.skus) ? filters.skus : []);
+    const modelSkuSet = new Set(model.products.map((product) => product.sku));
+    const productMask = model.products.map((product) => productMatches(product, filters, skuSet));
     const sourceMask = model.warehouses.map((warehouse) => warehouseInScopes(warehouse, scopes));
     const selectedProductCount = productMask.filter(Boolean).length;
     const selectedWarehouseCount = model.warehouses.filter(
@@ -148,6 +151,9 @@
       },
       summary: {
         selectedProductCount,
+        requestedSkuCount: skuSet.size,
+        availableRequestedSkuCount: [...skuSet].filter((sku) => modelSkuSet.has(sku)).length,
+        missingRequestedSkus: [...skuSet].filter((sku) => !modelSkuSet.has(sku)),
         selectedWarehouseCount,
         contributingWarehouseCount: [...sourceTotals.values()].filter((value) => value > 0).length,
         totalSales90: total,
