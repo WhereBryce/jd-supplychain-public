@@ -3,262 +3,189 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>仓配费节降通用框架 · JD Supply Chain</title>
-<meta name="description" content="把仓配费拆成 非异常(基础)+异常(拆单/代发)，按 费项→方式→抓手 三层拆解的跨品类可复用节降骨架。" />
-<style>
-  :root{
-    --bg:#0b1020; --bg2:#111834; --card:#151d3b; --line:#26305a;
-    --ink:#eaf0ff; --muted:#9fb0d8; --brand:#4f7cff; --brand2:#6ee7b7;
-    --accent:#ffd166; --danger:#ff6b6b; --radius:16px;
-  }
-  *{box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,"Microsoft YaHei",sans-serif;
-    color:var(--ink);background:linear-gradient(180deg,#0b1020,#0d1330 40%,#0b1020);line-height:1.75;}
-  a{color:var(--brand);text-decoration:none}
-  .wrap{max-width:1000px;margin:0 auto;padding:0 20px}
-  nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);
-    background:rgba(11,16,32,.72);border-bottom:1px solid var(--line)}
-  nav .wrap{display:flex;align-items:center;gap:18px;height:56px}
-  nav .logo{font-weight:800;letter-spacing:.3px;font-size:15px}
-  nav .logo span{color:var(--brand)}
-  nav .links{margin-left:auto;display:flex;gap:16px;flex-wrap:wrap}
-  nav .links a{color:var(--muted);font-size:13.5px}
-  nav .links a:hover{color:var(--ink)}
-  header.hero{padding:60px 0 34px}
-  .badge{display:inline-block;font-size:12.5px;color:var(--brand2);border:1px solid var(--line);
-    background:var(--card);padding:5px 12px;border-radius:999px;margin-bottom:18px}
-  h1{font-size:clamp(28px,4.6vw,44px);line-height:1.2;margin:0 0 18px;font-weight:800}
-  h1 em{font-style:normal;background:linear-gradient(90deg,var(--brand),var(--brand2));
-    -webkit-background-clip:text;background-clip:text;color:transparent}
-  .abstract{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--brand2);
-    border-radius:0 14px 14px 0;padding:18px 22px;color:#e6ecff;font-size:16px}
-  section{padding:40px 0;border-top:1px solid var(--line)}
-  h2{font-size:24px;margin:0 0 6px;font-weight:800}
-  h2 .n{color:var(--brand);margin-right:10px;font-variant-numeric:tabular-nums}
-  h3{font-size:18px;margin:26px 0 8px}
-  .lead{color:var(--muted);margin:0 0 22px;max-width:820px}
-  p{margin:12px 0}
-  ul,ol{color:var(--ink);padding-left:22px}
-  li{margin:6px 0}
-  strong{color:#fff}
-  code,.mono{font-family:"Cascadia Code",Consolas,monospace;font-size:13px;
-    background:#0a0f22;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:#cfe0ff}
-  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14.5px}
-  th,td{border:1px solid var(--line);padding:10px 13px;text-align:left;vertical-align:top}
-  th{background:#0e1430;color:var(--muted);font-weight:600}
-  tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
-  .callout{border-left:3px solid var(--brand);background:#161d38;border-radius:0 12px 12px 0;
-    padding:14px 18px;color:#e6ecff;margin:16px 0}
-  .callout.note{border-left-color:var(--brand2)}
-  .callout.tip{border-left-color:var(--accent)}
-  .callout.quote{border-left-color:var(--muted);color:var(--muted);font-size:14px}
-  .callout .t{display:block;font-weight:700;margin-bottom:6px;color:#fff}
-  .diagram{background:#0e1430;border:1px solid var(--line);border-radius:14px;padding:18px;margin:18px 0;overflow:auto}
-  .mermaid{display:flex;justify-content:center}
-  .rel{color:var(--muted);font-size:13.5px}
-  footer{padding:36px 0 60px;color:var(--muted);text-align:center;border-top:1px solid var(--line)}
-</style>
+<title>仓配成本诊断与节降框架 · JD Supply Chain</title>
+<meta name="description" content="从存储、操作、运输和异常履约增量出发，系统诊断仓配成本并平衡成本、服务与库存风险。" />
+<link rel="stylesheet" href="../assets/learning-page.css" />
 </head>
 <body>
 
-<nav>
+<nav class="topbar">
   <div class="wrap">
-    <div class="logo">JD <span>Supply Chain</span> · 洞察</div>
-    <div class="links">
-      <a href="#map">完整地图</a>
-      <a href="#skeleton">结构骨架</a>
-      <a href="#hubs">两仓网枢纽</a>
-      <a href="#levers">费项与抓手</a>
-      <a href="#migrate">迁移用法</a>
-      <a href="../">🏠 首页</a>
-      <a href="./guide.html">📘 指南</a>
+    <div class="brand">JD <span>Supply Chain</span> · 仓配成本</div>
+    <div class="nav-links">
+      <a href="#tree">成本树</a>
+      <a href="#drivers">驱动因素</a>
+      <a href="#levers">优化杠杆</a>
+      <a href="#diagnosis">诊断流程</a>
+      <a href="#example">教学案例</a>
+      <a href="../">首页</a>
     </div>
   </div>
 </nav>
 
 <header class="hero">
   <div class="wrap">
-    <div class="badge">合成 · 跨品类可复用骨架 · 仓配成本节降</div>
-    <h1>仓配费节降<em>通用框架</em></h1>
-    <div class="abstract">
-      通过 HC 的仓网费率诊断分析抽象成<strong>跨品类可复用的骨架</strong>：仓配费 = 非异常(基础) + 异常(拆单/代发)，按
-      <strong>费项 → 方式 → 抓手</strong> 三层拆解；<strong>轻货仓 / 城市仓是横跨多处的枢纽抓手</strong>。
-      换品类时骨架不动，只需重估主攻方向、替换选品参数。
+    <span class="badge">方法论 · 成本分析 · 公开教学版</span>
+    <h1>仓配成本<em>诊断与节降框架</em></h1>
+    <div class="summary">
+      仓配节降不是单纯压低单价，而是先判断成本来自<strong>正常履约结构</strong>还是<strong>异常履约增量</strong>，
+      再从订单结构、库存布局、操作单元和运输服务中选择适配的优化杠杆。
+    </div>
+    <div class="meta">
+      <span>通用分析框架</span>
+      <span>不包含任何企业实际费率</span>
+      <span>需同时评估服务与库存风险</span>
     </div>
   </div>
 </header>
 
-<section id="map">
-  <div class="wrap">
-    <h2><span class="n">一</span>完整地图：两张图合成</h2>
-    <p class="lead">非异常侧管「基础计费」，异常侧管「拆单/代发多花的钱」，合起来是一张完整仓配费地图。</p>
-    <table>
-      <tr><th></th><th>非异常（基础·人人都有）</th><th>异常（拆单/代发·额外多花）</th></tr>
-      <tr><td><strong>费项</strong></td><td>出库生产费（按件数）+ 配送费（按首续重×线路）</td><td>代发费 upcharge + 拆单出库 upcharge + 跨区配送 upcharge</td></tr>
-      <tr><td><strong>根源</strong></td><td>订单本身的件数/件型/重量</td><td>库存分布 ≠ 需求分布 → 拆单（跨城/同城跨网/虚拟组套）</td></tr>
-      <tr><td><strong>举措</strong></td><td>①箱规出库 ②小样赠品 bundling ③主品 SIOC ④赠品进轻货仓 ⑤BAO 进城市仓 ⑥快运</td><td>❶精准下沉 ❷同城合仓 ❸轻货仓选品 ❹城市仓选品 ❺组套转套内 ❻系统升级</td></tr>
-      <tr><td><strong>方式</strong></td><td>降件数 / 就近履约 + 更廉价运输</td><td>库存左移（下沉 + 合仓 + 选品）</td></tr>
-    </table>
+<main>
+  <section id="tree">
+    <div class="wrap">
+      <span class="section-kicker">COST TREE</span>
+      <h2>先把仓配成本拆成四类</h2>
+      <p class="lead">费用名称会因合同和平台不同而变化，但大多数仓配成本都可以回到以下四个资源消耗环节。</p>
 
-    <h3>费用结构分解（从总费用拆到末端计费口径）</h3>
-    <div class="diagram">
-      <pre class="mermaid">
-flowchart LR
-    W["仓配费"] --> N["非异常·基础"]
-    W --> E["异常·拆单/代发<br/>根因=本地库存不足"]
-    N --> N1["出库生产费<br/>按子单件数：首件+续件×单价"]
-    N --> N2["配送费<br/>按首续重×线路"]
-    E --> E1["出库生产费 upcharge<br/>拆单→每子单单独计首件<br/>（5 类拆单场景）"]
-    E --> E2["配送费 upcharge"]
-    E2 --> E2a["跨区平行履约<br/>子单分开·各自首续重计费"]
-    E2 --> E2b["同区代发<br/>并入父单·按最贵首续重计费"]
-    style W fill:#FFC000,color:#111,stroke:#c99a00
-    style E fill:#F4B183,color:#111,stroke:#c98a55
-      </pre>
+      <div class="cards four">
+        <article class="card">
+          <span class="label">01 存储</span>
+          <h3>库存占用与仓储</h3>
+          <p>由库存数量、体积、在库时间、库龄结构和特殊保管要求共同驱动。</p>
+        </article>
+        <article class="card">
+          <span class="label">02 操作</span>
+          <h3>入库、拣选与包装</h3>
+          <p>操作单元越多、订单越碎、包装越复杂，仓内处理资源通常越高。</p>
+        </article>
+        <article class="card violet">
+          <span class="label">03 运输</span>
+          <h3>干线与末端配送</h3>
+          <p>重量、体积、距离、服务等级、线路密度和运输方式决定主要资源消耗。</p>
+        </article>
+        <article class="card amber">
+          <span class="label">04 异常增量</span>
+          <h3>拆单与重复履约</h3>
+          <p>库存与需求错位可能重复触发拣选、包装、运输和客户服务资源。</p>
+        </article>
+      </div>
+
+      <div class="formula">
+        <b>总仓配成本</b> = 存储成本 + 操作成本 + 运输成本 + 异常履约增量
+      </div>
+      <div class="callout tip">
+        <span class="title">基础成本与异常增量的管理方式不同</span>
+        基础成本通常需要通过结构优化逐步降低；异常增量则应追溯触发原因，评估能否通过库存匹配、订单合并或流程纠偏减少。
+      </div>
     </div>
+  </section>
 
-    <div class="callout note">
-      <span class="t">这张地图怎么读</span>
-      <ul>
-        <li><strong>横向两大块</strong>：非异常是「订单本身就要付的基础费」，异常是「因为货没放对地方而多付的钱」——异常的每一项都是<strong>可以被消灭</strong>的，非异常只能被<strong>优化</strong>。</li>
-        <li><strong>末端即计费口径</strong>：出库生产费永远按<strong>子单件数</strong>、配送费永远按<strong>首续重×线路</strong>；异常无非是把这两条口径在「多子单/更长链路」上又跑了一遍。</li>
-        <li><strong>两处计费差异要记牢</strong>：拆单的出库 upcharge 是<strong>每子单各计一个首件</strong>；异常配送里<strong>跨区平行=子单分开算、同区代发=并父单按最贵算</strong>——同样是拆，计费规则不同。</li>
-      </ul>
+  <section id="drivers">
+    <div class="wrap">
+      <span class="section-kicker">COST DRIVERS</span>
+      <h2>五个通用成本驱动因素</h2>
+      <div class="cards three">
+        <article class="card"><span class="label">件数</span><h3>操作单元</h3><p>同样的销量，拆成更多独立件或子订单，通常意味着更多拣选、扫描和包装动作。</p></article>
+        <article class="card"><span class="label">重量与体积</span><h3>空间和运输资源</h3><p>货物的计费重量、体积占用和包装方式会影响仓储与运输效率。</p></article>
+        <article class="card"><span class="label">距离</span><h3>库存与需求的位置</h3><p>库存越偏离需求区域，干线、跨区配送和履约时间的不确定性通常越高。</p></article>
+        <article class="card violet"><span class="label">时间</span><h3>库龄和服务速度</h3><p>更长在库时间增加库存占用；更高服务等级通常需要更近节点或更高资源冗余。</p></article>
+        <article class="card violet"><span class="label">订单结构</span><h3>整单率和拆单率</h3><p>多商品订单能否在同一节点齐套，决定是否重复产生仓内和配送动作。</p></article>
+        <article class="card amber"><span class="label">波动</span><h3>需求不确定性</h3><p>促销、季节性和预测偏差会带来临时调拨、加急补货或库存积压。</p></article>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section id="skeleton">
-  <div class="wrap">
-    <h2><span class="n">二</span>结构骨架：费项 → 方式 → 抓手</h2>
-    <div class="callout tip">
-      <span class="t">一句话记住</span>
-      <strong>3 费项 · 4 方式 · 2 枢纽仓</strong>：出库费靠降件数；配送费靠就近履约 + 换便宜通道；异常费靠把货放对；轻货仓 / 城市仓是横跨多处的枢纽抓手。
+  <section id="levers">
+    <div class="wrap">
+      <span class="section-kicker">IMPROVEMENT LEVERS</span>
+      <h2>四类通用优化杠杆</h2>
+      <div class="flow">
+        <div class="flow-step"><b>减少操作单元</b><span>优化包装、组合方式和订单粒度，减少重复拣选与包装。</span></div>
+        <div class="flow-step"><b>提高库存需求匹配</b><span>让适合的商品更接近稳定需求，同时避免长尾库存过度分散。</span></div>
+        <div class="flow-step"><b>提高订单整合度</b><span>关注多商品共置、整单率和拆单原因，减少重复履约。</span></div>
+        <div class="flow-step"><b>匹配运输与服务</b><span>根据订单特征选择合适的运输通道和服务等级，而非一律追求最快。</span></div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>观察到的现象</th><th>优先验证的假设</th><th>同时关注的风险</th></tr></thead>
+          <tbody>
+            <tr><td>操作成本随件数快速上升</td><td>包装或组合方式是否制造了过多独立操作单元</td><td>商品体验、法规要求、包装强度</td></tr>
+            <tr><td>跨区域配送占比较高</td><td>库存是否长期偏离真实需求区域</td><td>库存分散、预测误差、调拨能力</td></tr>
+            <tr><td>多商品订单频繁拆分</td><td>关联购买商品是否缺少库存共置</td><td>长尾库存、仓容、补货复杂度</td></tr>
+            <tr><td>低货值订单配送资源偏高</td><td>服务等级和运输通道是否与订单价值匹配</td><td>消费者承诺、破损率、售后体验</td></tr>
+            <tr><td>仓储成本持续增加</td><td>是否存在低流速、长库龄或过度安全库存</td><td>缺货风险、采购批量、供应周期</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-    <div class="diagram">
-      <pre class="mermaid">
-flowchart LR
-    F1["出库生产费"] --> M1["降件数"]
-    F2["配送费"] --> M2["就近履约"]
-    F2 --> M3["更廉价运输"]
-    F3["异常费·拆单/代发"] --> M4["库存左移·把货放对"]
-    H["轻货仓 / 城市仓<br/>枢纽抓手"] -.横跨.-> M3
-    H -.横跨.-> M4
-    H -.横跨.-> M1
-    style H fill:#FFC000,color:#111,stroke:#c99a00
-      </pre>
+  </section>
+
+  <section id="diagnosis">
+    <div class="wrap">
+      <span class="section-kicker">DIAGNOSIS</span>
+      <h2>从问题到试点的六步诊断流程</h2>
+      <ol class="checklist">
+        <li><strong>统一口径</strong><br />确定分析周期、订单粒度、费用范围和服务范围。</li>
+        <li><strong>建立成本树</strong><br />将费用映射到存储、操作、运输和异常增量。</li>
+        <li><strong>定位主要驱动</strong><br />用件数、重量、距离、时间和订单结构解释变化。</li>
+        <li><strong>追溯异常链路</strong><br />区分偶发事件、规则问题和长期库存需求错位。</li>
+        <li><strong>设计受控试点</strong><br />只改变一个主要变量，并设置对照组和观察周期。</li>
+        <li><strong>平衡三类结果</strong><br />同时复盘成本、服务水平和库存健康，避免局部最优。</li>
+      </ol>
+
+      <div class="compare">
+        <div>
+          <h3>只看单价的风险</h3>
+          <ul>
+            <li>忽略拆单和重复操作；</li>
+            <li>把成本转移到库存或售后；</li>
+            <li>降低服务后影响转化与体验；</li>
+            <li>用短期节省换取长期复杂度。</li>
+          </ul>
+        </div>
+        <div>
+          <h3>完整评估至少包含</h3>
+          <ul>
+            <li>单位订单及单位商品成本；</li>
+            <li>整单率、跨区率和异常率；</li>
+            <li>时效达成、取消和售后表现；</li>
+            <li>库存周转、缺货和长库龄风险。</li>
+          </ul>
+        </div>
+      </div>
     </div>
-    <p><strong>三层怎么读：</strong></p>
-    <ul>
-      <li><strong>费项（花在哪）</strong>：出库生产费 / 配送费 / 异常费——对应 JD 真实计费科目。</li>
-      <li><strong>方式（往哪使劲）</strong>：降件数 / 就近履约 / 更廉价运输 / 库存左移。<strong>方式层按需</strong>——只有配送费需要分两方式，出库费、异常费方式单一，费项直连抓手。</li>
-      <li><strong>抓手（「杠杆」·可直接执行）</strong>：每个方式名下的具体动作，详见第四节。</li>
-      <li><strong>枢纽抓手</strong>：轻货仓 / 城市仓被「更廉价运输 + 库存左移选品下沉」多处复用，一个动作同时压配送费、异常费、出库费——最高效的着力点。</li>
-    </ul>
-  </div>
-</section>
+  </section>
 
-<section id="hubs">
-  <div class="wrap">
-    <h2><span class="n">三</span>两仓网枢纽详解：轻货仓 vs 城市仓</h2>
-    <p class="lead">两者都能把仓配费压到<strong>主仓的 ~50%</strong>，但设计目的、覆盖、时效完全不同。</p>
-    <table>
-      <tr><th></th><th>轻货仓</th><th>城市仓</th></tr>
-      <tr><td><strong>数量 / 位置</strong></td><td>6 个：北、上、广、成都、西安、武汉</td><td>3 个：北、上、广</td></tr>
-      <tr><td><strong>为谁设计</strong></td><td>小件<strong>赠品</strong>专仓</td><td>一线城市<strong>爆品</strong>专仓</td></tr>
-      <tr><td><strong>为何便宜（~50%）</strong></td><td>降级时效，出库生产费 + 配送费都更低</td><td>出库<strong>不过分拣中心</strong>、直达派送站点，链路更短</td></tr>
-      <tr><td><strong>时效</strong></td><td>更慢（以时效换低价）</td><td>更快（链路短，快速触达消费者）</td></tr>
-      <tr><td><strong>边界 / 代价</strong></td><td>时效降级</td><td>辐射范围小，仅北上广核心城区</td></tr>
-      <tr><td><strong>选品</strong></td><td>宝洁赠品进仓</td><td>只选适配当地偏好的爆品</td></tr>
-    </table>
-  </div>
-</section>
+  <section id="example">
+    <div class="wrap">
+      <span class="section-kicker">FICTIONAL EXAMPLE</span>
+      <h2>虚构案例：为什么库存共置可能降低成本</h2>
+      <p class="lead">以下指数仅用于演示分析方法，不代表任何企业的真实费率、节省比例或履约规则。</p>
 
-<section id="levers">
-  <div class="wrap">
-    <h2><span class="n">四</span>各费项的方式与抓手</h2>
+      <div class="compare">
+        <div>
+          <h3>方案甲：库存分散</h3>
+          <p>商品 A 和商品 B 分别位于两个节点。一张消费者订单被拆为两个履约单元，需要两次拣选、两次包装和两段配送。</p>
+          <div class="formula">教学成本指数：<b>100</b></div>
+        </div>
+        <div>
+          <h3>方案乙：适度共置</h3>
+          <p>在需求稳定的区域将高关联商品共置，订单可在一个节点完成。操作和运输资源减少，但需要承担额外库存占用。</p>
+          <div class="formula">教学成本指数：<b>82</b></div>
+        </div>
+      </div>
 
-    <h3>费项 1 · 出库生产费 ── 方式：降件数</h3>
-    <p>按<strong>子单</strong>核算：<code>首件 + (件数−1) × 续件</code>（A 件型 首件 2.8 / 续 0.5；B 件型 首件 3.5 / 续 0.6）。降子单内件数 = 降拣货次数。抓手（3 种「产品机制适配」）：</p>
-    <ol>
-      <li><strong>大包装新品</strong> — 一次买多件/套的，多「件」合成 1「件」。</li>
-      <li><strong>赠品打包</strong> — 绑赠里减赠品数量，或出厂把多个赠品<strong>预打包成一件</strong>。</li>
-      <li><strong>主+赠组合装</strong>（最激进）— 对高频一起买、或品牌有意为之的主+赠，直接做成一个包装的新品，一步消除多件。</li>
-    </ol>
-
-    <h3>费项 2 · 配送费 ── 两个并列方式</h3>
-    <p>按<strong>重量 × 路线</strong>报价，两个方式各降不同因子：</p>
-    <p><strong>方式 A · 就近履约（降距离）</strong></p>
-    <ul>
-      <li>抓手 <strong>库存下沉</strong>：让库存更近消费者。<strong>关键</strong>：JD 路由是<strong>整单优先</strong>，不能只下沉主品，<strong>绑送赠品也要一起下沉</strong>——否则赠品不在本地会触发跨区/拆单。</li>
-    </ul>
-    <p><strong>方式 B · 更廉价运输（降通道单价）</strong></p>
-    <ul>
-      <li>抓手① <strong>快运替快递</strong>：对<strong>大订单场域</strong>（企业购 / 批发）用快运，依赖 JD 系统为不同订单匹配更经济的履约方案。</li>
-      <li>抓手② <strong>特殊仓型</strong>：走轻货仓 / 城市仓（~50% 主仓费）。</li>
-    </ul>
-
-    <h3>费项 3 · 异常费（拆单 / 代发）── 方式：库存左移（把货放对）</h3>
-    <p>根因都是<strong>本地库存不足 / 不正确</strong>，父单被拆成多子单并发满足。下面两侧的抓手都指向「选品 + 库存正确 + 合仓」。</p>
-    <p><strong>A｜出库生产费侧 — 拆单 5 类场景</strong>（每个子单单独计出库费）</p>
-    <table>
-      <tr><th>#</th><th>拆单场景</th><th>解法</th></tr>
-      <tr><td>1</td><td>跨区（11 大 RDC：传统 8 仓 + 南京/郑州/杭州）</td><td>正确选品 + 库存</td></tr>
-      <tr><td>2</td><td>同区跨城市</td><td>正确选品 + 库存</td></tr>
-      <tr><td>3</td><td>同区跨网络（主仓/轻货仓/城市仓属不同网）</td><td>正确选品 + 库存</td></tr>
-      <tr><td>4</td><td>同区同城跨不同仓</td><td>同城合仓</td></tr>
-      <tr><td>5</td><td>虚拟组套 + X（同仓也拆组套与 X）</td><td>系统级，需 JD 干预</td></tr>
-    </table>
-    <div class="callout">
-      场景 1–3 靠「选品 + 库存正确」解决，占 <strong>~90%</strong>；场景 5 是系统设计，占 <strong>~10%</strong>；场景 4 靠同城合仓。
+      <div class="callout warn">
+        <span class="title">不能直接得出“库存越下沉越好”</span>
+        下沉可以缩短距离并提高整单机会，但也会增加库存分散、预测误差和长库龄风险。正确问题是：哪些商品、哪些区域、在什么服务目标下值得下沉。
+      </div>
     </div>
-    <p><strong>B｜配送费侧 — 两种异常履约</strong>（都因本地库存不足）</p>
-    <table>
-      <tr><th></th><th>跨区平行履约</th><th>同区代发</th></tr>
-      <tr><td><strong>触发</strong></td><td>本地无法整单满足 → 跨区协助</td><td>本地无法整单满足 → 同区跨城协助</td></tr>
-      <tr><td><strong>链路</strong></td><td>变长，可能拆单</td><td>变长，可能拆单</td></tr>
-      <tr><td><strong>计费</strong></td><td>跨区子单与同区子单<strong>分开</strong>按各自首续重计费</td><td>多子单<strong>合并到父单</strong>，按<strong>最贵</strong>首续重计费</td></tr>
-    </table>
-  </div>
-</section>
-
-<section id="migrate">
-  <div class="wrap">
-    <h2><span class="n">五</span>迁移用法（决策顺序）</h2>
-    <ol>
-      <li>先拆这个品类的仓配费：<strong>异常占比 vs 非异常占比</strong>（异常高 → 先做库存左移）。</li>
-      <li>非异常侧看<strong>件型分布</strong>：多小件 → 主攻降件数；多重货 → 主攻就近履约 / 换便宜通道。</li>
-      <li>落地优先用<strong>两个枢纽仓</strong>（轻货仓/城市仓），一个动作同时压配送费、异常费、出库费。</li>
-      <li>最后按品类替换选品参数与赠品策略。</li>
-    </ol>
-    <div class="callout quote">
-      <span class="t">📎 触发来源</span>
-      由 HC 异常仓配费结构图 + HC 非异常仓配费结构图 两张思维导图抽象而来（2026-07-02）。
-    </div>
-    <p class="rel">关联：HC 非异常仓配费结构图 · HC 异常仓配费结构图 · 仓配计费逻辑与节降方案 · 2025 仓配费率明细 · 供应链左移-上游一次做对胜过下游补救 · 刚性默认加极少例外压缩长尾复杂度</p>
-  </div>
-</section>
+  </section>
+</main>
 
 <footer>
-  <div class="wrap">
-    <p><b>JD Supply Chain 团队知识库</b> · 洞察层 · 合成笔记</p>
-    <p style="font-size:13px">源自 vault：<span class="mono">15 仓配成本与节降/仓配费节降通用框架</span></p>
-  </div>
+  <div class="wrap">本页为通用学习框架，不代表京东或任何企业的实际合同、计费规则与经营策略 · <a href="../">返回首页</a></div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
-<script>
-  mermaid.initialize({
-    startOnLoad:true,
-    theme:'dark',
-    themeVariables:{
-      fontFamily:'Segoe UI, Microsoft YaHei, sans-serif',
-      primaryColor:'#151d3b', primaryTextColor:'#eaf0ff', primaryBorderColor:'#4f7cff',
-      lineColor:'#6b7bb5', secondaryColor:'#111834', tertiaryColor:'#0e1430',
-      clusterBkg:'#0e1430', background:'#0e1430'
-    }
-  });
-</script>
 </body>
 </html>
