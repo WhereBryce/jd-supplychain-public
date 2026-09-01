@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="color-scheme" content="dark" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+<title>消费者订单如何找到发货仓 · JD Supply Chain</title>
+<meta name="description" content="从履约to/from、需求收敛、供给覆盖、整单与拆单，到Upcharge形成，系统理解消费者订单履约决策。" />
+<link rel="icon" href="data:," />
+<link rel="stylesheet" href="../assets/fulfillment-routing-primer.css?v=20260901a" />
+<script src="../assets/fulfillment-routing-primer.js?v=20260901a" defer></script>
+</head>
+<body>
+
+<nav class="topnav" aria-label="页面导航">
+  <div class="nav-inner">
+    <a class="brand" href="../"><span>JD</span> Supply Chain</a>
+    <div class="nav-links">
+      <a href="#coordinates">核心对象</a>
+      <a href="#decision">决策顺序</a>
+      <a href="#playground">场景演示</a>
+      <a href="#cost">成本框架</a>
+      <a href="#boundary">模型边界</a>
+      <a href="../">首页</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-orbit orbit-one" aria-hidden="true"></div>
+  <div class="hero-orbit orbit-two" aria-hidden="true"></div>
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <p class="eyebrow">FULFILLMENT ROUTING PRIMER</p>
+      <h1>消费者订单<br />如何找到<em>发货仓</em></h1>
+      <p class="hero-lead">履约不是先找最便宜的仓，而是在完整满足和业务约束下，先保护整单与本地库存，再用成本打破平局。</p>
+      <div class="hero-actions">
+        <a class="primary-link" href="#decision">查看决策顺序</a>
+        <a class="secondary-link" href="#playground">体验虚构案例</a>
+      </div>
+    </div>
+    <div class="hero-model" aria-label="订单履约五层模型">
+      <p>ORDER FULFILLMENT MODEL</p>
+      <ol>
+        <li><span>01</span><b>需求落点</b><small>订单应该由哪里承担</small></li>
+        <li><span>02</span><b>候选供给</b><small>哪些节点有资格服务</small></li>
+        <li><span>03</span><b>库存完整性</b><small>能否满足全部 SKU 与数量</small></li>
+        <li><span>04</span><b>业务优先级</b><small>整单、本地与覆盖关系</small></li>
+        <li><span>05</span><b>成本结果</b><small>在可行方案中打破平局</small></li>
+      </ol>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="intro">
+    <div class="wrap">
+      <div class="section-heading">
+        <p class="eyebrow">WHY ORDER-LEVEL</p>
+        <h2>库存有货，不等于订单能被理想履约</h2>
+        <p>一笔订单可能包含多个 SKU，它们分散在不同城市、不同仓网和不同履约节点。订单级判断的任务，是在这些约束下找到一个完整、可执行且结果稳定的方案。</p>
+      </div>
+      <div class="problem-grid">
+        <article><span>01</span><h3>单品有货，整单未必有货</h3><p>每个 SKU 各自有库存，但没有一个节点能同时满足整笔订单。</p></article>
+        <article><span>02</span><h3>能覆盖，不代表是本地</h3><p>覆盖关系决定“能不能服务”，物理位置决定“是否本地、同区或跨区”。</p></article>
+        <article><span>03</span><h3>少仓不一定优先</h3><p>为了减少一个包裹而放弃本地已有库存，可能违背业务策略和库存治理目标。</p></article>
+        <article><span>04</span><h3>成本不是唯一目标</h3><p>完整满足、主赠体验、整单保护和本地承担通常先于成本比较。</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section id="coordinates">
+    <div class="wrap">
+      <div class="section-heading split-heading">
+        <div>
+          <p class="eyebrow">FOUR COORDINATES</p>
+          <h2>先把订单放进四个坐标系</h2>
+        </div>
+        <p>同一个“仓”字可能指城市、配送中心、库房或仓网。只有先统一最小粒度，才能稳定判断同仓、跨仓和费用。</p>
+      </div>
+      <div class="coordinate-grid">
+        <article class="coordinate-card accent-blue">
+          <span>TO</span>
+          <h3>履约 to</h3>
+          <p>消费者城市经规则收敛后的应发货城市，是判断本地、同区和跨区的需求基准。</p>
+        </article>
+        <article class="coordinate-card accent-green">
+          <span>FROM</span>
+          <h3>履约 from</h3>
+          <p>实际出货的最小节点。分析时通常要细到“配送中心 + 库房”，而不是只看城市。</p>
+        </article>
+        <article class="coordinate-card accent-yellow">
+          <span>PLACE</span>
+          <h3>物理城市与区域</h3>
+          <p>描述节点真实所在地。覆盖能力不会改变一个履约 from 的物理位置。</p>
+        </article>
+        <article class="coordinate-card accent-purple">
+          <span>NETWORK</span>
+          <h3>仓网</h3>
+          <p>不同仓型形成不同的服务网络、覆盖规则和成本结构，例如常规仓网与特殊仓网。</p>
+        </article>
+      </div>
+
+      <div class="two-maps">
+        <div class="map-panel demand-map">
+          <header><span>MAP A</span><div><h3>需求地图</h3><p>消费者订单应该归属到哪里</p></div></header>
+          <div class="map-stage" aria-label="需求侧城市收敛示意">
+            <div class="node consumer">消费者城市</div>
+            <div class="route-arrow"><span>城市收敛</span></div>
+            <div class="node destination">应发货城市<br /><small>履约 to</small></div>
+          </div>
+        </div>
+        <div class="map-panel supply-map">
+          <header><span>MAP B</span><div><h3>供给地图</h3><p>哪些节点有资格服务这个订单</p></div></header>
+          <div class="supply-stage" aria-label="供给侧候选仓示意">
+            <div class="supply-node preferred"><b>原覆盖节点</b><small>优先级高</small></div>
+            <div class="supply-node fallback"><b>同区候选</b><small>区域兜底</small></div>
+            <div class="supply-node fallback"><b>跨区候选</b><small>网络兜底</small></div>
+            <div class="destination-dot">TO</div>
+          </div>
+        </div>
+      </div>
+      <aside class="principle"><strong>关键原则</strong><p>仓库“能覆盖”应发货城市，不代表它是本地仓。本地判断始终比较履约 from 的物理城市与履约 to。</p></aside>
+    </div>
+  </section>
+
+  <section id="decision" class="decision-section">
+    <div class="wrap">
+      <div class="section-heading">
+        <p class="eyebrow">DETERMINISTIC SEQUENCE</p>
+        <h2>履约是分层决策，不是一次性最低成本</h2>
+        <p>先判断业务场景，再在允许的候选集合中比较。相同输入始终得到相同结果，才能复盘、审计和治理。</p>
+      </div>
+      <div class="decision-flow">
+        <article>
+          <span class="step-number">01</span>
+          <div><h3>完整满足</h3><p>候选库存合计必须满足全部 SKU 和数量，否则输出缺货，而不是给出半个方案。</p></div>
+        </article>
+        <article>
+          <span class="step-number">02</span>
+          <div><h3>识别订单类型</h3><p>普通单、同品类订单、跨品类订单和主赠订单，对整单保护的要求不同。</p></div>
+        </article>
+        <article>
+          <span class="step-number">03</span>
+          <div><h3>保护适合的整单</h3><p>主赠或同品类订单优先寻找合理范围内的单节点整单方案，降低主赠分离和无谓拆包。</p></div>
+        </article>
+        <article>
+          <span class="step-number">04</span>
+          <div><h3>最大化本地承担</h3><p>整单方案不存在时，优先使用应发货城市已有库存，再为缺口寻找外部来源。</p></div>
+        </article>
+        <article>
+          <span class="step-number">05</span>
+          <div><h3>选择更优覆盖</h3><p>原覆盖节点优先于兜底节点；区域兜底通常优先于更远的跨区寻源。</p></div>
+        </article>
+        <article>
+          <span class="step-number">06</span>
+          <div><h3>比较增量成本</h3><p>只有前置业务条件相同时，才比较新增节点、配送异常和跨网成本。</p></div>
+        </article>
+        <article>
+          <span class="step-number">07</span>
+          <div><h3>减少节点并固定排序</h3><p>成本相同时减少履约 from，并用稳定顺序打破最后的平局。</p></div>
+        </article>
+      </div>
+      <div class="sorting-key">
+        <span>通用排序思想</span>
+        <code>完整满足 → 业务完整性 → 本地承担 → 覆盖层级 → 增量成本 → from 数量 → 稳定顺序</code>
+      </div>
+    </div>
+  </section>
+
+  <section id="playground">
+    <div class="wrap">
+      <div class="section-heading split-heading">
+        <div>
+          <p class="eyebrow">FICTIONAL PLAYGROUND</p>
+          <h2>同一套规则，五种不同结果</h2>
+        </div>
+        <p>以下 SKU、城市、库存和成本指数均为虚构演示，不代表真实仓网、库存或商业费率。</p>
+      </div>
+      <div class="scenario-picker" role="tablist" aria-label="选择虚构履约场景">
+        <button type="button" role="tab" aria-selected="true" data-scenario="local-whole">本地整单</button>
+        <button type="button" role="tab" aria-selected="false" data-scenario="local-split">本地拆单</button>
+        <button type="button" role="tab" aria-selected="false" data-scenario="regional-whole">同区整单</button>
+        <button type="button" role="tab" aria-selected="false" data-scenario="cross-region">跨区补货</button>
+        <button type="button" role="tab" aria-selected="false" data-scenario="bundle">主赠保护</button>
+      </div>
+
+      <div class="playground-grid">
+        <div class="scenario-input">
+          <div class="panel-label">ORDER</div>
+          <dl>
+            <div><dt>消费者城市</dt><dd id="scenarioConsumer">--</dd></div>
+            <div><dt>应发货城市</dt><dd id="scenarioDestination">--</dd></div>
+            <div><dt>订单类型</dt><dd id="scenarioType">--</dd></div>
+          </dl>
+          <h3>订单需求</h3>
+          <div class="sku-list" id="scenarioSkus"></div>
+        </div>
+
+        <div class="scenario-network">
+          <div class="panel-label">CANDIDATE NETWORK</div>
+          <div class="warehouse-list" id="scenarioWarehouses"></div>
+        </div>
+
+        <div class="scenario-result">
+          <div class="panel-label">DECISION</div>
+          <p class="result-kicker" id="scenarioKicker">--</p>
+          <h3 id="scenarioTitle">--</h3>
+          <div class="mode-tags" id="scenarioModes"></div>
+          <ol class="reason-list" id="scenarioReasons"></ol>
+          <div class="cost-index">
+            <header><span>相对增量成本指数</span><strong id="scenarioCostTotal">0</strong></header>
+            <div id="scenarioCostBars"></div>
+            <small>仅用于解释成本构成，不对应真实金额或合同费率。</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="result-language">
+    <div class="wrap">
+      <div class="section-heading">
+        <p class="eyebrow">RESULT LANGUAGE</p>
+        <h2>一个履约结果，需要四个维度共同描述</h2>
+      </div>
+      <div class="dimension-grid">
+        <article><span>地理</span><h3>本地 / 同区 / 跨区</h3><p>比较履约 from 的物理位置与履约 to。</p></article>
+        <article><span>网络</span><h3>同网 / 跨网</h3><p>判断所用节点是否属于同一个服务网络。</p></article>
+        <article><span>仓级</span><h3>同仓 / 跨仓</h3><p>看订单使用一个还是多个履约 from。</p></article>
+        <article><span>包裹</span><h3>整单 / 拆单</h3><p>描述消费者收到一个还是多个履约子单。</p></article>
+      </div>
+      <p class="dimension-example"><b>示例：</b>“同区跨城 · 同网 · 跨仓 · 拆单”比单独写“代发”更精确，也更容易找到成本和库存问题的来源。</p>
+    </div>
+  </section>
+
+  <section id="cost" class="cost-section">
+    <div class="wrap cost-layout">
+      <div>
+        <p class="eyebrow">UPCHARGE FRAMEWORK</p>
+        <h2>Upcharge 是偏离理想履约后的增量</h2>
+        <p class="cost-lead">分析基准通常是“应发货城市由一个合适节点整单发出”。当订单引入更多节点、更远距离或不同网络时，才产生额外成本。</p>
+        <div class="formula">
+          <span>总增量成本</span>
+          <code>新增节点生产 + 特殊网络配送 + 地理异常配送 + 跨网络调整</code>
+        </div>
+        <p class="cost-warning">具体费率、抵减、结算和责任归属属于版本化业务规则，不应与通用履约理论混为一谈。</p>
+      </div>
+      <div class="cost-stack">
+        <article><span>A</span><div><h3>确定基础 from</h3><p>每单先确定一个基准节点，它通常不承担“新增节点”生产成本。</p></div></article>
+        <article><span>B</span><div><h3>识别新增 from</h3><p>每增加一个履约节点，通常意味着新增拣选、出库或包裹生产。</p></div></article>
+        <article><span>C</span><div><h3>识别地理异常</h3><p>同区跨城、跨区和本地加异地拆单具有不同的运输结构。</p></div></article>
+        <article><span>D</span><div><h3>处理跨网关系</h3><p>不同仓网组合可能产生额外成本，也可能与地理费用取高而非简单叠加。</p></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="bundle-section">
+    <div class="wrap">
+      <div class="bundle-card">
+        <div>
+          <p class="eyebrow">BUNDLE ORDERS</p>
+          <h2>绑赠增加的不是一个 SKU，而是一个完整性约束</h2>
+          <p>主品有货不代表整套机制可被理想履约。赠品库存放在哪里，会直接改变整单率、拆单率、跨区率和消费者体验。</p>
+        </div>
+        <div class="bundle-path">
+          <div><span>主品</span><b>本地有货</b></div>
+          <i>+</i>
+          <div><span>赠品</span><b>仅外地有货</b></div>
+          <i>=</i>
+          <div class="bundle-risk"><span>机制结果</span><b>整单迁移或拆单</b></div>
+        </div>
+        <ul>
+          <li>机制设计要同时检查主品和赠品的地域覆盖。</li>
+          <li>“按历史商品件数加权”是结构性推演，不是随机概率或真实订单数预测。</li>
+          <li>赠品下沉策略应共同评估整单体验、库存效率与增量成本。</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="boundary">
+    <div class="wrap">
+      <div class="section-heading">
+        <p class="eyebrow">MODEL BOUNDARY</p>
+        <h2>把分析模型和真实生产路由分开</h2>
+      </div>
+      <div class="boundary-grid">
+        <article class="can">
+          <span>模型可以回答</span>
+          <ul>
+            <li>在给定库存切片和覆盖规则下，订单可能如何分仓。</li>
+            <li>哪些 SKU 或城市导致拆单、跨区和多节点履约。</li>
+            <li>仓网或绑赠方案改变后，结构性成本如何变化。</li>
+            <li>相同输入能否得到稳定、可复盘的结果。</li>
+          </ul>
+        </article>
+        <article class="cannot">
+          <span>模型不能直接代表</span>
+          <ul>
+            <li>京东平台实时生产环境中的最终路由决策。</li>
+            <li>考虑时效、线路、仓容和动态订单队列后的真实结果。</li>
+            <li>最终物流账单、合同结算或费用责任归属。</li>
+            <li>库存随多笔订单连续消耗的完整仿真。</li>
+          </ul>
+        </article>
+      </div>
+      <div class="disclaimer">本页描述的是基于库存切片和配置规则构建的供应链分析框架，不代表京东官方实时路由算法，也不等同于最终物流账单或结算规则。</div>
+    </div>
+  </section>
+
+  <section class="next-section">
+    <div class="wrap next-grid">
+      <div>
+        <p class="eyebrow">CONTINUE LEARNING</p>
+        <h2>从仓网结构走向订单结果</h2>
+      </div>
+      <a href="./warehouse-network-primer.html"><span>先理解货放在哪里</span><b>JD 仓网入门 →</b></a>
+      <a href="./fulfillment-decision.html"><span>用受控数据执行判定</span><b>订单履约分析工具 →</b></a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap"><b>JD Supply Chain 团队知识库</b><span>订单履约方法论 · 虚构案例仅用于教学</span><a href="../">返回首页</a></div>
+</footer>
+
+</body>
+</html>
