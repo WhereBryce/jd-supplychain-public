@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$CredentialPath = (Join-Path $env:LOCALAPPDATA 'JD-SupplyChain\rdc-pages-password.xml'),
+    [string]$CredentialPath = (Join-Path $env:LOCALAPPDATA 'JD-SupplyChain\warehouse-ratio-pages-password.xml'),
     [string]$StatePath = (Join-Path $env:LOCALAPPDATA 'JD-SupplyChain\warehouse-ratio-pages-state.json'),
     [string]$LockPath = (Join-Path $env:LOCALAPPDATA 'JD-SupplyChain\warehouse-ratio-pages-publish.lock'),
     [switch]$Force,

@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 
 $TaskName = 'JD-Warehouse-Ratio-Pages-Publish'
 $Runner = Join-Path $PSScriptRoot 'run-warehouse-ratio-publication.ps1'
-$CredentialPath = Join-Path $env:LOCALAPPDATA 'JD-SupplyChain\rdc-pages-password.xml'
+$CredentialPath = Join-Path $env:LOCALAPPDATA 'JD-SupplyChain\warehouse-ratio-pages-password.xml'
 if (-not (Test-Path -LiteralPath $Runner)) { throw "找不到发布入口：$Runner" }
 if (-not (Test-Path -LiteralPath $CredentialPath)) { throw "找不到访问密码文件：$CredentialPath" }
 
