@@ -120,14 +120,31 @@ def atomic_json(path: Path, payload: Mapping[str, Any]) -> None:
         json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
         encoding="utf-8",
     )
+    replace_error: PermissionError | None = None
     for attempt in range(6):
         try:
             temporary.replace(path)
             return
-        except PermissionError:
+        except PermissionError as exc:
+            replace_error = exc
             if attempt == 5:
-                raise
+                break
             time.sleep(0.5 * (attempt + 1))
+
+    # Some Windows readers allow writes but deny the delete access required by os.replace.
+    try:
+        payload_bytes = temporary.read_bytes()
+        with path.open("r+b") as output:
+            output.seek(0)
+            output.write(payload_bytes)
+            output.truncate()
+            output.flush()
+            os.fsync(output.fileno())
+        temporary.unlink()
+    except OSError:
+        if replace_error is not None:
+            raise replace_error
+        raise
 
 
 def load_app_modules(app_assets: Path) -> tuple[Any, Any]:
