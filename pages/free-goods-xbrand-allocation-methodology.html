@@ -54,6 +54,15 @@
   .hero-model b{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:rgba(111,140,255,.15);color:var(--blue);font-size:12px}
   .hero-model strong{display:block;font-size:14px}.hero-model small{display:block;color:var(--muted);font-size:11.5px}
   section{padding:54px 0;border-top:1px solid rgba(38,52,95,.72)}
+  .advisory-section{padding:0 0 48px;border-top:0}
+  .bundle-advisory{padding:20px;border:1px solid rgba(255,209,102,.38);border-left:5px solid var(--amber);border-radius:0 15px 15px 0;background:linear-gradient(120deg,rgba(255,209,102,.09),rgba(17,25,54,.9) 32%)}
+  .bundle-advisory header{display:flex;align-items:center;gap:12px;margin-bottom:15px}
+  .bundle-advisory header>span{display:grid;width:30px;height:30px;flex:0 0 auto;place-items:center;border:1px solid var(--amber);border-radius:50%;color:var(--amber);font-weight:900}
+  .bundle-advisory h2{margin:0;font-size:19px}.bundle-advisory header p{margin:3px 0 0;color:var(--muted);font-size:12px}
+  .bundle-advisory ol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;counter-reset:bundle-note;margin:0;padding:0;list-style:none}
+  .bundle-advisory li{counter-increment:bundle-note;position:relative;min-width:0;margin:0;padding:14px 14px 14px 48px;border:1px solid var(--line);border-radius:11px;background:rgba(8,13,27,.52);color:#cdd8ef;font-size:13px;line-height:1.65}
+  .bundle-advisory li::before{content:counter(bundle-note);position:absolute;left:14px;top:14px;display:grid;width:23px;height:23px;place-items:center;border-radius:6px;color:var(--bg);background:var(--amber);font-size:11px;font-weight:900}
+  .bundle-advisory li strong{color:#fff}.bundle-advisory .worst-case{color:var(--amber);font-weight:900}
   .section-head{max-width:800px;margin-bottom:24px}
   .section-head h2{margin:0;font-size:clamp(25px,3vw,34px);letter-spacing:-.025em}
   .section-head p{margin:10px 0 0;color:var(--muted)}
@@ -117,7 +126,7 @@
   footer{padding:34px 0 50px;border-top:1px solid var(--line);color:#7889af;text-align:center;font-size:12px}
   @media(max-width:820px){
     .hero-grid,.role-grid{grid-template-columns:1fr}.cards{grid-template-columns:1fr 1fr}
-    .hero-model{max-width:520px}.formula{grid-template-columns:1fr}.divide{text-align:center;transform:rotate(90deg)}
+    .hero-model{max-width:520px}.bundle-advisory ol{grid-template-columns:1fr}.formula{grid-template-columns:1fr}.divide{text-align:center;transform:rotate(90deg)}
   }
   @media(max-width:600px){
     .wrap{width:min(100% - 24px,1060px)}.hero{padding-top:48px}.cards,.scenario-grid,.checks,.boundary{grid-template-columns:1fr}
@@ -131,6 +140,7 @@
   <div class="wrap nav-inner">
     <a class="brand" href="../"><span>JD</span> Supply Chain</a>
     <div class="nav-links">
+      <a href="#bundle-notice">注意事项</a>
       <a href="#roles">仓的角色</a>
       <a href="#workflow">计算流程</a>
       <a href="#formula">核心公式</a>
@@ -163,6 +173,23 @@
 </header>
 
 <main>
+  <section class="advisory-section" id="bundle-notice">
+    <div class="wrap">
+      <aside class="bundle-advisory" aria-labelledby="public-bundle-advisory-title">
+        <header>
+          <span aria-hidden="true">i</span>
+          <div><h2 id="public-bundle-advisory-title">绑赠注意事项</h2><p>赠品分仓之前，应先确认整单优先级、掉赠兜底、平行范围及消费者包裹体验。</p></div>
+        </header>
+        <ol>
+          <li><strong>绑赠订单优先整单发货。</strong>无论赠品是否与主品同品类，赠品下沉都要跟随主品，覆盖普通 C 仓和城市仓；非绑赠订单则优先使用本地有货库存发货。</li>
+          <li><strong>避免掉赠的兜底方案需谨慎。</strong>配额无法支持全仓有货时，本地主品有货但赠品无货，页面可能掉赠。若要避免，需要保证 11RDC 有货或打开预定，并配置代发关系、拉黑小仓；这会产生大量区域内代发，Upcharge 影响品牌利润，仅建议作为 <span class="worst-case">Worst Case</span>。</li>
+          <li><strong>严格限制手工平行。</strong>平行会让订单内 SKU 从全国有现货的库存点寻货，可能导致大量拆单；跨区拆单还会单独计算配送费和出库生产费。AE/业务负责人应严格限制运营开平行的场景，目前中台仅支持长库龄或滞销清理使用平行手段。</li>
+          <li><strong>不拆订单不等于不拆包裹。</strong>即使同仓发货，也可能因不同品牌的拣货区、打包区不同而形成多个包裹。在该口径下不影响 JD 零售物流费用，但会影响消费者体验，客服团队应提前知悉潜在进线。</li>
+        </ol>
+      </aside>
+    </div>
+  </section>
+
   <section>
     <div class="wrap">
       <div class="section-head">

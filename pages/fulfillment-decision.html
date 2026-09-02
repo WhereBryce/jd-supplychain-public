@@ -72,6 +72,18 @@
 
     <section class="tool-view active" id="mechanismView">
       <header class="view-heading"><div><p>BUNDLE SIMULATION</p><h2>绑赠机制模拟</h2></div><button class="primary-button" id="analyzeMechanism" type="button">开始模拟</button></header>
+      <aside class="bundle-advisory" aria-labelledby="bundle-advisory-title">
+        <header>
+          <span aria-hidden="true">i</span>
+          <div><h3 id="bundle-advisory-title">绑赠注意事项</h3><p>先确认履约边界，再决定赠品下沉、预定、代发或平行策略。</p></div>
+        </header>
+        <ol>
+          <li><strong>绑赠订单优先整单发货。</strong>无论赠品是否与主品同品类，赠品下沉都要跟随主品，覆盖普通 C 仓和城市仓；非绑赠订单则优先使用本地有货库存发货。</li>
+          <li><strong>避免掉赠的兜底方案需谨慎。</strong>配额无法支持全仓有货时，本地主品有货但赠品无货，页面可能掉赠。若要避免，需要保证 11RDC 有货或打开预定，并配置代发关系、拉黑小仓；这会产生大量区域内代发，Upcharge 影响品牌利润，仅建议作为 <span class="worst-case">Worst Case</span>。</li>
+          <li><strong>严格限制手工平行。</strong>平行会让订单内 SKU 从全国有现货的库存点寻货，可能导致大量拆单；跨区拆单还会单独计算配送费和出库生产费。AE/业务负责人应严格限制运营开平行的场景，目前中台仅支持长库龄或滞销清理使用平行手段。</li>
+          <li><strong>不拆订单不等于不拆包裹。</strong>即使同仓发货，也可能因不同品牌的拣货区、打包区不同而形成多个包裹。在该口径下不影响 JD 零售物流费用，但会影响消费者体验，客服团队应提前知悉潜在进线。</li>
+        </ol>
+      </aside>
       <div class="mechanism-grid">
         <section class="editor-panel"><header><h3>单套构成</h3><button class="square-button" id="addMechanismRow" type="button" title="增加SKU">＋</button></header><div class="table-wrap"><table><thead><tr><th>JD码</th><th>单套数量</th><th>角色</th><th></th></tr></thead><tbody id="mechanismBody"></tbody></table></div></section>
         <aside class="basis-panel"><label for="primarySku">地域分布基准主品</label><input id="primarySku" list="skuSuggestions" placeholder="输入主品JD码" /><datalist id="skuSuggestions"></datalist><label for="mechanismSnapshot">参考库存切片</label><select id="mechanismSnapshot"></select><p>城市权重取主品近90日收货地商品件数；同一配送中心跨RDC重复值只计一次。机制同时包含主品和赠品时，无论一级类目是否相同，均优先同区单仓整单；全部为主品时仍按一级类目规则判断。</p></aside>
