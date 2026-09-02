@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>需求预测与补货基础 · JD Supply Chain</title>
+<meta name="description" content="用一个虚构的SKU配送中心案例，学习需求预测、提前期、安全库存、库存位置、箱规、MOQ和建议订货量。" />
+<link rel="stylesheet" href="../assets/learning-page.css" />
+<style>
+  .story-hero{position:relative;overflow:hidden}
+  .story-hero::after{
+    content:"";position:absolute;right:-110px;top:-90px;width:360px;height:360px;border-radius:50%;
+    background:radial-gradient(circle,rgba(98,223,189,.12),transparent 66%);pointer-events:none
+  }
+  .morning-board{
+    display:grid;grid-template-columns:1.45fr repeat(3,minmax(0,.7fr));gap:10px;margin-top:22px;
+    padding:12px;border:1px solid var(--line);border-radius:var(--radius);
+    background:rgba(9,15,35,.8);box-shadow:0 22px 60px rgba(0,0,0,.2)
+  }
+  .clock-card,.signal-card{position:relative;min-height:92px;padding:15px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+  .clock-card{display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#151f43,#0d1530)}
+  .clock{display:grid;width:54px;height:54px;flex:0 0 auto;place-items:center;border:2px solid var(--mint);border-radius:50%;color:var(--mint);font-size:12px;font-weight:900}
+  .clock-card b,.signal-card b{display:block}
+  .clock-card span,.signal-card span{display:block;margin-top:4px;color:var(--muted);font-size:11.5px}
+  .signal-card strong{display:block;margin-top:5px;color:var(--mint);font-size:23px;line-height:1}
+  .signal-card.alert strong{color:var(--amber)}
+  .live-dot{display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:var(--mint);box-shadow:0 0 0 0 rgba(98,223,189,.5);animation:pulse 2s infinite}
+  @keyframes pulse{70%{box-shadow:0 0 0 8px rgba(98,223,189,0)}100%{box-shadow:0 0 0 0 rgba(98,223,189,0)}}
+  .scene{
+    display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:16px;align-items:stretch;margin:20px 0
+  }
+  .scene-copy,.shelf-scene{padding:20px;border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(145deg,var(--panel),var(--panel2))}
+  .scene-copy blockquote{margin:15px 0 0;padding:14px 16px;border-left:3px solid var(--amber);background:#0a1127;color:#fff;font-size:15px}
+  .shelf-scene{display:flex;flex-direction:column;justify-content:center}
+  .shelf{display:flex;align-items:flex-end;gap:6px;height:102px;padding:12px;border-bottom:5px solid #53648f}
+  .box{width:14%;min-width:20px;border:1px solid rgba(255,255,255,.22);border-radius:4px 4px 2px 2px;background:linear-gradient(#7d96ff,#405bc6);animation:arrive .6s both}
+  .box:nth-child(1){height:72%}.box:nth-child(2){height:58%;animation-delay:.05s}.box:nth-child(3){height:44%;animation-delay:.1s}
+  .box:nth-child(4){height:30%;animation-delay:.15s}.box:nth-child(5){height:20%;background:linear-gradient(#ffd166,#b87a1c);animation-delay:.2s}
+  @keyframes arrive{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+  .shelf-note{margin-top:12px;color:var(--muted);font-size:12px;text-align:center}
+  .journey{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:17px;margin:22px 0}
+  .journey-step{position:relative;min-height:126px;padding:15px;border:1px solid var(--line);border-radius:13px;background:var(--panel)}
+  .journey-step:not(:last-child)::after{content:"→";position:absolute;right:-14px;top:43%;color:var(--mint);font-size:18px}
+  .journey-step i{display:grid;width:29px;height:29px;margin-bottom:9px;place-items:center;border-radius:9px;background:#0a1127;color:var(--mint);font-style:normal;font-weight:900}
+  .journey-step b{display:block;font-size:13px}.journey-step span{display:block;margin-top:5px;color:var(--muted);font-size:11.5px}
+  .truth-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+  .truth-card{padding:18px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+  .truth-card .big{display:block;margin:8px 0;color:var(--mint);font-size:24px;font-weight:900}
+  .truth-card p{color:var(--muted);font-size:12.5px}
+  .truth-card.warn .big{color:var(--amber)}.truth-card.red .big{color:var(--red)}
+  .forecast-lanes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+  .forecast-lane{padding:18px;border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(145deg,var(--panel),var(--panel2))}
+  .forecast-lane .line{height:44px;margin:14px 0;background-repeat:no-repeat;background-position:center;background-size:100% 100%}
+  .line.smooth{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 44'%3E%3Cpath d='M2 34 C30 36 34 20 60 24 S95 12 120 19 S160 10 198 7' fill='none' stroke='%2362dfbd' stroke-width='3'/%3E%3C/svg%3E")}
+  .line.week{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 44'%3E%3Cpath d='M2 31 L24 15 L46 30 L68 13 L90 29 L112 12 L134 28 L156 10 L178 25 L198 8' fill='none' stroke='%23b49cff' stroke-width='3'/%3E%3C/svg%3E")}
+  .line.event{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 44'%3E%3Cpath d='M2 34 L60 31 L94 28 L112 4 L125 27 L198 22' fill='none' stroke='%23ffd166' stroke-width='3'/%3E%3C/svg%3E")}
+  .forecast-lane p{color:var(--muted);font-size:12.5px}
+  .planner{
+    margin:22px 0;padding:18px;border:1px solid #38509a;border-radius:20px;
+    background:linear-gradient(150deg,rgba(17,25,54,.97),rgba(8,13,27,.98));
+    box-shadow:0 28px 80px rgba(0,0,0,.27)
+  }
+  .planner-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:15px}
+  .planner-head h3{margin:0;font-size:20px}.planner-head p{margin:4px 0 0;color:var(--muted);font-size:12px}
+  .scenario-buttons{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+  .scenario-button,.recalc{
+    padding:8px 11px;border:1px solid var(--line);border-radius:9px;cursor:pointer;color:#cbd7f4;background:#0a1127;font:inherit;font-size:11.5px;font-weight:800
+  }
+  .scenario-button:hover,.scenario-button.active{border-color:var(--mint);color:var(--mint)}
+  .planner-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(330px,.95fr);gap:14px}
+  .input-panel,.output-panel{padding:16px;border:1px solid var(--line);border-radius:14px;background:rgba(9,15,35,.74)}
+  .panel-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+  .panel-title b{font-size:14px}.panel-title span{color:var(--muted);font-size:10.5px}
+  .forecast-row{
+    display:grid;grid-template-columns:52px repeat(3,minmax(0,1fr));gap:7px;align-items:center;margin-bottom:7px
+  }
+  .forecast-row.header{color:var(--muted);font-size:10.5px;text-align:center}
+  .forecast-row > b{font-size:11.5px}
+  .planner label{display:block;color:var(--muted);font-size:10.5px}
+  .planner input{
+    width:100%;margin-top:4px;padding:8px 9px;border:1px solid var(--line);border-radius:8px;outline:none;
+    color:var(--ink);background:#080d1b;font:inherit;font-size:12px
+  }
+  .planner input:focus{border-color:var(--brand)}
+  .parameter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:14px}
+  .recalc{width:100%;margin-top:12px;border-color:#5874e6;color:#fff;background:#3859d8;font-size:12.5px}
+  .recalc:hover{background:#4768e5}
+  .result-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .result-card{padding:12px;border:1px solid var(--line);border-radius:11px;background:#0b132b}
+  .result-card span{display:block;color:var(--muted);font-size:10.5px}
+  .result-card strong{display:block;margin-top:3px;color:var(--mint);font-size:20px;line-height:1.2}
+  .result-card.hero-result{grid-column:1/-1;background:linear-gradient(120deg,rgba(98,223,189,.12),#0b132b)}
+  .result-card.hero-result strong{font-size:29px}
+  .decision-status{display:inline-flex;margin-top:8px;padding:4px 8px;border:1px solid var(--mint);border-radius:999px;color:var(--mint);font-size:10.5px;font-weight:900}
+  .decision-status.warn{border-color:var(--amber);color:var(--amber)}.decision-status.danger{border-color:var(--red);color:var(--red)}
+  .coverage{margin-top:12px;padding:13px;border:1px solid var(--line);border-radius:11px;background:#080d1b}
+  .coverage-label{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:10.5px}
+  .coverage-note{margin-top:7px;color:#7f91b9;font-size:10px;line-height:1.45}
+  .coverage-track{position:relative;height:12px;margin:8px 0 5px;border-radius:999px;background:#202b4d;overflow:hidden}
+  .coverage-fill{height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,var(--red),var(--amber),var(--mint));transition:width .45s ease}
+  .coverage-target{position:absolute;right:2px;top:-2px;width:2px;height:16px;background:#fff}
+  .timeline{display:flex;height:42px;margin-top:12px;overflow:hidden;border:1px solid var(--line);border-radius:10px}
+  .timeline > div{display:grid;min-width:52px;place-items:center;padding:4px;color:#fff;font-size:10px;text-align:center}
+  .lead-block{background:#3c58be}.review-block{background:#715bb5}.safety-block{background:#9a681d}
+  .decision-story{margin:12px 0 0;padding:13px 14px;border-left:3px solid var(--mint);border-radius:0 10px 10px 0;background:#101a39;color:#dfe7ff;font-size:12.5px}
+  .decision-story.warn{border-left-color:var(--amber)}.decision-story.danger{border-left-color:var(--red)}
+  .equation{margin-top:10px;color:#b9c7e8;font-family:"Cascadia Code",Consolas,monospace;font-size:11.5px}
+  .error-message{display:none;margin-top:10px;color:var(--red);font-size:12px}
+  .twists{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:18px 0}
+  .twist{position:relative;overflow:hidden;padding:17px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+  .twist::after{content:attr(data-mark);position:absolute;right:9px;bottom:-16px;color:rgba(255,255,255,.05);font-size:64px;font-weight:900}
+  .twist h3{position:relative;margin:0 0 7px;font-size:15px}.twist p{position:relative;color:var(--muted);font-size:12px}
+  .question-list{counter-reset:q;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:0;list-style:none}
+  .question-list li{counter-increment:q;position:relative;margin:0;padding:14px 14px 14px 48px;border:1px solid var(--line);border-radius:11px;background:var(--panel);font-size:12.5px}
+  .question-list li::before{content:counter(q);position:absolute;left:14px;top:13px;display:grid;width:23px;height:23px;place-items:center;border-radius:7px;background:#0a1127;color:var(--mint);font-weight:900}
+  @media(max-width:920px){
+    .morning-board{grid-template-columns:repeat(3,minmax(0,1fr))}.clock-card{grid-column:1/-1}
+    .journey{grid-template-columns:repeat(3,minmax(0,1fr))}.journey-step::after{display:none}
+    .planner-grid{grid-template-columns:1fr}.twists{grid-template-columns:repeat(2,minmax(0,1fr))}
+  }
+  @media(max-width:680px){
+    .morning-board,.truth-grid,.forecast-lanes{grid-template-columns:1fr}.clock-card{grid-column:auto}
+    .scene{grid-template-columns:1fr}.journey{grid-template-columns:1fr}
+    .planner-head{flex-direction:column}.scenario-buttons{justify-content:flex-start}
+    .parameter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.question-list{grid-template-columns:1fr}
+  }
+  @media(max-width:460px){.forecast-row{grid-template-columns:42px repeat(3,minmax(0,1fr));gap:5px}.twists,.parameter-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="wrap">
+    <div class="brand">JD <span>Supply Chain</span> · 预测补货</div>
+    <div class="nav-links">
+      <a href="#story">开场</a>
+      <a href="#demand">真实需求</a>
+      <a href="#forecast">预测</a>
+      <a href="#planner">补货驾驶舱</a>
+      <a href="#exceptions">异常场景</a>
+      <a href="#sources">公开来源</a>
+      <a href="../">首页</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero story-hero">
+  <div class="wrap">
+    <span class="badge"><span class="live-dot"></span>新人指南 · 需求预测 · 库存补货</span>
+    <h1>需求预测与补货基础：<br /><em>别等货架空了才想起下单</em></h1>
+    <div class="summary">
+      预测回答<strong>“未来可能卖多少”</strong>，补货回答<strong>“今天应该订多少”</strong>。
+      两者之间还隔着提前期、安全库存、现有库存、确认在途、箱规与 MOQ。下面从一个虚构的配送中心早晨开始。
+    </div>
+    <div class="morning-board" aria-label="案例晨会看板">
+      <div class="clock-card">
+        <div class="clock">09:12</div>
+        <div><b>补货员收到一条预警</b><span>“这个 SKU 还能卖几天？今天要不要下单？”</span></div>
+      </div>
+      <div class="signal-card"><b>预测日销</b><strong>10 支</strong><span>虚构教学数据</span></div>
+      <div class="signal-card alert"><b>库存位置</b><strong>70 支</strong><span>可用 50 + 在途 20</span></div>
+      <div class="signal-card"><b>保护周期</b><strong>13 天</strong><span>提前期 7 + 复核 3 + 安全 3</span></div>
+    </div>
+    <div class="meta">
+      <span>案例数据完全虚构</span>
+      <span>计算口径：SKU × 配送中心</span>
+      <span>核验日期：2026-09-02</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="story">
+    <div class="wrap">
+      <span class="section-kicker">A MORNING DECISION</span>
+      <h2>70 支库存，看起来不少，为什么仍要补货？</h2>
+      <div class="scene">
+        <div class="scene-copy">
+          <p>屏幕上显示：可用库存 50 支，四天后有 20 支在途到仓。最近每天大约卖 10 支。</p>
+          <p>如果只看“现在有 50 支”，似乎还能卖 5 天；如果把在途也算上，总共能覆盖 7 天。但下一次补货决策要保护的不只是今天，而是<strong>等待新货的时间、下一次复核前的需求，以及不确定性缓冲</strong>。</p>
+          <blockquote>货不是卖完那一刻才需要订，而是要在“库存还能撑到新货到达”之前行动。</blockquote>
+        </div>
+        <div class="shelf-scene" aria-hidden="true">
+          <div class="shelf">
+            <span class="box"></span><span class="box"></span><span class="box"></span><span class="box"></span><span class="box"></span>
+          </div>
+          <div class="shelf-note">货架从充足到见底，是一条时间线，不是一张静态库存截图。</div>
+        </div>
+      </div>
+
+      <div class="journey">
+        <div class="journey-step"><i>1</i><b>观察销量</b><span>先看历史发生了什么，也要识别缺货和异常。</span></div>
+        <div class="journey-step"><i>2</i><b>估计需求</b><span>形成未来日均需求，而不是机械复制昨天。</span></div>
+        <div class="journey-step"><i>3</i><b>计算时间</b><span>提前期、复核周期决定需要保护多远。</span></div>
+        <div class="journey-step"><i>4</i><b>盘点供给</b><span>可用库存、可信在途与占用共同形成库存位置。</span></div>
+        <div class="journey-step"><i>5</i><b>形成建议</b><span>目标库存减库存位置，再应用箱规与 MOQ。</span></div>
+        <div class="journey-step"><i>6</i><b>到货复盘</b><span>实际需求和到货偏差进入下一轮参数修正。</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="demand">
+    <div class="wrap">
+      <span class="section-kicker">DEMAND IS NOT ALWAYS SALES</span>
+      <h2>销量是被看见的需求，但不是需求的全部</h2>
+      <p class="lead">销售记录同时受到库存、价格、活动、流量和履约能力影响。零销量可能意味着没人要，也可能只是无货可卖。</p>
+
+      <div class="truth-grid">
+        <article class="truth-card">
+          <span>正常销售日</span><span class="big">10 支/天</span>
+          <p>商品可售、价格稳定、没有明显活动，销量较接近自然需求。</p>
+        </article>
+        <article class="truth-card warn">
+          <span>缺货日</span><span class="big">0 支 ≠ 0 需求</span>
+          <p>货架已经空了，系统只能记录成交为零，却无法直接记录被放弃的购买。</p>
+        </article>
+        <article class="truth-card red">
+          <span>活动峰值</span><span class="big">40 支 ≠ 常态</span>
+          <p>促销、内容曝光或一次性大单可能制造尖峰，不能简单外推到每天。</p>
+        </article>
+      </div>
+
+      <div class="compare">
+        <div>
+          <h3>日历日均</h3>
+          <p>销量 ÷ 全部日历天。简单，但缺货天越多，需求越容易被低估。</p>
+          <div class="formula">过去 7 天卖出 35 支 ÷ 7 天 = <b>5 支/天</b></div>
+        </div>
+        <div>
+          <h3>有效销售日均</h3>
+          <p>先识别商品真正可售的日期，再计算销量。仍需结合缺货前趋势和业务背景。</p>
+          <div class="formula">过去 7 天卖出 35 支 ÷ 5 个有效销售日 = <b>7 支/天</b></div>
+        </div>
+      </div>
+      <div class="callout warn">
+        <span class="title">第一道关不是算法，而是数据判断</span>
+        商品状态、库存可售性、活动标签、异常订单和日期完整性没有处理好，再复杂的模型也只会把错误算得更精确。
+      </div>
+    </div>
+  </section>
+
+  <section id="forecast">
+    <div class="wrap">
+      <span class="section-kicker">FROM HISTORY TO A VIEW OF TOMORROW</span>
+      <h2>新人先掌握三层预测，不必一开始就追求“AI”</h2>
+      <div class="forecast-lanes">
+        <article class="forecast-lane">
+          <span class="label">第一层 · 基线</span>
+          <h3>移动平均</h3>
+          <div class="line smooth" aria-hidden="true"></div>
+          <p>使用近 7、14、28 日有效销售日均，得到一个透明、可解释的起点。</p>
+        </article>
+        <article class="forecast-lane">
+          <span class="label">第二层 · 规律</span>
+          <h3>趋势与星期效应</h3>
+          <div class="line week" aria-hidden="true"></div>
+          <p>识别持续增长、下降，以及工作日与周末之间反复出现的节奏。</p>
+        </article>
+        <article class="forecast-lane">
+          <span class="label">第三层 · 事件</span>
+          <h3>活动与业务修正</h3>
+          <div class="line event" aria-hidden="true"></div>
+          <p>将大促、新品、调价、流量资源和供应约束作为单独事件处理。</p>
+        </article>
+      </div>
+
+      <div class="formula"><b>教学版预测日均</b> =（近 7 日日均 × 权重 + 近 14 日日均 × 权重 + 近 28 日日均 × 权重）×（1 + 事件修正）</div>
+      <p class="source-note">权重与事件修正只用于演示计算逻辑，不代表任何企业、平台或品类的实际预测参数。</p>
+    </div>
+  </section>
+
+  <section id="planner">
+    <div class="wrap">
+      <span class="section-kicker">REPLENISHMENT COCKPIT</span>
+      <h2>把数字放进补货驾驶舱</h2>
+      <p class="lead">先尝试默认案例，再切换“大促升温”“在途延期”和“缺货遮蔽”。每次输入变化都会立即生成新的订货建议和解释。</p>
+
+      <div class="planner">
+        <div class="planner-head">
+          <div>
+            <h3>SKU × 配送中心补货演练</h3>
+            <p>所有数据均为虚构；使用简化的周期复核、补至目标库存逻辑。</p>
+          </div>
+          <div class="scenario-buttons" aria-label="教学情景">
+            <button class="scenario-button active" type="button" data-scenario="normal">日常销售</button>
+            <button class="scenario-button" type="button" data-scenario="promotion">大促升温</button>
+            <button class="scenario-button" type="button" data-scenario="delay">在途延期</button>
+            <button class="scenario-button" type="button" data-scenario="stockout">缺货遮蔽</button>
+          </div>
+        </div>
+
+        <div class="planner-grid">
+          <div class="input-panel">
+            <div class="panel-title"><b>① 需求信号</b><span>权重自动归一化</span></div>
+            <div class="forecast-row header"><span></span><span>销量</span><span>有效天数</span><span>权重 %</span></div>
+            <div class="forecast-row">
+              <b>近 7 日</b>
+              <label><input id="sales-7" type="number" min="0" step="1" value="70" aria-label="近7日销量" /></label>
+              <label><input id="days-7" type="number" min="1" max="7" step="1" value="7" aria-label="近7日有效销售天数" /></label>
+              <label><input id="weight-7" type="number" min="0" step="1" value="50" aria-label="近7日权重" /></label>
+            </div>
+            <div class="forecast-row">
+              <b>近 14 日</b>
+              <label><input id="sales-14" type="number" min="0" step="1" value="140" aria-label="近14日销量" /></label>
+              <label><input id="days-14" type="number" min="1" max="14" step="1" value="14" aria-label="近14日有效销售天数" /></label>
+              <label><input id="weight-14" type="number" min="0" step="1" value="30" aria-label="近14日权重" /></label>
+            </div>
+            <div class="forecast-row">
+              <b>近 28 日</b>
+              <label><input id="sales-28" type="number" min="0" step="1" value="280" aria-label="近28日销量" /></label>
+              <label><input id="days-28" type="number" min="1" max="28" step="1" value="28" aria-label="近28日有效销售天数" /></label>
+              <label><input id="weight-28" type="number" min="0" step="1" value="20" aria-label="近28日权重" /></label>
+            </div>
+
+            <div class="panel-title" style="margin-top:18px"><b>② 时间、库存与订货约束</b><span>单位：天 / 支</span></div>
+            <div class="parameter-grid">
+              <label>事件修正 %<input id="uplift" type="number" min="-90" step="1" value="0" /></label>
+              <label>补货提前期<input id="lead-time" type="number" min="0" step="1" value="7" /></label>
+              <label>复核周期<input id="review-period" type="number" min="0" step="1" value="3" /></label>
+              <label>安全库存天数<input id="safety-days" type="number" min="0" step="1" value="3" /></label>
+              <label>可用库存<input id="available" type="number" min="0" step="1" value="50" /></label>
+              <label>确认在途<input id="inbound" type="number" min="0" step="1" value="20" /></label>
+              <label>占用/不可用<input id="reserved" type="number" min="0" step="1" value="0" /></label>
+              <label>箱规<input id="case-pack" type="number" min="1" step="1" value="12" /></label>
+              <label>MOQ<input id="moq" type="number" min="0" step="1" value="24" /></label>
+            </div>
+            <button class="recalc" id="recalculate" type="button">重新计算补货建议</button>
+            <div class="error-message" id="error-message">请检查输入：有效销售天数、权重、箱规和数量必须符合要求。</div>
+          </div>
+
+          <div class="output-panel" aria-live="polite">
+            <div class="panel-title"><b>③ 决策结果</b><span id="scenario-name">日常销售</span></div>
+            <div class="result-cards">
+              <div class="result-card hero-result">
+                <span>最终建议订货量</span>
+                <strong id="suggestion-result">60 支 · 5 箱</strong>
+                <span class="decision-status" id="decision-status">建议补货</span>
+              </div>
+              <div class="result-card"><span>预测日均需求</span><strong id="forecast-result">10.0 支</strong></div>
+              <div class="result-card"><span>库存位置覆盖</span><strong id="coverage-result">7.0 天</strong></div>
+              <div class="result-card"><span>保护周期</span><strong id="protection-result">13 天</strong></div>
+              <div class="result-card"><span>目标库存</span><strong id="target-result">130 支</strong></div>
+              <div class="result-card"><span>库存位置</span><strong id="position-result">70 支</strong></div>
+              <div class="result-card"><span>补货点参考</span><strong id="reorder-result">100 支</strong></div>
+            </div>
+
+            <div class="coverage">
+              <div class="coverage-label"><span>库存位置相对目标库存</span><b id="coverage-label">70 / 130</b></div>
+              <div class="coverage-track"><div class="coverage-fill" id="coverage-fill"></div><span class="coverage-target"></span></div>
+              <div class="coverage-label"><span>现在</span><span>保护周期终点</span></div>
+              <div class="coverage-note">覆盖天数假设确认在途早于现货耗尽到达；如果到货更晚，需要按日期逐日模拟断货窗口。</div>
+            </div>
+
+            <div class="timeline" aria-label="保护周期组成">
+              <div class="lead-block" id="lead-block">提前期<br />7 天</div>
+              <div class="review-block" id="review-block">复核<br />3 天</div>
+              <div class="safety-block" id="safety-block">安全<br />3 天</div>
+            </div>
+
+            <div class="decision-story" id="decision-story">
+              当前库存位置只能覆盖约 7 天，而本轮计划要保护未来 13 天需求。建议补 60 支，按 12 支/箱取整后为 5 箱。
+            </div>
+            <div class="equation" id="equation">130 目标库存 − 70 库存位置 = 60 净需求 → 60 支</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cards three">
+        <article class="card">
+          <span class="label">什么时候下单</span>
+          <h3>补货点</h3>
+          <p>连续复核的简化思想：预计提前期需求 + 安全库存。库存位置跌破它时，需要触发补货判断。</p>
+        </article>
+        <article class="card violet">
+          <span class="label">补到什么水平</span>
+          <h3>目标库存</h3>
+          <p>周期复核时通常还要覆盖下一次复核前的需求，因此保护范围可能包含提前期、复核周期和安全缓冲。</p>
+        </article>
+        <article class="card amber">
+          <span class="label">最终订多少</span>
+          <h3>执行约束</h3>
+          <p>净需求还要经过箱规、MOQ、配额、仓容、商品状态和供应可行性检查，才能成为订单。</p>
+        </article>
+      </div>
+      <div class="callout tip">
+        <span class="title">库存位置比“现货”更接近补货决策</span>
+        本页使用“可用库存 + 确认在途 − 占用或不可用”的简化定义。它适合判断净需求，但不等于到货前一定不断货；
+        实际业务还要按日期检查现货何时耗尽、每笔在途何时到达，并明确哪些库存可承诺，以及是否还有待分货、退货或未清需求。
+      </div>
+    </div>
+  </section>
+
+  <section id="exceptions">
+    <div class="wrap">
+      <span class="section-kicker">PLOT TWISTS</span>
+      <h2>补货故事里最常见的四次“剧情反转”</h2>
+      <div class="twists">
+        <article class="twist" data-mark="0"><h3>缺货让销量变小</h3><p>直接按日历日均预测，会把“卖不出来”误判成“没人想买”。先识别有效销售日和缺货前趋势。</p></article>
+        <article class="twist" data-mark="↑"><h3>活动让销量变大</h3><p>活动峰值不应永久写入基线。把自然需求与活动增量拆开，活动结束后及时撤回修正。</p></article>
+        <article class="twist" data-mark="!"><h3>在途写着有，却迟迟不到</h3><p>只有数量、节点和预计到货时间可信的供给才应进入库存位置；延期在途可能需要降权或剔除。</p></article>
+        <article class="twist" data-mark="?"><h3>新品没有历史</h3><p>新品可参考相似商品、渠道计划和爬坡曲线，并使用更短复核周期，避免一次性压入过多库存。</p></article>
+      </div>
+
+      <h3>下单前的七个问题</h3>
+      <ol class="question-list">
+        <li>这是自然需求、活动需求，还是异常订单？</li>
+        <li>缺货是否遮蔽了真实需求？</li>
+        <li>补货提前期是平均值，还是近期真实表现？</li>
+        <li>在途数量和到货日期是否可信？</li>
+        <li>库存是否位于真正产生需求的配送中心？</li>
+        <li>建议数量是否满足箱规、MOQ、配额和仓容？</li>
+        <li>如果预测错误，下一次可以多快重新复核？</li>
+      </ol>
+      <div class="formula"><b>成熟的补货判断</b> = 数据可信度 + 需求判断 + 时间风险 + 库存位置 + 执行约束 + 复盘机制</div>
+    </div>
+  </section>
+
+  <section id="sources">
+    <div class="wrap sources">
+      <span class="section-kicker">PUBLIC SOURCES AND BOUNDARIES</span>
+      <h2>公开来源与使用边界</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>公开资料</th><th>用于核验的概念</th></tr></thead>
+          <tbody>
+            <tr><td><a href="https://www.scor-ds.com/">SCOR Digital Standard</a></td><td>Plan、Order、Source、Fulfill 等活动共同服务于客户需求，不应把预测或补货孤立理解。</td></tr>
+            <tr><td><a href="https://learning.sap.com/courses/consumption-based-planning-and-forecasting-in-sap-cloud-erp/using-forecast-in-reorder-point-planning">SAP Learning · Using Forecast in Reorder Point Planning</a></td><td>补货点由安全库存与提前期内平均需求构成；安全库存用于应对额外消耗与延期。</td></tr>
+            <tr><td><a href="https://docs.oracle.com/cd/A60725_05/html/comnls/us/inv/roplan.htm">Oracle Inventory · Reorder Point Planning</a></td><td>使用需求预测、安全库存、提前期和计划收货判断何时建议新订单。</td></tr>
+            <tr><td><a href="https://www.ascm.org/ascm-insights/safety-stock-a-contingency-plan-to-keep-supply-chains-flying-high/">ASCM · Safety Stock</a></td><td>安全库存用于缓冲需求变化和供应中断；具体算法应与需求及提前期波动相匹配。</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="source-note">
+        本页是公开教学材料，不是 JD、供应商或任何企业的订货规则。移动平均权重、安全库存天数、事件修正和虚构案例仅用于解释思路；
+        真实补货需要结合商品状态、业务政策、服务目标、供应能力、合同约束及系统口径。
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">JD Supply Chain 团队知识库 · 需求预测与补货基础 · <a href="../">返回首页</a></div>
+</footer>
+
+<script>
+(() => {
+  const scenarios = {
+    normal: {
+      name: "日常销售", sales7: 70, days7: 7, weight7: 50, sales14: 140, days14: 14, weight14: 30,
+      sales28: 280, days28: 28, weight28: 20, uplift: 0, lead: 7, review: 3, safety: 3,
+      available: 50, inbound: 20, reserved: 0, pack: 12, moq: 24
+    },
+    promotion: {
+      name: "大促升温", sales7: 98, days7: 7, weight7: 50, sales14: 168, days14: 14, weight14: 30,
+      sales28: 280, days28: 28, weight28: 20, uplift: 25, lead: 7, review: 3, safety: 4,
+      available: 50, inbound: 20, reserved: 0, pack: 12, moq: 24
+    },
+    delay: {
+      name: "在途延期", sales7: 70, days7: 7, weight7: 50, sales14: 140, days14: 14, weight14: 30,
+      sales28: 280, days28: 28, weight28: 20, uplift: 0, lead: 12, review: 3, safety: 4,
+      available: 50, inbound: 0, reserved: 0, pack: 12, moq: 24
+    },
+    stockout: {
+      name: "缺货遮蔽", sales7: 35, days7: 5, weight7: 50, sales14: 80, days14: 10, weight14: 30,
+      sales28: 180, days28: 22, weight28: 20, uplift: 0, lead: 7, review: 3, safety: 4,
+      available: 12, inbound: 20, reserved: 0, pack: 12, moq: 24
+    }
+  };
+
+  const ids = {
+    sales7: "sales-7", days7: "days-7", weight7: "weight-7",
+    sales14: "sales-14", days14: "days-14", weight14: "weight-14",
+    sales28: "sales-28", days28: "days-28", weight28: "weight-28",
+    uplift: "uplift", lead: "lead-time", review: "review-period", safety: "safety-days",
+    available: "available", inbound: "inbound", reserved: "reserved", pack: "case-pack", moq: "moq"
+  };
+
+  const input = key => document.getElementById(ids[key]);
+  const number = key => input(key).valueAsNumber;
+  const setText = (id, value) => { document.getElementById(id).textContent = value; };
+  let activeScenario = "normal";
+
+  function valid(values) {
+    const finite = Object.values(values).every(Number.isFinite);
+    return finite &&
+      values.days7 > 0 && values.days7 <= 7 &&
+      values.days14 > 0 && values.days14 <= 14 &&
+      values.days28 > 0 && values.days28 <= 28 &&
+      values.sales7 >= 0 && values.sales14 >= 0 && values.sales28 >= 0 &&
+      values.weight7 >= 0 && values.weight14 >= 0 && values.weight28 >= 0 &&
+      values.weight7 + values.weight14 + values.weight28 > 0 &&
+      values.uplift > -100 && values.lead >= 0 && values.review >= 0 && values.safety >= 0 &&
+      values.available >= 0 && values.inbound >= 0 && values.reserved >= 0 &&
+      values.pack > 0 && values.moq >= 0;
+  }
+
+  function calculate() {
+    const values = Object.fromEntries(Object.keys(ids).map(key => [key, number(key)]));
+    const error = document.getElementById("error-message");
+    if (!valid(values)) {
+      error.style.display = "block";
+      return;
+    }
+    error.style.display = "none";
+
+    const weightTotal = values.weight7 + values.weight14 + values.weight28;
+    const baseForecast = (
+      values.sales7 / values.days7 * values.weight7 +
+      values.sales14 / values.days14 * values.weight14 +
+      values.sales28 / values.days28 * values.weight28
+    ) / weightTotal;
+    const forecast = Math.max(0, baseForecast * (1 + values.uplift / 100));
+    const protectionDays = values.lead + values.review + values.safety;
+    const target = Math.ceil(forecast * protectionDays);
+    const position = values.available + values.inbound - values.reserved;
+    const usablePosition = Math.max(0, position);
+    const rawNeed = Math.max(0, target - position);
+    const suggested = rawNeed > 0 ? Math.ceil(Math.max(rawNeed, values.moq) / values.pack) * values.pack : 0;
+    const boxes = suggested / values.pack;
+    const coverage = forecast > 0 ? usablePosition / forecast : Infinity;
+    const reorderPoint = Math.ceil(forecast * (values.lead + values.safety));
+
+    setText("forecast-result", `${forecast.toFixed(1)} 支`);
+    setText("coverage-result", Number.isFinite(coverage) ? `${coverage.toFixed(1)} 天` : "无需补货");
+    setText("protection-result", `${protectionDays.toFixed(0)} 天`);
+    setText("target-result", `${target} 支`);
+    setText("position-result", `${position} 支`);
+    setText("reorder-result", `${reorderPoint} 支`);
+    setText("suggestion-result", suggested > 0 ? `${suggested} 支 · ${boxes.toFixed(Number.isInteger(boxes) ? 0 : 1)} 箱` : "0 支 · 暂不补货");
+    setText("coverage-label", `${position} / ${target}`);
+    setText("equation", `${target} 目标库存 − ${position} 库存位置 = ${rawNeed} 净需求 → ${suggested} 支`);
+
+    const ratio = target > 0 ? Math.max(0, Math.min(100, usablePosition / target * 100)) : 100;
+    document.getElementById("coverage-fill").style.width = `${ratio}%`;
+
+    const timelineTotal = protectionDays || 1;
+    const blocks = [
+      ["lead-block", values.lead, "提前期"],
+      ["review-block", values.review, "复核"],
+      ["safety-block", values.safety, "安全"]
+    ];
+    blocks.forEach(([id, days, label]) => {
+      const element = document.getElementById(id);
+      element.style.flex = `${Math.max(days, .3)} 1 0`;
+      element.textContent = `${label} ${days} 天`;
+      element.title = `${label}占保护周期 ${(days / timelineTotal * 100).toFixed(0)}%`;
+    });
+
+    const status = document.getElementById("decision-status");
+    const story = document.getElementById("decision-story");
+    status.className = "decision-status";
+    story.className = "decision-story";
+
+    if (suggested === 0) {
+      status.textContent = "当前无需补货";
+      story.textContent = `库存位置可覆盖目标库存。在这些教学假设下，本轮不建议新增订单；仍需关注需求和在途变化。`;
+    } else if (coverage < values.lead) {
+      const gap = values.lead - coverage;
+      status.textContent = "存在断货窗口";
+      status.classList.add("danger");
+      story.classList.add("danger");
+      story.textContent = `当前库存位置约能覆盖 ${coverage.toFixed(1)} 天，新供给按 ${values.lead} 天提前期计算，可能出现约 ${gap.toFixed(1)} 天的断货窗口。建议补 ${suggested} 支（${boxes.toFixed(Number.isInteger(boxes) ? 0 : 1)} 箱），并同步确认加急或调拨方案。`;
+    } else if (coverage < protectionDays) {
+      status.textContent = "建议补货";
+      status.classList.add("warn");
+      story.classList.add("warn");
+      story.textContent = `当前库存位置可覆盖约 ${coverage.toFixed(1)} 天，能够接近或覆盖提前期，但不足以保护完整的 ${protectionDays.toFixed(0)} 天计划窗口。建议补 ${suggested} 支（${boxes.toFixed(Number.isInteger(boxes) ? 0 : 1)} 箱）。`;
+    } else {
+      status.textContent = "执行约束触发";
+      story.textContent = `库存覆盖较充足，但目标、MOQ 或箱规仍形成 ${suggested} 支建议。下单前应再次确认最小起订量和库存口径。`;
+    }
+  }
+
+  function loadScenario(name) {
+    const scenario = scenarios[name];
+    activeScenario = name;
+    Object.keys(ids).forEach(key => { input(key).value = scenario[key]; });
+    document.querySelectorAll(".scenario-button").forEach(button => {
+      button.classList.toggle("active", button.dataset.scenario === name);
+    });
+    setText("scenario-name", scenario.name);
+    calculate();
+  }
+
+  document.querySelectorAll(".scenario-button").forEach(button => {
+    button.addEventListener("click", () => loadScenario(button.dataset.scenario));
+  });
+  Object.keys(ids).forEach(key => {
+    input(key).addEventListener("input", () => {
+      document.querySelectorAll(".scenario-button").forEach(button => button.classList.remove("active"));
+      setText("scenario-name", "自定义情景");
+      calculate();
+    });
+  });
+  document.getElementById("recalculate").addEventListener("click", calculate);
+  loadScenario(activeScenario);
+})();
+</script>
+
+</body>
+</html>
