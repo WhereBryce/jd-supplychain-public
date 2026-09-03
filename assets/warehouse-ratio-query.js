@@ -600,4 +600,11 @@ el.lock.addEventListener("click", () => {
   setStatus("");
 });
 
+function clearPasswordField() {
+  el.password.value = "";
+}
+
+clearPasswordField();
+window.addEventListener("pageshow", clearPasswordField);
+window.setTimeout(clearPasswordField, 250);
 loadPublicStatus();

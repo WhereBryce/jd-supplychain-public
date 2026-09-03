@@ -7,7 +7,7 @@
   <title>JD 仓比查询 · JD Supply Chain</title>
   <link rel="stylesheet" href="../assets/warehouse-ratio-query.css">
   <script src="../assets/warehouse-ratio-engine.js" defer></script>
-  <script src="../assets/warehouse-ratio-query.js" defer></script>
+  <script src="../assets/warehouse-ratio-query.js?v=20260903a" defer></script>
 </head>
 <body>
   <main id="unlock" class="unlock">
@@ -23,9 +23,9 @@
         <div><dt>加密标准</dt><dd>AES-256-GCM</dd></div>
       </dl>
       <p id="unlockWarning" class="fallback-note" hidden></p>
-      <form id="unlockForm">
+      <form id="unlockForm" autocomplete="off">
         <label class="field">访问密码
-          <input id="password" type="password" autocomplete="current-password" required>
+          <input id="password" name="warehouse-ratio-access-key" type="password" autocomplete="new-password" value="" required>
         </label>
         <p id="unlockStatus" class="status" role="status"></p>
         <button id="unlockButton" class="primary" type="submit">解锁并加载模型</button>

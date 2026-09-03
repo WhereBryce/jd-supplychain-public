@@ -161,4 +161,8 @@ document.addEventListener("change", (event) => { if (el.app.contains(event.targe
 el.run.addEventListener("click", () => { try { el.run.disabled = true; el.run.textContent = "正在计算…"; render(BbccEngine.simulate(state.model, scenario())); notice("仿真完成，结果已更新。"); el.results.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (error) { notice(error.message || "计算失败。"); } finally { el.run.disabled = false; el.run.textContent = "重新运行当前情景"; } });
 el.download.addEventListener("click", csv);
 el.lock.addEventListener("click", () => { state.worker?.close(); state.worker = null; state.model = null; state.password = ""; state.result = null; el.password.value = ""; el.app.hidden = true; el.unlock.hidden = false; status(""); });
+const clearPasswordField = () => { el.password.value = ""; };
+clearPasswordField();
+window.addEventListener("pageshow", clearPasswordField);
+window.setTimeout(clearPasswordField, 250);
 loadStatus();

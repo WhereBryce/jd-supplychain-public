@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="../assets/fulfillment-decision.css?v=20260731b" />
 <link rel="stylesheet" href="../assets/fulfillment-logic.css?v=20260731b" />
 <script src="../assets/fulfillment-engine.js?v=20260807a" defer></script>
-<script src="../assets/fulfillment-decision.js?v=20260807a" defer></script>
+<script src="../assets/fulfillment-decision.js?v=20260903a" defer></script>
 </head>
 <body>
 
@@ -27,10 +27,10 @@
       <div><dt>履约from</dt><dd id="unlockWarehouseCount">读取中</dd></div>
       <div><dt>相关SKU</dt><dd id="unlockSkuCount">读取中</dd></div>
     </dl>
-    <form id="unlockForm" method="post" action="#">
+    <form id="unlockForm" method="post" action="#" autocomplete="off">
       <label for="password">访问密码</label>
       <div class="password-row">
-        <input id="password" name="password" type="password" minlength="8" maxlength="256" autocomplete="current-password" required autofocus />
+        <input id="password" name="fulfillment-access-key" type="password" minlength="8" maxlength="256" autocomplete="new-password" value="" required autofocus />
         <button id="togglePassword" class="reveal-button" type="button">显示</button>
       </div>
       <p class="unlock-status" id="unlockStatus" role="status" aria-live="polite"></p>
