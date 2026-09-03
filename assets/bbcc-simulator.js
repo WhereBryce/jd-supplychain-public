@@ -8,6 +8,20 @@ const fmt = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 2 });
 const money = (value) => `¥${fmt.format(Number(value) || 0)}`;
 const text = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
 const state = { status: null, model: null, password: "", worker: null, result: null };
+const CREDENTIAL_ID = "jd-free-goods-bbcc";
+
+async function rememberCredential(password) {
+  if (!navigator.credentials?.store || typeof PasswordCredential === "undefined") return;
+  try {
+    await navigator.credentials.store(new PasswordCredential({
+      id: CREDENTIAL_ID,
+      name: "Free Goods BBCC",
+      password,
+    }));
+  } catch (error) {
+    console.warn("浏览器未保存BBCC凭据", error);
+  }
+}
 
 class Decryptor {
   constructor() {
@@ -150,7 +164,7 @@ el.unlockForm.addEventListener("submit", async (event) => {
   try {
     status("正在下载加密模型…", true); const response = await fetch(MODEL_URL, { cache: "no-cache" }); if (!response.ok) throw new Error("加密BBCC模型尚未发布");
     state.worker ||= new Decryptor(); const payload = await state.worker.decrypt(await response.text(), password, (stage) => status({ derive: "正在验证密码（PBKDF2 600,000轮）…", decrypt: "正在解密模型…", decompress: "正在解压模型…", parse: "正在解析模型…" }[stage], true));
-    state.model = BbccEngine.decodeModel(payload.data); state.password = password; renderDefaultNetwork(); fillSettings(savedSettings()); el.sourceInfo.textContent = `加密模型生成于 ${payload.metadata?.generated_at || state.status?.generated_at || "未知"}；FY2526月度发货、需求分布、13个B仓、B-C报价及调拨日历均在浏览器内解密计算。`;
+    state.model = BbccEngine.decodeModel(payload.data); state.password = password; void rememberCredential(password); renderDefaultNetwork(); fillSettings(savedSettings()); el.sourceInfo.textContent = `加密模型生成于 ${payload.metadata?.generated_at || state.status?.generated_at || "未知"}；FY2526月度发货、需求分布、13个B仓、B-C报价及调拨日历均在浏览器内解密计算。`;
     el.unlock.hidden = true; el.app.hidden = false; notice(""); window.scrollTo(0, 0);
   } catch (error) { status(error.name === "OperationError" ? "密码不正确，或加密数据已损坏。" : error.message || "解锁失败。"); }
   finally { el.unlockButton.disabled = false; }
@@ -161,8 +175,4 @@ document.addEventListener("change", (event) => { if (el.app.contains(event.targe
 el.run.addEventListener("click", () => { try { el.run.disabled = true; el.run.textContent = "正在计算…"; render(BbccEngine.simulate(state.model, scenario())); notice("仿真完成，结果已更新。"); el.results.scrollIntoView({ behavior: "smooth", block: "start" }); } catch (error) { notice(error.message || "计算失败。"); } finally { el.run.disabled = false; el.run.textContent = "重新运行当前情景"; } });
 el.download.addEventListener("click", csv);
 el.lock.addEventListener("click", () => { state.worker?.close(); state.worker = null; state.model = null; state.password = ""; state.result = null; el.password.value = ""; el.app.hidden = true; el.unlock.hidden = false; status(""); });
-const clearPasswordField = () => { el.password.value = ""; };
-clearPasswordField();
-window.addEventListener("pageshow", clearPasswordField);
-window.setTimeout(clearPasswordField, 250);
 loadStatus();

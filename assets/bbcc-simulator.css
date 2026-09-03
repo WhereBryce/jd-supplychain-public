@@ -26,6 +26,14 @@ button { cursor: pointer; }
 button:disabled { cursor: wait; opacity: .55; }
 input:disabled, select:disabled { cursor: not-allowed; opacity: .55; }
 [hidden] { display: none !important; }
+.credential-username {
+  position: fixed !important;
+  left: -10000px !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
 a { color: var(--blue); text-decoration: none; }
 
 .unlock { min-height: 100vh; padding: 28px 18px; display: grid; place-items: center; }

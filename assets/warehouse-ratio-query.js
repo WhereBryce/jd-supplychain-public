@@ -15,6 +15,20 @@ const numberFormat = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 0 }
 const decimalFormat = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 1 });
 const percentFormat = new Intl.NumberFormat("zh-CN", { style: "percent", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const state = { status: null, model: null, result: null, worker: null };
+const CREDENTIAL_ID = "jd-warehouse-ratio-query";
+
+async function rememberCredential(password) {
+  if (!navigator.credentials?.store || typeof PasswordCredential === "undefined") return;
+  try {
+    await navigator.credentials.store(new PasswordCredential({
+      id: CREDENTIAL_ID,
+      name: "JD仓比查询",
+      password,
+    }));
+  } catch (error) {
+    console.warn("浏览器未保存仓比查询凭据", error);
+  }
+}
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (character) => ({
@@ -541,6 +555,7 @@ el.unlockForm.addEventListener("submit", async (event) => {
       parse: "正在解析模型…",
     }[stage], true));
     state.model = WarehouseRatioEngine.decodeModel(payload.data);
+    void rememberCredential(password);
     initializeFilters();
     el.meta.textContent = `切片 ${payload.metadata?.snapshot_date || state.status?.snapshot_date || "未知"} · ${numberFormat.format(state.model.products.length)}个SKU · ${state.model.warehouses.length}个配送中心`;
     el.unlock.hidden = true;
@@ -600,11 +615,4 @@ el.lock.addEventListener("click", () => {
   setStatus("");
 });
 
-function clearPasswordField() {
-  el.password.value = "";
-}
-
-clearPasswordField();
-window.addEventListener("pageshow", clearPasswordField);
-window.setTimeout(clearPasswordField, 250);
 loadPublicStatus();

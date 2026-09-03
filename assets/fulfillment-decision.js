@@ -26,6 +26,20 @@ const elements = Object.fromEntries([
 const state = { status: null, password: "", decryptor: null, snapshot: null, snapshotEntry: null, snapshotMetadata: null, shardPromises: new Map(), lastTiming: null, cityMapping: [], rules: null, routing: null, mechanismRows: 0 };
 const money = new Intl.NumberFormat("zh-CN", { style: "currency", currency: "CNY" });
 const integer = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 0 });
+const CREDENTIAL_ID = "jd-fulfillment-decision";
+
+async function rememberCredential(password) {
+  if (!navigator.credentials?.store || typeof PasswordCredential === "undefined") return;
+  try {
+    await navigator.credentials.store(new PasswordCredential({
+      id: CREDENTIAL_ID,
+      name: "JD订单履约分析",
+      password,
+    }));
+  } catch (error) {
+    console.warn("浏览器未保存履约分析凭据", error);
+  }
+}
 
 class DecryptWorkerClient {
   constructor() {
@@ -226,6 +240,7 @@ async function unlock(event) {
   setBusy(elements.unlockButton, true, "正在解锁", "解锁并进入");
   try {
     await loadSnapshot(state.status.snapshots[0], password);
+    void rememberCredential(password);
     elements.unlockView.hidden = true; elements.appView.hidden = false; setUnlockStatus("");
   } catch (error) { state.decryptor?.dispose(); state.decryptor = null; setUnlockStatus(error.message); elements.password.select(); }
   finally { setBusy(elements.unlockButton, false, "正在解锁", "解锁并进入"); }
@@ -461,8 +476,4 @@ function resetSettings() { localStorage.removeItem(STORAGE_KEY); applyStoredConf
 document.querySelectorAll(".view-tabs button").forEach((button) => button.addEventListener("click", () => { document.querySelectorAll(".view-tabs button").forEach((item) => item.classList.toggle("active", item === button)); document.querySelectorAll(".tool-view").forEach((view) => view.classList.toggle("active", view.id === `${button.dataset.view}View`)); hideNotice(); }));
 elements.unlockForm.addEventListener("submit", unlock); elements.togglePassword.addEventListener("click", () => { const reveal = elements.password.type === "password"; elements.password.type = reveal ? "text" : "password"; elements.togglePassword.textContent = reveal ? "隐藏" : "显示"; }); elements.lockButton.addEventListener("click", lock); elements.noticeClose.addEventListener("click", hideNotice);
 elements.orderSnapshot.addEventListener("change", () => switchSnapshot(elements.orderSnapshot.value)); elements.mechanismSnapshot.addEventListener("change", () => switchSnapshot(elements.mechanismSnapshot.value)); elements.analyzeOrders.addEventListener("click", analyzeOrders); elements.addMechanismRow.addEventListener("click", () => addMechanismRow()); elements.analyzeMechanism.addEventListener("click", analyzeMechanism); elements.cityFilter.addEventListener("input", renderCityMappings); elements.saveSettings.addEventListener("click", saveSettings); elements.resetSettings.addEventListener("click", resetSettings);
-const clearPasswordField = () => { elements.password.value = ""; };
-clearPasswordField();
-window.addEventListener("pageshow", clearPasswordField);
-window.setTimeout(clearPasswordField, 250);
 addMechanismRow({ role: "主品" }); addMechanismRow({ role: "赠品", quantity: 2 }); loadStatus();

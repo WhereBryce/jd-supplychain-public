@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="基于最新JD库存切片计算11RDC与宝洁直送62仓备货占比">
   <title>JD 仓比查询 · JD Supply Chain</title>
-  <link rel="stylesheet" href="../assets/warehouse-ratio-query.css">
+  <link rel="stylesheet" href="../assets/warehouse-ratio-query.css?v=20260903b">
   <script src="../assets/warehouse-ratio-engine.js" defer></script>
-  <script src="../assets/warehouse-ratio-query.js?v=20260903a" defer></script>
+  <script src="../assets/warehouse-ratio-query.js?v=20260903b" defer></script>
 </head>
 <body>
   <main id="unlock" class="unlock">
@@ -23,9 +23,10 @@
         <div><dt>加密标准</dt><dd>AES-256-GCM</dd></div>
       </dl>
       <p id="unlockWarning" class="fallback-note" hidden></p>
-      <form id="unlockForm" autocomplete="off">
+      <form id="unlockForm" autocomplete="on">
+        <input class="credential-username" name="username" type="text" autocomplete="username" value="jd-warehouse-ratio-query" tabindex="-1" aria-hidden="true" readonly>
         <label class="field">访问密码
-          <input id="password" name="warehouse-ratio-access-key" type="password" autocomplete="new-password" value="" required>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
         </label>
         <p id="unlockStatus" class="status" role="status"></p>
         <button id="unlockButton" class="primary" type="submit">解锁并加载模型</button>

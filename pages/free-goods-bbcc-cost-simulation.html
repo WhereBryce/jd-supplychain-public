@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="加密的 HC FGOI BBCC 灵活费用仿真工具">
   <title>Free Goods BBCC 灵活费用仿真 · JD Supply Chain</title>
-  <link rel="stylesheet" href="../assets/bbcc-simulator.css">
+  <link rel="stylesheet" href="../assets/bbcc-simulator.css?v=20260903b">
   <script src="../assets/bbcc-engine.js" defer></script>
-  <script src="../assets/bbcc-simulator.js?v=20260903a" defer></script>
+  <script src="../assets/bbcc-simulator.js?v=20260903b" defer></script>
 </head>
 <body>
   <main id="unlock" class="unlock">
@@ -16,7 +16,7 @@
       <h1 id="unlockTitle">Free Goods BBCC<br>灵活费用仿真</h1>
       <p class="unlock-copy">输入内部访问密码以在本浏览器本地解密模型。密码不会保存、上传或写入本地存储。</p>
       <dl class="freshness"><div><dt>数据期间</dt><dd id="unlockDate">读取中…</dd></div><div><dt>C仓城市</dt><dd id="unlockCities">—</dd></div><div><dt>B仓范围</dt><dd id="unlockWarehouses">—</dd></div><div><dt>加密标准</dt><dd>AES-256-GCM</dd></div></dl>
-      <form id="unlockForm" autocomplete="off"><label class="field">访问密码<input id="password" name="bbcc-access-key" type="password" autocomplete="new-password" value="" required></label><p id="unlockStatus" class="status"></p><button id="unlockButton" class="primary" type="submit">解锁并加载模型</button></form>
+      <form id="unlockForm" autocomplete="on"><input class="credential-username" name="username" type="text" autocomplete="username" value="jd-free-goods-bbcc" tabindex="-1" aria-hidden="true" readonly><label class="field">访问密码<input id="password" name="password" type="password" autocomplete="current-password" required></label><p id="unlockStatus" class="status"></p><button id="unlockButton" class="primary" type="submit">解锁并加载模型</button></form>
       <p class="privacy">PBKDF2-SHA256（600,000轮）+ AES-256-GCM + gzip。商业数据仅存在于加密文件，并仅在解锁后的当前浏览器内存中使用。</p>
       <a href="../index.html">返回主页</a>
     </section>
