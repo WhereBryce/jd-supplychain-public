@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="基于最新JD库存切片计算11RDC与宝洁直送62仓备货占比">
   <title>JD 仓比查询 · JD Supply Chain</title>
-  <link rel="stylesheet" href="../assets/warehouse-ratio-query.css?v=20260904a">
+  <link rel="stylesheet" href="../assets/warehouse-ratio-query.css?v=20260904b">
   <script src="../assets/warehouse-ratio-engine.js?v=20260904a" defer></script>
   <script src="../assets/warehouse-ratio-query.js?v=20260904a" defer></script>
 </head>
@@ -61,7 +61,6 @@
           <h2>按商品范围和销量仓网，计算两套全国备货比例。</h2>
           <p>11RDC方案收敛到11仓；62仓方案将未直送配送中心按同城优先、城市中心球面距离最近原则收敛到普通C仓。</p>
         </div>
-        <button id="download" class="primary" type="button" disabled>下载 Excel</button>
       </section>
 
       <section class="card query-card">
@@ -118,6 +117,10 @@
 
       <section id="results" class="results">
         <div id="kpis" class="kpis"></div>
+        <div class="scenario-toolbar">
+          <div><p class="eyebrow">SIMULATION OUTPUT</p><h3>两套备货模拟结果</h3></div>
+          <button id="download" class="primary scenario-download" type="button" disabled>下载 Excel</button>
+        </div>
         <div class="two">
           <article class="card">
             <div class="heading"><div><p class="eyebrow">SCENARIO 01</p><h3>11RDC发全国</h3></div><small>所选销量收敛到11仓</small></div>

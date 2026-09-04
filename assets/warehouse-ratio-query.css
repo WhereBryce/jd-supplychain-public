@@ -207,6 +207,15 @@ input[type="checkbox"] { min-height: 18px; accent-color: var(--blue); }
 .kpi small { color: var(--muted); }
 .kpi strong { display: block; margin: 8px 0 5px; font-size: 25px; }
 .kpi span { color: var(--muted); font-size: 12px; }
+.scenario-toolbar {
+  margin-top: 19px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+.scenario-toolbar h3 { margin: 2px 0 0; font-size: 20px; }
+.scenario-download { min-width: 150px; }
 .two { display: grid; grid-template-columns: .72fr 1.28fr; gap: 18px; }
 .table-wrap { max-height: 610px; overflow: auto; border: 1px solid var(--line); }
 table { width: 100%; min-width: 620px; border-collapse: collapse; }
@@ -239,6 +248,8 @@ footer { padding: 30px; color: #8190b5; text-align: center; font-size: 11px; let
   .light-exclusion { align-items: flex-start; flex-direction: column; gap: 8px; }
   .heading { align-items: flex-start; }
   .scenario-options { align-items: flex-start; }
+  .scenario-toolbar { align-items: stretch; flex-direction: column; }
+  .scenario-download { width: 100%; }
 }
 @media (max-width: 520px) {
   .unlock-card { padding: 32px 23px; }
