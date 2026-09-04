@@ -74,4 +74,28 @@ assert.equal(skuResult.summary.availableRequestedSkuCount, 1);
 assert.deepEqual(skuResult.summary.missingRequestedSkus, ["MISSING"]);
 assert.equal(skuResult.summary.totalSales90, 200);
 
+const only11Model = engine.decodeModel({
+  format: "warehouse-ratio-model-v1",
+  rdc_order: ["北京", "上海"],
+  products: [["A", "测试商品", "品牌甲", "个护", "身体", "沐浴", 10]],
+  warehouses: [
+    ["北京", "普通C仓", "北京", "北京", "北京", 0, "上海", 1068, false, "高", true],
+    ["上海", "普通C仓", "上海", "上海", "上海", 0, "北京", 1068, false, "高", true],
+    ["苏州", "普通C仓", "苏州", "上海", "苏州", 0, "上海", 84, false, "高", false],
+  ],
+  sales: [[0, 0, 100], [0, 1, 200], [0, 2, 700]],
+  quality: {},
+});
+const only11Result = engine.calculate(only11Model, {
+  filters: {},
+  scopes: ["all"],
+  excludeLight: true,
+});
+assert.equal(only11Result.summary.only11Sales90, 300);
+assert.equal(only11Result.summary.only11CoverageRatio, 0.3);
+assert.equal(only11Result.c62Rows.find((row) => row.warehouse === "北京").ratio, 0.1);
+assert.equal(only11Result.c62Rows.find((row) => row.warehouse === "北京").only11Ratio, 1 / 3);
+assert.equal(only11Result.c62Rows.find((row) => row.warehouse === "上海").only11Ratio, 2 / 3);
+assert.equal(only11Result.c62Rows.find((row) => row.warehouse === "苏州").only11Ratio, 0);
+
 console.log("warehouse-ratio-engine: all tests passed");

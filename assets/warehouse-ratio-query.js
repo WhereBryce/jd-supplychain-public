@@ -8,7 +8,7 @@ const ids = [
   "unlockDate", "unlockProducts", "unlockWarehouses", "unlockWarning", "lock",
   "meta", "notice", "brand", "l1", "l2", "l3", "price", "excludeLight",
   "skuList", "skuStats", "scopeReminder", "query", "reset", "download", "kpis", "rdcBody", "c62Body",
-  "mappingBody", "mappingSearch",
+  "only11Stock", "only11Coverage", "only11Risk", "only11RatioHeader", "mappingBody", "mappingSearch",
 ];
 const el = Object.fromEntries(ids.map((id) => [id, $(id)]));
 const numberFormat = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 0 });
@@ -256,6 +256,22 @@ function renderRatioTable(target, rows, nameField = "warehouse") {
   }).join("");
 }
 
+function renderC62Table(result) {
+  const only11 = el.only11Stock.checked;
+  const rows = only11 ? result.c62Rows.filter((row) => row.is11) : result.c62Rows;
+  el.only11RatioHeader.hidden = !only11;
+  el.only11Coverage.hidden = !only11;
+  el.only11Risk.hidden = !only11;
+  el.only11Coverage.textContent = `11仓销量覆盖率 ${percentFormat.format(result.summary.only11CoverageRatio)}`;
+  el.c62Body.innerHTML = rows.map((row) => {
+    const zeroClass = row.sales90 === 0 ? "zero" : "";
+    const only11Cell = only11
+      ? `<td class="numeric emphasis">${percentFormat.format(row.only11Ratio)}</td>`
+      : "";
+    return `<tr class="${zeroClass}"><td><strong>${escapeHtml(row.warehouse)}</strong></td><td class="numeric">${numberFormat.format(row.sales90)}</td><td class="numeric">${percentFormat.format(row.ratio)}</td>${only11Cell}</tr>`;
+  }).join("");
+}
+
 function renderMappings(rows) {
   el.mappingBody.innerHTML = rows.map((row) =>
     `<tr data-search="${escapeHtml(`${row.source} ${row.city} ${row.rdc} ${row.target62}`)}">
@@ -277,7 +293,7 @@ function render(result) {
   state.result = result;
   renderKpis(result);
   renderRatioTable(el.rdcBody, result.rdcRows);
-  renderRatioTable(el.c62Body, result.c62Rows);
+  renderC62Table(result);
   renderMappings(result.mappingRows);
   el.download.disabled = result.summary.totalSales90 <= 0;
   if (result.summary.totalSales90 <= 0) {
@@ -311,6 +327,7 @@ function resetFilters() {
   el.skuList.value = "";
   el.brand.value = "";
   el.price.value = "";
+  el.only11Stock.checked = false;
   refreshCategoryOptions("brand");
   updateSkuStats();
   resetScopes();
@@ -481,10 +498,19 @@ async function downloadExcel() {
       ["纳入90日销量", { value: result.summary.totalSales90, style: 1 }],
       ["贡献销量配送中心", { value: result.summary.contributingWarehouseCount, style: 1 }],
       ["排除轻货仓销量", { value: result.summary.excludedLightSales, style: 1 }],
+      ["62仓列表模式", el.only11Stock.checked ? "11仓备货仅发11城" : "62仓发全国"],
+      ["11仓销量覆盖率", { value: result.summary.only11CoverageRatio, style: 2 }],
       ...filterDescription(result.settings),
     ];
     const rdcRows = [["11RDC", "90日件数", "备货占比"], ...result.rdcRows.map((row) => [row.warehouse, { value: row.sales90, style: 1 }, { value: row.ratio, style: 2 }])];
-    const c62Rows = [["普通C仓", "标准城市", "90日件数", "备货占比"], ...result.c62Rows.map((row) => [row.warehouse, row.city, { value: row.sales90, style: 1 }, { value: row.ratio, style: 2 }])];
+    const displayedC62Rows = el.only11Stock.checked ? result.c62Rows.filter((row) => row.is11) : result.c62Rows;
+    const c62Headers = ["普通C仓", "标准城市", "90日件数", "备货占比"];
+    if (el.only11Stock.checked) c62Headers.push("仅11仓备货时的比例");
+    const c62Rows = [c62Headers, ...displayedC62Rows.map((row) => {
+      const values = [row.warehouse, row.city, { value: row.sales90, style: 1 }, { value: row.ratio, style: 2 }];
+      if (el.only11Stock.checked) values.push({ value: row.only11Ratio, style: 2 });
+      return values;
+    })];
     const mappingRows = [["原配送中心", "仓型", "标准城市", "11RDC", "目标62仓", "最近距离km", "第二候选仓", "第二候选距离km", "地理边界", "映射置信度", "90日件数"], ...result.mappingRows.map((row) => [row.source, row.type, row.city, row.rdc, row.target62, row.distance62, row.second62, row.secondDistance62, row.boundary ? "是" : "否", row.confidence, { value: row.sales90, style: 1 }])];
     const detailHeaders = ["SKU", "商品名称", "品牌", "一级类目", "二级类目", "三级类目", "全国采购价", "原配送中心", "原仓型", "标准城市", "目标11RDC", "目标62仓", "近90日收货地商品件数"];
     const detailRows = [detailHeaders, ...result.details.map((row) => detailHeaders.map((header) => {
@@ -508,6 +534,8 @@ async function downloadExcel() {
       ["采购价", "全国采购价空值SKU不进入计算"],
       ["11RDC方案", "所选配送中心销量收敛到所属11RDC"],
       ["62仓方案", "普通C仓归自身；同城特殊仓归同城普通C仓；其他仓按城市中心球面距离归最近普通C仓"],
+      ["11仓备货仅发11城", "仅显示11个核心普通C仓；原备货占比保持62仓总销量分母不变；新增比例以11仓原占比合计为分母重新归一化"],
+      ["掉赠风险", "11仓备货，其他仓不备货且不代发时，11仓未辐射区域存在掉赠"],
       ["多选", "配送中心范围按并集去重；全国全仓已包含11RDC"],
     ];
     const modelSkuSet = new Set(state.model.products.map((product) => product.sku));
@@ -518,7 +546,7 @@ async function downloadExcel() {
     const blob = workbookBlob([
       { name: "01_查询摘要", rows: summaryRows },
       { name: "02_11RDC备货比", rows: rdcRows },
-      { name: "03_62仓备货比", rows: c62Rows },
+      { name: el.only11Stock.checked ? "03_仅11仓备货比" : "03_62仓备货比", rows: c62Rows },
       { name: "04_收敛关系审计", rows: mappingRows },
       { name: "05_SKU销量明细", rows: detailRows },
       { name: "06_异常与排除", rows: exceptionRows },
@@ -602,6 +630,9 @@ el.excludeLight.addEventListener("change", () => {
 el.skuList.addEventListener("input", updateSkuStats);
 el.query.addEventListener("click", runQuery);
 el.reset.addEventListener("click", resetFilters);
+el.only11Stock.addEventListener("change", () => {
+  if (state.result) renderC62Table(state.result);
+});
 el.mappingSearch.addEventListener("input", filterMappings);
 el.download.addEventListener("click", downloadExcel);
 el.lock.addEventListener("click", () => {

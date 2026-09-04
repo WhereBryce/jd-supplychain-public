@@ -121,11 +121,23 @@
       sales90: rdcTotals.get(rdc) || 0,
       ratio: ratio(rdcTotals.get(rdc) || 0),
     }));
-    const c62Rows = [...targetTotals].map(([warehouse, sales90]) => ({
-      warehouse,
-      city: targetByName.get(warehouse)?.city || warehouse,
-      sales90,
-      ratio: ratio(sales90),
+    const c62BaseRows = [...targetTotals].map(([warehouse, sales90]) => {
+      const target = targetByName.get(warehouse);
+      return {
+        warehouse,
+        city: target?.city || warehouse,
+        is11: Boolean(target?.is11),
+        sales90,
+        ratio: ratio(sales90),
+      };
+    });
+    const only11Sales90 = c62BaseRows.reduce(
+      (sum, row) => sum + (row.is11 ? row.sales90 : 0),
+      0
+    );
+    const c62Rows = c62BaseRows.map((row) => ({
+      ...row,
+      only11Ratio: row.is11 && only11Sales90 > 0 ? row.sales90 / only11Sales90 : 0,
     })).sort((first, second) => second.ratio - first.ratio || first.warehouse.localeCompare(second.warehouse, "zh-CN"));
     const mappingRows = model.warehouses
       .filter((warehouse) => sourceMask[warehouse.index] && (!excludeLight || warehouse.type !== "轻货仓"))
@@ -158,6 +170,8 @@
         contributingWarehouseCount: [...sourceTotals.values()].filter((value) => value > 0).length,
         totalSales90: total,
         excludedLightSales,
+        only11Sales90,
+        only11CoverageRatio: ratio(only11Sales90),
       },
       rdcRows,
       c62Rows,
