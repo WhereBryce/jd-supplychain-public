@@ -11,6 +11,7 @@ JD 供应链团队知识库的**对外发布站**（GitHub Pages 托管）。所
 | 门户首页 | 导航 | 所有页面的总入口（页面目录） | <https://wherebryce.github.io/jd-supplychain-public/> |
 | 团队知识库使用指南 | 指南 | 怎么往 Inbox 贡献材料、云⇄本地运转方式、AI 协作触 发词（含二维码） | <https://wherebryce.github.io/jd-supplychain-public/pages/guide.html> |
 | 仓配费节降通用框架 | 洞察·仓配成本 | 仓配费 = 非异常+异常，按 费项→方式→抓手  三层拆解的跨品类节降骨架（含流程图） | <https://wherebryce.github.io/jd-supplychain-public/pages/warehouse-cost-reduction.html> |
+| 逆向损失漏斗模型 | 方法论·逆向损失 | 从前台销量、售后申请、退换货、有损处置到损失金额，拆解四层过滤效率、数据口径与 RMA 影响 | <https://wherebryce.github.io/jd-supplychain-public/pages/reverse-loss-funnel.html> |
 | JD 仓网入门 | 新人·仓网 | 11 大 RDC、三层级 8→62 仓、RDC vs 配送中心、库存流转、布货决策、枢纽仓与常见坑（含流程图） | <https://wherebryce.github.io/jd-supplychain-public/pages/warehouse-network-primer.html> |
 | 轻货仓入门 | 新人·轻货仓 | 六仓网络、低成本逻辑、SKU 准入、消费者路由、库存边界、MOQ，以及与城市仓的核心区别 | <https://wherebryce.github.io/jd-supplychain-public/pages/light-warehouse-primer.html> |
 | JD 库存报告字段词典 | 参考·库存字段 | 商智库存报告全字段逐条识别（现货/可用/可订购公式、滞销库龄、出库销量口径、PV现货率），带即时筛选 | <https://wherebryce.github.io/jd-supplychain-public/pages/jd-inventory-report-fields.html> |
@@ -26,6 +27,7 @@ jd-supplychain-public/          # Pages 从 /(root) 发布
   pages/                        # 除入口外的所有页面集中在此
     guide.html                  # 团队知识库使用指南
     warehouse-cost-reduction.html   # 仓配费节降通用框架
+    reverse-loss-funnel.html        # 逆向损失漏斗模型
     warehouse-network-primer.html   # JD 仓网入门（新人向）
     light-warehouse-primer.html     # 轻货仓入门
     jd-inventory-report-fields.html # JD 库存报告字段词典
